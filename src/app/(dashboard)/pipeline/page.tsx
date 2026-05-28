@@ -336,6 +336,7 @@ export default function PipelinePage() {
           ) : (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
               <KanbanBoard
+                filteredStages={filteredStages}
                 onMoveLead={handleMoveLead}
                 onAddLead={(stageId) => console.log('Add to:', stageId)}
                 onCardClick={(card) => console.log('Click:', card.id)}

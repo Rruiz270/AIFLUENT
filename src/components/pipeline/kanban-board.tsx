@@ -24,16 +24,18 @@ interface KanbanBoardProps {
   onCardClick?: (card: KanbanCardType) => void
   onAddLead?: (stageId: string) => void
   onMoveLead?: (leadId: string, stageId: string, newOrder: number) => void
+  filteredStages?: PipelineStage[]
 }
 
-export function KanbanBoard({ onCardClick, onAddLead, onMoveLead }: KanbanBoardProps) {
+export function KanbanBoard({ onCardClick, onAddLead, onMoveLead, filteredStages }: KanbanBoardProps) {
   const { stages, setStages, setDraggedLead } = usePipelineStore()
   const [activeCard, setActiveCard] = useState<KanbanCardType | null>(null)
+  const displayStages = filteredStages || stages
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -181,7 +183,7 @@ export function KanbanBoard({ onCardClick, onAddLead, onMoveLead }: KanbanBoardP
           '[&::-webkit-scrollbar-thumb:hover]:bg-gray-100'
         )}
       >
-        {stages.map((stage) => (
+        {displayStages.map((stage) => (
           <KanbanColumn
             key={stage.id}
             stage={stage}
