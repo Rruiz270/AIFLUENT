@@ -1,50 +1,53 @@
 'use client'
 
 import * as React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  UserPlus,
-  Loader2,
+  UserPlus, Loader2, User, Phone, Mail, MessageCircle, MapPin,
+  Briefcase, GraduationCap, Tag, FileText, Sparkles, X, Plus,
+  Flame, Thermometer, Snowflake, ChevronRight, ChevronLeft,
+  Camera, Globe, Search, Users, Calendar, MessagesSquare, Target,
+  CheckCircle2, Building2, Languages,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import type { LeadSource, LeadTemperature } from '@/types'
 
-// ── Source / temperature options ─────────────────────────────────────────────
-
-const sourceOptions: { value: LeadSource; label: string }[] = [
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'facebook', label: 'Facebook' },
-  { value: 'google', label: 'Google' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'website', label: 'Site' },
-  { value: 'referral', label: 'Indicacao' },
-  { value: 'event', label: 'Evento' },
-  { value: 'manual', label: 'Manual' },
+const steps = [
+  { id: 'personal', label: 'Dados Pessoais', icon: User },
+  { id: 'contact', label: 'Contato', icon: Phone },
+  { id: 'qualification', label: 'Qualificacao', icon: GraduationCap },
+  { id: 'tags', label: 'Tags & Notas', icon: Tag },
 ]
 
-const temperatureOptions: { value: LeadTemperature; label: string }[] = [
-  { value: 'cold', label: 'Frio' },
-  { value: 'warm', label: 'Morno' },
-  { value: 'hot', label: 'Quente' },
+const sourceOptions: { value: LeadSource; label: string; icon: React.ElementType; color: string }[] = [
+  { value: 'instagram', label: 'Instagram', icon: Camera, color: 'text-pink-400 bg-pink-500/10 border-pink-500/20' },
+  { value: 'facebook', label: 'Facebook', icon: MessagesSquare, color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+  { value: 'google', label: 'Google', icon: Search, color: 'text-green-400 bg-green-500/10 border-green-500/20' },
+  { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+  { value: 'website', label: 'Site', icon: Globe, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
+  { value: 'referral', label: 'Indicacao', icon: Users, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+  { value: 'event', label: 'Evento', icon: Calendar, color: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
+  { value: 'meta_ads', label: 'Meta Ads', icon: Target, color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
+  { value: 'manual', label: 'Manual', icon: UserPlus, color: 'text-slate-400 bg-slate-500/10 border-slate-500/20' },
 ]
 
-// ── Form state ──────────────────────────────────────────────────────────────
+const temperatureConfig = {
+  cold: { label: 'Frio', icon: Snowflake, color: 'text-blue-400 bg-blue-500/10 border-blue-500/30', desc: 'Primeiro contato' },
+  warm: { label: 'Morno', icon: Thermometer, color: 'text-amber-400 bg-amber-500/10 border-amber-500/30', desc: 'Demonstrou interesse' },
+  hot: { label: 'Quente', icon: Flame, color: 'text-rose-400 bg-rose-500/10 border-rose-500/30', desc: 'Pronto para fechar' },
+}
+
+const courseOptions = [
+  'Ingles - Business', 'Ingles - Conversacao', 'Ingles - Preparatorio', 'Ingles - Kids',
+  'Espanhol - Business', 'Espanhol - Conversacao', 'Espanhol - Preparatorio',
+]
+
+const levelOptions = ['Iniciante', 'Basico', 'Intermediario', 'Avancado', 'Fluente']
+
+const suggestedTags = [
+  'VIP', 'Corporativo', 'Estudante', 'Reativacao', 'Premium', 'Indicacao',
+  'Black Friday', 'Matricula', 'Trial', 'Follow-up', 'Urgente', 'B2B',
+]
 
 interface FormData {
   firstName: string
@@ -52,31 +55,23 @@ interface FormData {
   email: string
   phone: string
   whatsapp: string
+  company: string
+  jobTitle: string
   source: LeadSource
   temperature: LeadTemperature
   courseInterest: string
+  languageLevel: string
+  city: string
+  state: string
   notes: string
-}
-
-interface FormErrors {
-  firstName?: string
-  email?: string
-  phone?: string
+  tags: string[]
 }
 
 const defaultForm: FormData = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  whatsapp: '',
-  source: 'manual',
-  temperature: 'warm',
-  courseInterest: '',
-  notes: '',
+  firstName: '', lastName: '', email: '', phone: '', whatsapp: '',
+  company: '', jobTitle: '', source: 'manual', temperature: 'warm',
+  courseInterest: '', languageLevel: '', city: '', state: '', notes: '', tags: [],
 }
-
-// ── Component ───────────────────────────────────────────────────────────────
 
 interface NewLeadModalProps {
   open: boolean
@@ -86,55 +81,50 @@ interface NewLeadModalProps {
 
 export function NewLeadModal({ open, onOpenChange, onCreated }: NewLeadModalProps) {
   const [form, setForm] = React.useState<FormData>({ ...defaultForm })
-  const [errors, setErrors] = React.useState<FormErrors>({})
+  const [step, setStep] = React.useState(0)
   const [loading, setLoading] = React.useState(false)
+  const [success, setSuccess] = React.useState(false)
+  const [tagInput, setTagInput] = React.useState('')
+  const [errors, setErrors] = React.useState<Record<string, string>>({})
 
   const resetForm = () => {
     setForm({ ...defaultForm })
-    setErrors({})
+    setStep(0)
     setLoading(false)
+    setSuccess(false)
+    setTagInput('')
+    setErrors({})
   }
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) resetForm()
-    onOpenChange(open)
+  const handleOpenChange = (v: boolean) => {
+    if (!v) resetForm()
+    onOpenChange(v)
   }
 
-  const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
+  const update = <K extends keyof FormData>(key: K, value: FormData[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
-    // Clear error on edit
-    if (key in errors) {
-      setErrors((prev) => {
-        const next = { ...prev }
-        delete next[key as keyof FormErrors]
-        return next
-      })
-    }
+    if (key in errors) setErrors((prev) => { const n = { ...prev }; delete n[key]; return n })
   }
 
-  // ── Validation ────────────────────────────────────────────────────────────
+  const addTag = (tag: string) => {
+    const t = tag.trim()
+    if (t && !form.tags.includes(t)) update('tags', [...form.tags, t])
+    setTagInput('')
+  }
+
+  const removeTag = (tag: string) => update('tags', form.tags.filter((t) => t !== tag))
 
   const validate = (): boolean => {
-    const newErrors: FormErrors = {}
-    if (!form.firstName.trim()) {
-      newErrors.firstName = 'Nome e obrigatorio'
-    }
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = 'Email invalido'
-    }
-    if (form.phone && form.phone.replace(/\D/g, '').length < 10) {
-      newErrors.phone = 'Telefone deve ter pelo menos 10 digitos'
-    }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    const e: Record<string, string> = {}
+    if (!form.firstName.trim()) e.firstName = 'Nome obrigatorio'
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Email invalido'
+    setErrors(e)
+    if (Object.keys(e).length > 0) setStep(0)
+    return Object.keys(e).length === 0
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     if (!validate()) return
-
     setLoading(true)
     try {
       const res = await fetch('/api/leads', {
@@ -146,167 +136,430 @@ export function NewLeadModal({ open, onOpenChange, onCreated }: NewLeadModalProp
           email: form.email.trim() || undefined,
           phone: form.phone.replace(/\D/g, '') || undefined,
           whatsapp: form.whatsapp.replace(/\D/g, '') || undefined,
+          company: form.company.trim() || undefined,
+          jobTitle: form.jobTitle.trim() || undefined,
           source: form.source,
           temperature: form.temperature,
-          courseInterest: form.courseInterest.trim() || undefined,
+          courseInterest: form.courseInterest || undefined,
+          languageLevel: form.languageLevel || undefined,
+          city: form.city.trim() || undefined,
+          state: form.state.trim() || undefined,
           notes: form.notes.trim() || undefined,
+          tags: form.tags,
         }),
       })
-
       if (res.ok) {
-        onCreated?.()
-        handleOpenChange(false)
+        setSuccess(true)
+        setTimeout(() => { onCreated?.(); handleOpenChange(false) }, 1200)
       }
     } catch {
-      // Could show error toast
+      // ignore
     } finally {
       setLoading(false)
     }
   }
 
+  const aiScore = React.useMemo(() => {
+    let s = 20
+    if (form.firstName) s += 5
+    if (form.email) s += 15
+    if (form.phone) s += 10
+    if (form.whatsapp) s += 10
+    if (form.courseInterest) s += 15
+    if (form.temperature === 'hot') s += 15
+    else if (form.temperature === 'warm') s += 8
+    if (form.tags.length > 0) s += 5
+    if (form.company) s += 5
+    return Math.min(s, 100)
+  }, [form])
+
+  if (!open) return null
+
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            <UserPlus className="mr-2 inline h-5 w-5 text-indigo-400" />
-            Novo Lead
-          </DialogTitle>
-          <DialogDescription>
-            Preencha os dados do novo lead.
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          {/* Name row */}
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Nome *"
-              placeholder="Nome"
-              value={form.firstName}
-              onChange={(e) => updateField('firstName', e.target.value)}
-              error={errors.firstName}
-            />
-            <Input
-              label="Sobrenome"
-              placeholder="Sobrenome"
-              value={form.lastName}
-              onChange={(e) => updateField('lastName', e.target.value)}
-            />
-          </div>
-
-          {/* Email */}
-          <Input
-            label="Email"
-            type="email"
-            placeholder="email@exemplo.com"
-            value={form.email}
-            onChange={(e) => updateField('email', e.target.value)}
-            error={errors.email}
-          />
-
-          {/* Phone row */}
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Telefone"
-              placeholder="(11) 99999-9999"
-              value={form.phone}
-              onChange={(e) => updateField('phone', e.target.value)}
-              error={errors.phone}
-            />
-            <Input
-              label="WhatsApp"
-              placeholder="(11) 99999-9999"
-              value={form.whatsapp}
-              onChange={(e) => updateField('whatsapp', e.target.value)}
-            />
-          </div>
-
-          {/* Source + temperature */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-300">
-                Origem
-              </label>
-              <Select
-                value={form.source}
-                onValueChange={(v) => updateField('source', v as LeadSource)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sourceOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-300">
-                Temperatura
-              </label>
-              <Select
-                value={form.temperature}
-                onValueChange={(v) => updateField('temperature', v as LeadTemperature)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {temperatureOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Course interest */}
-          <Input
-            label="Curso de Interesse"
-            placeholder="Ex: Engenharia Civil"
-            value={form.courseInterest}
-            onChange={(e) => updateField('courseInterest', e.target.value)}
-          />
-
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-300">
-              Notas
-            </label>
-            <textarea
-              placeholder="Observacoes sobre o lead..."
-              value={form.notes}
-              onChange={(e) => updateField('notes', e.target.value)}
-              rows={3}
-              className={cn(
-                'w-full resize-none rounded-lg border bg-slate-800/50 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 transition-all duration-200',
-                'border-slate-700/50',
-                'focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 focus:bg-slate-800/80'
-              )}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => handleOpenChange(false)}
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => handleOpenChange(false)} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-2xl shadow-black/50"
+      >
+        {/* Success overlay */}
+        <AnimatePresence>
+          {success && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/98"
             >
-              Cancelar
-            </Button>
-            <Button type="submit" loading={loading}>
-              {loading ? 'Criando...' : 'Criar Lead'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4"
+              >
+                <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+              </motion.div>
+              <p className="text-xl font-bold text-white">Lead Criado!</p>
+              <p className="text-sm text-slate-400 mt-1">{form.firstName} foi adicionado com sucesso</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+              <UserPlus className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Novo Lead</h2>
+              <p className="text-xs text-slate-500">Preencha os dados para cadastrar</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* AI Score */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs font-bold text-white">{aiScore}</span>
+              <span className="text-[10px] text-slate-400">Score IA</span>
+            </div>
+            <button onClick={() => handleOpenChange(false)} className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Step Indicator */}
+        <div className="flex items-center gap-1 px-6 py-3 border-b border-white/5 bg-slate-800/30">
+          {steps.map((s, i) => (
+            <React.Fragment key={s.id}>
+              <button
+                onClick={() => setStep(i)}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                  step === i
+                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
+                    : step > i
+                      ? 'text-emerald-400 bg-emerald-500/10'
+                      : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
+                )}
+              >
+                <s.icon className="w-3.5 h-3.5" />
+                {s.label}
+              </button>
+              {i < steps.length - 1 && <ChevronRight className="w-3 h-3 text-slate-700" />}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto p-6" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+          <AnimatePresence mode="wait">
+            {/* Step 1: Personal */}
+            {step === 0 && (
+              <motion.div key="personal" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1.5">Nome *</label>
+                    <input
+                      value={form.firstName} onChange={(e) => update('firstName', e.target.value)}
+                      placeholder="Nome do lead"
+                      className={cn('w-full px-4 py-2.5 bg-slate-800/50 border rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors', errors.firstName ? 'border-rose-500/50' : 'border-white/5')}
+                    />
+                    {errors.firstName && <p className="text-[10px] text-rose-400 mt-1">{errors.firstName}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1.5">Sobrenome</label>
+                    <input
+                      value={form.lastName} onChange={(e) => update('lastName', e.target.value)}
+                      placeholder="Sobrenome"
+                      className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/5 rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1.5">Empresa</label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                      <input value={form.company} onChange={(e) => update('company', e.target.value)} placeholder="Nome da empresa" className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/5 rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1.5">Cargo</label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                      <input value={form.jobTitle} onChange={(e) => update('jobTitle', e.target.value)} placeholder="Cargo / Funcao" className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/5 rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Source Selector */}
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Origem do Lead</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {sourceOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => update('source', opt.value)}
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-all',
+                          form.source === opt.value ? opt.color : 'text-slate-500 bg-slate-800/30 border-white/5 hover:bg-slate-800/50'
+                        )}
+                      >
+                        <opt.icon className="w-3.5 h-3.5" />
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 2: Contact */}
+            {step === 1 && (
+              <motion.div key="contact" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1.5">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                    <input value={form.email} onChange={(e) => update('email', e.target.value)} type="email" placeholder="email@exemplo.com" className={cn('w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors', errors.email ? 'border-rose-500/50' : 'border-white/5')} />
+                  </div>
+                  {errors.email && <p className="text-[10px] text-rose-400 mt-1">{errors.email}</p>}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1.5">Telefone</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                      <input value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="(11) 99999-9999" className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/5 rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1.5">WhatsApp</label>
+                    <div className="relative">
+                      <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                      <input value={form.whatsapp} onChange={(e) => update('whatsapp', e.target.value)} placeholder="(11) 99999-9999" className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/5 rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors" />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1.5">Cidade</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                      <input value={form.city} onChange={(e) => update('city', e.target.value)} placeholder="Sao Paulo" className="w-full pl-10 pr-4 py-2.5 bg-slate-800/50 border border-white/5 rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1.5">Estado</label>
+                    <input value={form.state} onChange={(e) => update('state', e.target.value)} placeholder="SP" className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/5 rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors" />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Qualification */}
+            {step === 2 && (
+              <motion.div key="qualification" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                {/* Temperature */}
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Temperatura do Lead</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(Object.entries(temperatureConfig) as [LeadTemperature, typeof temperatureConfig.cold][]).map(([key, cfg]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => update('temperature', key)}
+                        className={cn(
+                          'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all',
+                          form.temperature === key ? cfg.color : 'text-slate-500 bg-slate-800/30 border-white/5 hover:bg-slate-800/50'
+                        )}
+                      >
+                        <cfg.icon className="w-6 h-6" />
+                        <span className="text-sm font-semibold">{cfg.label}</span>
+                        <span className="text-[10px] opacity-70">{cfg.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Course */}
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Curso de Interesse</label>
+                  <div className="flex flex-wrap gap-2">
+                    {courseOptions.map((course) => (
+                      <button
+                        key={course}
+                        type="button"
+                        onClick={() => update('courseInterest', course)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                          form.courseInterest === course
+                            ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30'
+                            : 'text-slate-400 bg-slate-800/30 border-white/5 hover:bg-slate-800/50'
+                        )}
+                      >
+                        {course}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Language Level */}
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Nivel do Idioma</label>
+                  <div className="flex gap-2">
+                    {levelOptions.map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => update('languageLevel', level)}
+                        className={cn(
+                          'flex-1 py-2 rounded-xl text-xs font-medium border transition-all text-center',
+                          form.languageLevel === level
+                            ? 'bg-purple-600/20 text-purple-400 border-purple-500/30'
+                            : 'text-slate-500 bg-slate-800/30 border-white/5 hover:bg-slate-800/50'
+                        )}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI Prediction */}
+                <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm font-semibold text-white">Previsao IA</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <motion.div animate={{ width: `${aiScore}%` }} className={cn('h-full rounded-full', aiScore >= 70 ? 'bg-emerald-500' : aiScore >= 40 ? 'bg-amber-500' : 'bg-slate-500')} />
+                      </div>
+                    </div>
+                    <span className={cn('text-sm font-bold', aiScore >= 70 ? 'text-emerald-400' : aiScore >= 40 ? 'text-amber-400' : 'text-slate-400')}>
+                      {aiScore}%
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {aiScore >= 70 ? 'Alta probabilidade de conversao' : aiScore >= 40 ? 'Probabilidade moderada - investir em follow-up' : 'Preencha mais dados para melhorar a previsao'}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 4: Tags & Notes */}
+            {step === 3 && (
+              <motion.div key="tags" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                {/* Tags */}
+                <div>
+                  <label className="block text-sm text-slate-400 mb-2">Tags</label>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {form.tags.map((tag) => (
+                      <span key={tag} className="flex items-center gap-1 px-2.5 py-1 bg-indigo-500/20 text-indigo-400 text-xs font-medium rounded-lg border border-indigo-500/30">
+                        {tag}
+                        <button onClick={() => removeTag(tag)} className="hover:text-white transition-colors"><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
+                      placeholder="Digite uma tag e pressione Enter"
+                      className="flex-1 px-4 py-2 bg-slate-800/50 border border-white/5 rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none transition-colors"
+                    />
+                    <button onClick={() => addTag(tagInput)} className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm transition-colors">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-600 mb-2">Sugestoes:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {suggestedTags.filter((t) => !form.tags.includes(t)).map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => addTag(tag)}
+                          className="px-2 py-1 text-[10px] text-slate-500 bg-slate-800/30 border border-white/5 rounded-lg hover:bg-slate-800/50 hover:text-slate-300 transition-colors"
+                        >
+                          + {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1.5">Notas</label>
+                  <textarea
+                    value={form.notes}
+                    onChange={(e) => update('notes', e.target.value)}
+                    placeholder="Observacoes, contexto, informacoes relevantes..."
+                    rows={4}
+                    className="w-full px-4 py-2.5 bg-slate-800/50 border border-white/5 rounded-xl text-sm text-white placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none resize-none transition-colors"
+                  />
+                </div>
+
+                {/* Summary */}
+                <div className="bg-slate-800/30 border border-white/5 rounded-xl p-4 space-y-2">
+                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Resumo</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: 'Nome', value: `${form.firstName} ${form.lastName}`.trim() || '-' },
+                      { label: 'Email', value: form.email || '-' },
+                      { label: 'Telefone', value: form.phone || '-' },
+                      { label: 'Origem', value: sourceOptions.find((s) => s.value === form.source)?.label || '-' },
+                      { label: 'Temperatura', value: temperatureConfig[form.temperature].label },
+                      { label: 'Curso', value: form.courseInterest || '-' },
+                      { label: 'Tags', value: form.tags.length > 0 ? form.tags.join(', ') : '-' },
+                      { label: 'Score IA', value: `${aiScore}%` },
+                    ].map((item) => (
+                      <div key={item.label} className="flex justify-between">
+                        <span className="text-[10px] text-slate-500">{item.label}</span>
+                        <span className="text-[10px] text-slate-300 font-medium text-right truncate ml-2">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-slate-800/20">
+          <div className="flex items-center gap-1">
+            {steps.map((_, i) => (
+              <div key={i} className={cn('h-1.5 rounded-full transition-all', step === i ? 'w-6 bg-indigo-500' : step > i ? 'w-3 bg-emerald-500' : 'w-3 bg-slate-700')} />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            {step > 0 && (
+              <button onClick={() => setStep(step - 1)} className="flex items-center gap-1.5 px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+                <ChevronLeft className="w-4 h-4" /> Voltar
+              </button>
+            )}
+            {step < steps.length - 1 ? (
+              <button onClick={() => setStep(step + 1)} className="flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors">
+                Proximo <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button onClick={handleSubmit} disabled={loading} className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                {loading ? 'Criando...' : 'Criar Lead'}
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </div>
   )
 }
