@@ -100,13 +100,13 @@ export default function InboxPage() {
   return (
     <div className="flex h-[calc(100dvh-4rem)] -m-6">
       {/* Conversation List */}
-      <div className="w-[380px] flex flex-col border-r border-gray-200">
+      <div className="w-[380px] flex flex-col border-r border-gray-200 bg-white">
         {/* List Header */}
         <div className="p-4 border-b border-gray-200 space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Inbox</h2>
-              <p className="text-xs text-gray-400">{totalUnread} nao lidas</p>
+              <p className="text-xs text-gray-500">{totalUnread} nao lidas</p>
             </div>
             <div className="flex items-center gap-1">
               <button className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors">
@@ -144,8 +144,8 @@ export default function InboxPage() {
                 className={cn(
                   'flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   channel === tab.key
-                    ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                    : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 )}
               >
                 {tab.label}
@@ -167,13 +167,13 @@ export default function InboxPage() {
                 onClick={() => setSelectedId(conv.id)}
                 className={cn(
                   'w-full flex items-start gap-3 p-4 text-left transition-colors border-b border-gray-100',
-                  isActive ? 'bg-indigo-500/5 border-l-2 border-l-indigo-500' : 'hover:bg-white'
+                  isActive ? 'bg-indigo-50 border-l-2 border-l-indigo-500' : 'hover:bg-gray-50'
                 )}
               >
                 {/* Avatar */}
                 <div className="relative shrink-0">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                    <span className="text-xs font-bold text-gray-900">
+                    <span className="text-xs font-bold text-white">
                       {conv.lead.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                     </span>
                   </div>
@@ -185,7 +185,7 @@ export default function InboxPage() {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className={cn('text-sm font-medium truncate', conv.unreadCount > 0 ? 'text-gray-900' : 'text-gray-700')}>
+                    <p className={cn('text-sm truncate', conv.unreadCount > 0 ? 'text-gray-900 font-semibold' : 'text-gray-700 font-medium')}>
                       {conv.lead.name}
                     </p>
                     <span className="text-[10px] text-gray-400 shrink-0 ml-2">{conv.lastMessageAt}</span>
@@ -195,18 +195,18 @@ export default function InboxPage() {
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     {conv.assignee && (
-                      <span className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
                         {conv.assignee}
                       </span>
                     )}
                     {conv.priority === 'urgent' && (
-                      <span className="text-[10px] text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded font-medium">Urgente</span>
+                      <span className="text-[10px] text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded font-medium">Urgente</span>
                     )}
                     {conv.priority === 'high' && (
-                      <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded font-medium">Alta</span>
+                      <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-medium">Alta</span>
                     )}
                     {conv.aiSuggestion && (
-                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      <Sparkles className="w-3 h-3 text-amber-500" />
                     )}
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export default function InboxPage() {
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                  <span className="text-xs font-bold text-gray-900">
+                  <span className="text-xs font-bold text-white">
                     {selected.lead.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                   </span>
                 </div>
@@ -241,7 +241,7 @@ export default function InboxPage() {
                 <p className="text-sm font-semibold text-gray-900">{selected.lead.name}</p>
                 <div className="flex items-center gap-2">
                   {(() => { const CI = channelIcons[selected.channel]; return <CI className={cn('w-3 h-3', channelColors[selected.channel])} /> })()}
-                  <span className="text-xs text-gray-400">{selected.lead.phone || selected.channel}</span>
+                  <span className="text-xs text-gray-500">{selected.lead.phone || selected.channel}</span>
                 </div>
               </div>
             </div>
@@ -269,20 +269,20 @@ export default function InboxPage() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="px-6 py-2 bg-amber-500/5 border-b border-amber-500/10 flex items-center gap-3"
+              className="px-6 py-2 bg-amber-50 border-b border-amber-200 flex items-center gap-3"
             >
-              <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-              <p className="text-xs text-amber-300 flex-1">{selected.aiSuggestion}</p>
-              <button onClick={() => setShowAiSuggestion(false)} className="text-amber-400/60 hover:text-amber-400">
+              <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+              <p className="text-xs text-amber-800 flex-1">{selected.aiSuggestion}</p>
+              <button onClick={() => setShowAiSuggestion(false)} className="text-amber-500 hover:text-amber-700">
                 <X className="w-3.5 h-3.5" />
               </button>
             </motion.div>
           )}
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gray-50">
             <div className="flex justify-center">
-              <span className="text-[10px] text-gray-400 bg-gray-50 px-3 py-1 rounded-full">Hoje</span>
+              <span className="text-[10px] text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">Hoje</span>
             </div>
 
             {mockMessages.map((msg) => (
@@ -296,26 +296,26 @@ export default function InboxPage() {
                   'max-w-[70%] rounded-2xl px-4 py-2.5',
                   msg.direction === 'outbound'
                     ? msg.aiGenerated
-                      ? 'bg-gradient-to-br from-indigo-600/80 to-purple-600/80 border border-indigo-500/20'
+                      ? 'bg-gradient-to-br from-indigo-600 to-purple-600'
                       : 'bg-indigo-600'
-                    : 'bg-gray-50 border border-gray-200'
+                    : 'bg-gray-100 border border-gray-200'
                 )}>
                   {msg.aiGenerated && (
                     <div className="flex items-center gap-1 mb-1">
-                      <Bot className="w-3 h-3 text-amber-400" />
-                      <span className="text-[10px] text-amber-400 font-medium">Gerado por IA</span>
+                      <Bot className="w-3 h-3 text-amber-200" />
+                      <span className="text-[10px] text-amber-200 font-medium">Gerado por IA</span>
                     </div>
                   )}
                   {msg.sender && !msg.aiGenerated && msg.direction === 'outbound' && (
                     <p className="text-[10px] text-indigo-200 mb-1">{msg.sender}</p>
                   )}
-                  <p className="text-sm text-gray-900 whitespace-pre-wrap">{msg.content}</p>
+                  <p className={cn('text-sm whitespace-pre-wrap', msg.direction === 'outbound' ? 'text-white' : 'text-gray-900')}>{msg.content}</p>
                   <div className={cn('flex items-center gap-1 mt-1', msg.direction === 'outbound' ? 'justify-end' : '')}>
-                    <span className="text-[10px] text-gray-500">{msg.createdAt}</span>
+                    <span className={cn('text-[10px]', msg.direction === 'outbound' ? 'text-indigo-200' : 'text-gray-400')}>{msg.createdAt}</span>
                     {msg.direction === 'outbound' && (
                       msg.status === 'read'
-                        ? <CheckCheck className="w-3 h-3 text-blue-400" />
-                        : <Check className="w-3 h-3 text-gray-500" />
+                        ? <CheckCheck className="w-3 h-3 text-indigo-200" />
+                        : <Check className="w-3 h-3 text-indigo-200" />
                     )}
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export default function InboxPage() {
           </div>
 
           {/* Input Area */}
-          <div className="px-6 py-4 border-t border-gray-200">
+          <div className="px-6 py-4 bg-white border-t border-gray-200">
             <div className="flex items-end gap-2">
               <div className="flex gap-1">
                 <button className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
@@ -362,9 +362,9 @@ export default function InboxPage() {
       ) : (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Inbox className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <Inbox className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-1">Selecione uma conversa</h3>
-            <p className="text-sm text-gray-400">Escolha uma conversa para comecar a atender</p>
+            <p className="text-sm text-gray-500">Escolha uma conversa para comecar a atender</p>
           </div>
         </div>
       )}
@@ -376,12 +376,12 @@ export default function InboxPage() {
             {/* Lead Card */}
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mx-auto mb-3">
-                <span className="text-lg font-bold text-gray-900">
+                <span className="text-lg font-bold text-white">
                   {selected.lead.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                 </span>
               </div>
               <h3 className="text-sm font-semibold text-gray-900">{selected.lead.name}</h3>
-              <p className="text-xs text-gray-400">{selected.lead.phone}</p>
+              <p className="text-xs text-gray-600">{selected.lead.phone}</p>
             </div>
 
             {/* Quick Actions */}
@@ -395,8 +395,8 @@ export default function InboxPage() {
                   key={action.label}
                   className="flex flex-col items-center gap-1 p-3 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
-                  <action.icon className="w-4 h-4 text-gray-500" />
-                  <span className="text-[10px] text-gray-400">{action.label}</span>
+                  <action.icon className="w-4 h-4 text-gray-600" />
+                  <span className="text-[10px] text-gray-600">{action.label}</span>
                 </button>
               ))}
             </div>
@@ -413,28 +413,28 @@ export default function InboxPage() {
                 { label: 'Consultor', value: selected.assignee || 'Nao atribuido' },
               ].map((item) => (
                 <div key={item.label} className="flex justify-between items-center">
-                  <span className="text-xs text-gray-400">{item.label}</span>
-                  <span className="text-xs text-gray-700 font-medium">{item.value}</span>
+                  <span className="text-xs text-gray-500">{item.label}</span>
+                  <span className="text-xs text-gray-900 font-medium">{item.value}</span>
                 </div>
               ))}
             </div>
 
             {/* AI Insights */}
-            <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl p-4 space-y-2">
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-400" />
                 <h4 className="text-xs font-semibold text-gray-900">Insights IA</h4>
               </div>
               <ul className="space-y-1.5">
-                <li className="text-xs text-gray-700 flex items-start gap-2">
+                <li className="text-xs text-gray-800 flex items-start gap-2">
                   <ArrowRight className="w-3 h-3 text-indigo-400 mt-0.5 shrink-0" />
                   Lead com alta probabilidade de conversao (87%)
                 </li>
-                <li className="text-xs text-gray-700 flex items-start gap-2">
+                <li className="text-xs text-gray-800 flex items-start gap-2">
                   <ArrowRight className="w-3 h-3 text-indigo-400 mt-0.5 shrink-0" />
                   Interesse demonstrado em horario noturno
                 </li>
-                <li className="text-xs text-gray-700 flex items-start gap-2">
+                <li className="text-xs text-gray-800 flex items-start gap-2">
                   <ArrowRight className="w-3 h-3 text-indigo-400 mt-0.5 shrink-0" />
                   Sugestao: Oferecer aula experimental
                 </li>
@@ -459,8 +459,8 @@ export default function InboxPage() {
                     {i < 3 && <div className="w-px h-full bg-gray-100 mt-1" />}
                   </div>
                   <div>
-                    <p className="text-xs text-gray-700">{event.text}</p>
-                    <p className="text-[10px] text-gray-400">{event.time}</p>
+                    <p className="text-xs text-gray-800">{event.text}</p>
+                    <p className="text-[10px] text-gray-500">{event.time}</p>
                   </div>
                 </div>
               ))}
