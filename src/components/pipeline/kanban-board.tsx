@@ -174,13 +174,12 @@ export function KanbanBoard({ onCardClick, onAddLead, onMoveLead, filteredStages
     >
       <div
         className={cn(
-          'flex gap-3 pb-4 overflow-x-auto',
-          // Custom horizontal scrollbar
+          'flex gap-3 pb-4 overflow-x-auto h-full',
           '[&::-webkit-scrollbar]:h-1.5',
           '[&::-webkit-scrollbar-track]:bg-transparent',
-          '[&::-webkit-scrollbar-thumb]:bg-gray-100',
+          '[&::-webkit-scrollbar-thumb]:bg-gray-200',
           '[&::-webkit-scrollbar-thumb]:rounded-full',
-          '[&::-webkit-scrollbar-thumb:hover]:bg-gray-100'
+          '[&::-webkit-scrollbar-thumb:hover]:bg-gray-300'
         )}
       >
         {displayStages.map((stage) => (

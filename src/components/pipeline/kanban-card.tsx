@@ -3,7 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  GripVertical, MessageCircle, Phone, Mail, Clock, DollarSign,
+  MessageCircle, Phone, Mail, Clock, DollarSign,
 } from 'lucide-react'
 import { cn, getInitials, generateColor } from '@/lib/utils'
 import type { KanbanCard as KanbanCardType } from '@/types'
@@ -22,7 +22,6 @@ const tagColors: Record<string, string> = {
   'ultima semana cliente': 'bg-rose-100 text-rose-700 border-rose-200',
   'MSI': 'bg-indigo-100 text-indigo-700 border-indigo-200',
   'RENOVACAO MSI': 'bg-amber-100 text-amber-700 border-amber-200',
-  'BLCK_ENGL_PRICE': 'bg-gray-800 text-white border-gray-700',
   'Black_MSI_EX': 'bg-gray-800 text-white border-gray-700',
   'no duplicates': 'bg-gray-100 text-gray-500 border-gray-200',
 }
@@ -37,29 +36,28 @@ export function KanbanCard({ card, onClick, isDragOverlay = false }: KanbanCardP
     data: { type: 'card', card },
   })
 
-  const style = { transform: CSS.Transform.toString(transform), transition }
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    touchAction: 'none',
+  }
+
   const consultantInitial = card.consultant ? card.consultant.charAt(0).toUpperCase() : null
 
   return (
     <div
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       className={cn(
-        'group relative bg-white rounded-lg border border-gray-200 p-3 cursor-pointer',
-        'transition-all duration-150 hover:shadow-md hover:border-gray-300',
-        isDragging && 'opacity-40 scale-95',
-        isDragOverlay && 'shadow-xl border-indigo-400 rotate-1 scale-105'
+        'group relative bg-white rounded-lg border border-gray-200 p-3',
+        'cursor-grab active:cursor-grabbing',
+        'transition-shadow duration-150 hover:shadow-md hover:border-gray-300',
+        isDragging && 'opacity-30 scale-95 shadow-none',
+        isDragOverlay && 'shadow-2xl border-indigo-400 rotate-2 scale-105 cursor-grabbing'
       )}
-      onClick={onClick}
     >
-      {/* Drag handle */}
-      <button
-        className="absolute top-2 right-2 p-0.5 rounded text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing hover:text-gray-500"
-        {...attributes} {...listeners}
-      >
-        <GripVertical className="h-3.5 w-3.5" />
-      </button>
-
       {/* Tags de origem */}
       {card.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
@@ -76,7 +74,7 @@ export function KanbanCard({ card, onClick, isDragOverlay = false }: KanbanCardP
 
       {/* Nome + Avatar consultor */}
       <div className="flex items-center justify-between mb-1.5">
-        <h4 className="text-sm font-semibold text-gray-900 truncate pr-6">{card.name}</h4>
+        <h4 className="text-sm font-semibold text-gray-900 truncate pr-4">{card.name}</h4>
         {consultantInitial && (
           <div
             className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
@@ -101,29 +99,29 @@ export function KanbanCard({ card, onClick, isDragOverlay = false }: KanbanCardP
 
       {/* Footer: icones de acao + valor + contadores + tempo */}
       <div className="flex items-center gap-1.5 pt-2 border-t border-gray-100">
-        {/* Quick action icons */}
         <div className="flex items-center gap-0.5">
-          <button className="p-1 rounded text-emerald-500 hover:bg-emerald-50 transition-colors" title="WhatsApp" onClick={(e) => { e.stopPropagation(); if (card.whatsapp) window.open(`https://wa.me/${card.whatsapp.replace(/\D/g, '')}`, '_blank') }}>
+          <span
+            className="p-1 rounded text-emerald-500 hover:bg-emerald-50 transition-colors"
+            onPointerDown={(e) => { e.stopPropagation(); if (card.whatsapp) window.open(`https://wa.me/${card.whatsapp.replace(/\D/g, '')}`, '_blank') }}
+          >
             <MessageCircle className="w-3.5 h-3.5" />
-          </button>
-          <button className="p-1 rounded text-blue-500 hover:bg-blue-50 transition-colors" title="Ligar" onClick={(e) => e.stopPropagation()}>
+          </span>
+          <span className="p-1 rounded text-blue-500 hover:bg-blue-50 transition-colors">
             <Phone className="w-3.5 h-3.5" />
-          </button>
-          <button className="p-1 rounded text-gray-400 hover:bg-gray-50 transition-colors" title="Email" onClick={(e) => e.stopPropagation()}>
+          </span>
+          <span className="p-1 rounded text-gray-400 hover:bg-gray-50 transition-colors">
             <Mail className="w-3.5 h-3.5" />
-          </button>
+          </span>
         </div>
 
         <div className="flex-1" />
 
-        {/* Valor */}
         {card.dealValue != null && card.dealValue > 0 && (
           <span className="text-[10px] font-medium text-gray-500">
             R${card.dealValue.toLocaleString('pt-BR')}
           </span>
         )}
 
-        {/* Contadores */}
         {card.totalMessages != null && (
           <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
             <Clock className="w-2.5 h-2.5" />
@@ -131,7 +129,6 @@ export function KanbanCard({ card, onClick, isDragOverlay = false }: KanbanCardP
           </span>
         )}
 
-        {/* Tempo desde entrada */}
         {card.daysSinceEntry && (
           <span className="flex items-center gap-0.5 text-[10px] text-gray-400">
             <Clock className="w-2.5 h-2.5" />

@@ -90,12 +90,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const prisma = await getPrisma()
 
-  if (prisma) {
-    try {
+  try {
+    const prisma = await getPrisma()
+    if (prisma) {
       const orgId = body.organizationId || await ensureDefaultOrg(prisma)
-
       const lead = await prisma.lead.create({
         data: {
           firstName: body.firstName,
@@ -141,9 +140,9 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json(lead, { status: 201 })
-    } catch (error) {
-      console.error('POST /api/leads DB error:', error)
     }
+  } catch (error) {
+    console.error('POST /api/leads DB error:', error)
   }
 
   const fakeLead = {

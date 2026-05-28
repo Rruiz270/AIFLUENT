@@ -24,9 +24,9 @@ export function KanbanColumn({ stage, onCardClick, onAddLead }: KanbanColumnProp
 
   return (
     <div className={cn(
-      'flex flex-col shrink-0 w-[300px] rounded-lg bg-white border border-gray-200',
+      'flex flex-col shrink-0 w-[300px] rounded-lg bg-white border border-gray-200 h-full',
       'transition-all duration-200',
-      isOver && 'border-indigo-400 shadow-lg shadow-indigo-500/10'
+      isOver && 'border-indigo-400 shadow-lg shadow-indigo-500/10 bg-indigo-50/30'
     )}>
       {/* Header */}
       <div className="px-3 py-2.5 border-b border-gray-100">

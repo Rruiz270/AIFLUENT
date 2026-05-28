@@ -79,9 +79,7 @@ export function Sidebar() {
       className="relative flex h-dvh flex-col border-r border-gray-200 bg-white"
     >
       <div className="flex h-16 items-center gap-3 border-b border-gray-200 px-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-500 shadow-lg shadow-indigo-500/20">
-          <span className="text-sm font-extrabold text-white tracking-tight">AI</span>
-        </div>
+        <img src="/logo.png" alt="AIFLUENT" className="h-9 w-9 shrink-0 rounded-lg object-contain" />
         <AnimatePresence>
           {!collapsed && (
             <motion.span initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.15 }} className="gradient-text text-lg font-bold tracking-tight">
