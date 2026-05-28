@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const inter = Inter({
@@ -22,21 +23,20 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className={inter.variable}>
+    <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var h=new Date().getHours();
+            if(h>=18||h<5) document.documentElement.classList.add('dark');
+          })();
+        `}} />
+      </head>
       <body className="min-h-dvh bg-background text-foreground antialiased">
-        {children}
-        <Toaster
-          position="top-right"
-          theme="light"
-          toastOptions={{
-            style: {
-              background: 'rgba(255, 255, 255, 0.95)',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              color: '#0f172a',
-              backdropFilter: 'blur(12px)',
-            },
-          }}
-        />
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+        <Toaster position="top-right" />
       </body>
     </html>
   )
