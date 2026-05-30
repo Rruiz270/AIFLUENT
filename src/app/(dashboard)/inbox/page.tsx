@@ -240,7 +240,7 @@ export default function InboxPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar conversas..."
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500/30 focus:outline-none transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-sky-500/30 focus:outline-none transition-colors"
             />
           </div>
 
@@ -258,7 +258,7 @@ export default function InboxPage() {
                 className={cn(
                   'flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   channel === tab.key
-                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                    ? 'bg-sky-50 text-sky-700 border border-sky-200'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 )}
               >
@@ -281,12 +281,12 @@ export default function InboxPage() {
                 onClick={() => setSelectedId(conv.id)}
                 className={cn(
                   'w-full flex items-start gap-3 p-4 text-left transition-colors border-b border-gray-100',
-                  isActive ? 'bg-indigo-50 border-l-2 border-l-indigo-500' : 'hover:bg-gray-50'
+                  isActive ? 'bg-sky-50 border-l-2 border-l-sky-500' : 'hover:bg-gray-50'
                 )}
               >
                 {/* Avatar */}
                 <div className="relative shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                     <span className="text-xs font-bold text-white">
                       {conv.lead.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                     </span>
@@ -327,7 +327,7 @@ export default function InboxPage() {
 
                 {/* Unread badge */}
                 {conv.unreadCount > 0 && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-[10px] font-bold text-white shrink-0">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-sky-500 px-1.5 text-[10px] font-bold text-white shrink-0">
                     {conv.unreadCount}
                   </span>
                 )}
@@ -344,7 +344,7 @@ export default function InboxPage() {
           <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                   <span className="text-xs font-bold text-white">
                     {selected.lead.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                   </span>
@@ -410,8 +410,8 @@ export default function InboxPage() {
                   'max-w-[70%] rounded-2xl px-4 py-2.5',
                   msg.direction === 'outbound'
                     ? msg.aiGenerated
-                      ? 'bg-gradient-to-br from-indigo-600 to-purple-600'
-                      : 'bg-indigo-600'
+                      ? 'bg-gradient-to-br from-sky-500 to-blue-600'
+                      : 'bg-sky-500'
                     : 'bg-gray-100 border border-gray-200'
                 )}>
                   {msg.aiGenerated && (
@@ -421,15 +421,15 @@ export default function InboxPage() {
                     </div>
                   )}
                   {msg.sender && !msg.aiGenerated && msg.direction === 'outbound' && (
-                    <p className="text-[10px] text-indigo-200 mb-1">{msg.sender}</p>
+                    <p className="text-[10px] text-sky-200 mb-1">{msg.sender}</p>
                   )}
                   <p className={cn('text-sm whitespace-pre-wrap', msg.direction === 'outbound' ? 'text-white' : 'text-gray-900')}>{msg.content}</p>
                   <div className={cn('flex items-center gap-1 mt-1', msg.direction === 'outbound' ? 'justify-end' : '')}>
-                    <span className={cn('text-[10px]', msg.direction === 'outbound' ? 'text-indigo-200' : 'text-gray-400')}>{msg.createdAt}</span>
+                    <span className={cn('text-[10px]', msg.direction === 'outbound' ? 'text-sky-200' : 'text-gray-400')}>{msg.createdAt}</span>
                     {msg.direction === 'outbound' && (
                       msg.status === 'read'
-                        ? <CheckCheck className="w-3 h-3 text-indigo-200" />
-                        : <Check className="w-3 h-3 text-indigo-200" />
+                        ? <CheckCheck className="w-3 h-3 text-sky-200" />
+                        : <Check className="w-3 h-3 text-sky-200" />
                     )}
                   </div>
                 </div>
@@ -525,7 +525,7 @@ export default function InboxPage() {
                   onKeyDown={handleKeyDown}
                   placeholder="Digite sua mensagem..."
                   rows={1}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500/30 focus:outline-none resize-none transition-colors"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-sky-500/30 focus:outline-none resize-none transition-colors"
                 />
               </div>
               <button
@@ -533,7 +533,7 @@ export default function InboxPage() {
                 className={cn(
                   'p-2 rounded-lg transition-colors',
                   showEmojiPanel
-                    ? 'text-indigo-500 bg-indigo-50'
+                    ? 'text-sky-500 bg-sky-50'
                     : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'
                 )}
               >
@@ -541,7 +541,7 @@ export default function InboxPage() {
               </button>
               <button
                 onClick={handleSend}
-                className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+                className="p-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white transition-colors"
               >
                 <Send className="w-5 h-5" />
               </button>
@@ -571,7 +571,7 @@ export default function InboxPage() {
           <div className="p-5 space-y-5">
             {/* Lead Card */}
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center mx-auto mb-3">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center mx-auto mb-3">
                 <span className="text-lg font-bold text-white">
                   {selected.lead.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                 </span>
@@ -616,22 +616,22 @@ export default function InboxPage() {
             </div>
 
             {/* AI Insights */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 space-y-2">
+            <div className="bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-200 rounded-xl p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-400" />
                 <h4 className="text-xs font-semibold text-gray-900">Insights IA</h4>
               </div>
               <ul className="space-y-1.5">
                 <li className="text-xs text-gray-800 flex items-start gap-2">
-                  <ArrowRight className="w-3 h-3 text-indigo-400 mt-0.5 shrink-0" />
+                  <ArrowRight className="w-3 h-3 text-sky-400 mt-0.5 shrink-0" />
                   Lead com alta probabilidade de conversao (87%)
                 </li>
                 <li className="text-xs text-gray-800 flex items-start gap-2">
-                  <ArrowRight className="w-3 h-3 text-indigo-400 mt-0.5 shrink-0" />
+                  <ArrowRight className="w-3 h-3 text-sky-400 mt-0.5 shrink-0" />
                   Interesse demonstrado em horario noturno
                 </li>
                 <li className="text-xs text-gray-800 flex items-start gap-2">
-                  <ArrowRight className="w-3 h-3 text-indigo-400 mt-0.5 shrink-0" />
+                  <ArrowRight className="w-3 h-3 text-sky-400 mt-0.5 shrink-0" />
                   Sugestao: Oferecer aula experimental
                 </li>
               </ul>

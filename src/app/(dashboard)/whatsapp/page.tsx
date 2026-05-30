@@ -240,15 +240,15 @@ export default function WhatsAppPage() {
       {/* Top bar with stats */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
-            <MessageSquare className="h-5 w-5 text-emerald-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-500/10">
+            <MessageSquare className="h-5 w-5 text-sky-400" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900">WhatsApp</h1>
             <div className="flex items-center gap-2">
               <div className={cn(
                 'flex items-center gap-1 text-xs',
-                apiStatus === 'connected' ? 'text-emerald-400' : 'text-rose-400'
+                apiStatus === 'connected' ? 'text-sky-400' : 'text-rose-400'
               )}>
                 {apiStatus === 'connected' ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
                 {apiStatus === 'connected' ? 'API Conectada' : 'API Desconectada'}
@@ -272,7 +272,7 @@ export default function WhatsAppPage() {
 
           <button
             onClick={() => setShowBulkSend(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-sky-500 hover:bg-sky-400 text-white text-sm rounded-lg transition-colors"
           >
             <Users className="w-4 h-4" />
             Envio em Massa
@@ -307,11 +307,11 @@ export default function WhatsAppPage() {
                 )}
               >
                 <div className="relative shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                     <span className="text-xs font-bold text-gray-900">{conv.avatar}</span>
                   </div>
                   {conv.status === 'online' && (
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-sky-400 border-2 border-white" />
                   )}
                 </div>
 
@@ -324,7 +324,7 @@ export default function WhatsAppPage() {
                 </div>
 
                 {conv.unreadCount > 0 && (
-                  <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
+                  <span className="shrink-0 flex h-5 w-5 items-center justify-center rounded-full bg-sky-400 text-[10px] font-bold text-white">
                     {conv.unreadCount}
                   </span>
                 )}
@@ -340,11 +340,11 @@ export default function WhatsAppPage() {
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                     <span className="text-xs font-bold text-gray-900">{currentConv.avatar}</span>
                   </div>
                   {currentConv.status === 'online' && (
-                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-sky-400 border-2 border-white" />
                   )}
                 </div>
                 <div>
@@ -389,7 +389,7 @@ export default function WhatsAppPage() {
                   className={cn(
                     'max-w-[70%] rounded-2xl px-4 py-2.5 text-sm',
                     msg.sender === 'me'
-                      ? 'bg-emerald-600/80 text-white rounded-br-sm'
+                      ? 'bg-sky-500/80 text-white rounded-br-sm'
                       : 'bg-gray-50 text-gray-800 rounded-bl-sm'
                   )}
                 >
@@ -513,7 +513,7 @@ export default function WhatsAppPage() {
                   onClick={() => setShowQuickReplies(!showQuickReplies)}
                   className={cn(
                     'p-2 rounded-lg transition-colors',
-                    showQuickReplies ? 'text-emerald-400 bg-emerald-500/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                    showQuickReplies ? 'text-sky-400 bg-sky-500/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                   )}
                 >
                   <Zap className="w-4 h-4" />
@@ -527,7 +527,7 @@ export default function WhatsAppPage() {
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Digite uma mensagem..."
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -536,7 +536,7 @@ export default function WhatsAppPage() {
                   onClick={() => setShowEmojiPanel(!showEmojiPanel)}
                   className={cn(
                     'p-2 rounded-lg transition-colors',
-                    showEmojiPanel ? 'text-emerald-400 bg-emerald-500/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                    showEmojiPanel ? 'text-sky-400 bg-sky-500/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                   )}
                 >
                   <Smile className="w-4 h-4" />
@@ -544,7 +544,7 @@ export default function WhatsAppPage() {
                 {message.trim() ? (
                   <button
                     onClick={handleSend}
-                    className="p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors"
+                    className="p-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl transition-colors"
                   >
                     <Send className="w-4 h-4" />
                   </button>
@@ -555,7 +555,7 @@ export default function WhatsAppPage() {
                       'p-2.5 rounded-xl transition-colors',
                       isRecording
                         ? 'bg-rose-500 hover:bg-rose-400 text-white'
-                        : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                        : 'bg-sky-500 hover:bg-sky-400 text-white'
                     )}
                   >
                     <Mic className="w-4 h-4" />
@@ -578,14 +578,14 @@ export default function WhatsAppPage() {
             >
               <div className="w-[300px] p-4 space-y-4">
                 <div className="text-center pt-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mx-auto mb-3">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center mx-auto mb-3">
                     <span className="text-lg font-bold text-gray-900">{currentConv.avatar}</span>
                   </div>
                   <h3 className="text-base font-semibold text-gray-900">{currentConv.name}</h3>
                   <p className="text-xs text-gray-500 mt-0.5">{currentConv.phone}</p>
                   <div className={cn(
                     'inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium',
-                    currentConv.status === 'online' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gray-100 text-gray-400'
+                    currentConv.status === 'online' ? 'bg-sky-500/10 text-sky-400' : 'bg-gray-100 text-gray-400'
                   )}>
                     <div className={cn('w-1.5 h-1.5 rounded-full', currentConv.status === 'online' ? 'bg-emerald-400' : 'bg-gray-400')} />
                     {currentConv.status === 'online' ? 'Online' : 'Offline'}
@@ -670,7 +670,7 @@ export default function WhatsAppPage() {
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm text-gray-500 mb-2">Selecionar Template</label>
-                  <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors">
+                  <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-sky-500 focus:outline-none transition-colors">
                     <option>Boas-vindas</option>
                     <option>Follow-up</option>
                     <option>Promocao</option>
@@ -679,7 +679,7 @@ export default function WhatsAppPage() {
                 </div>
                 <div>
                   <label className="block text-sm text-gray-500 mb-2">Segmento de Leads</label>
-                  <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors">
+                  <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-sky-500 focus:outline-none transition-colors">
                     <option>Todos os leads</option>
                     <option>Leads quentes</option>
                     <option>Leads frios</option>
@@ -691,7 +691,7 @@ export default function WhatsAppPage() {
                   <textarea
                     rows={3}
                     defaultValue="Ola {{nome}}! Temos uma novidade especial para voce..."
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none transition-colors resize-none"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:outline-none transition-colors resize-none"
                   />
                 </div>
                 <p className="text-xs text-gray-400">Estimativa: 234 destinatarios</p>
@@ -705,7 +705,7 @@ export default function WhatsAppPage() {
                 </button>
                 <button
                   onClick={() => setShowBulkSend(false)}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-xl transition-colors"
+                  className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white text-sm font-medium rounded-xl transition-colors"
                 >
                   Enviar para 234 leads
                 </button>
