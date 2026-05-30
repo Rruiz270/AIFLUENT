@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageSquare,
@@ -75,7 +75,7 @@ const mockConversations: Conversation[] = [
   { id: 'c8', name: 'Diego Santos', phone: '(81) 92109-8765', avatar: 'DS', lastMessage: 'Bom dia! Vi o anúncio no Instagram', lastMessageTime: '24/05', unreadCount: 0, status: 'offline', tags: ['instagram'] },
 ]
 
-const mockMessages: Record<string, Message[]> = {
+const initialMockMessages: Record<string, Message[]> = {
   c1: [
     { id: 'm1', text: 'Olá Maria! Bem-vinda ao AIFLUENT. Como posso te ajudar?', time: '10:00', sender: 'me', status: 'read', type: 'text' },
     { id: 'm2', text: 'Oi! Vi o anúncio de vocês no Instagram sobre o MBA em Gestão.', time: '10:15', sender: 'them', status: 'read', type: 'text' },
@@ -101,6 +101,11 @@ const quickReplies: QuickReply[] = [
   { id: 'qr5', label: 'Agendamento', text: 'Gostaria de agendar uma visita presencial ou uma chamada de vídeo para tirar suas dúvidas?' },
 ]
 
+const EMOJI_LIST = [
+  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '😊', '😇',
+  '🥰', '😍', '🤩', '😘', '😋', '😜', '🤗', '🤔', '👍', '👋',
+]
+
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function WhatsAppPage() {
@@ -110,11 +115,17 @@ export default function WhatsAppPage() {
   const [showQuickReplies, setShowQuickReplies] = useState(false)
   const [showContactInfo, setShowContactInfo] = useState(false)
   const [showBulkSend, setShowBulkSend] = useState(false)
+  const [showEmojiPanel, setShowEmojiPanel] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
   const [apiStatus] = useState<'connected' | 'disconnected'>('connected')
+  const [allMessages, setAllMessages] = useState<Record<string, Message[]>>(initialMockMessages)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const currentConv = mockConversations.find((c) => c.id === selectedConv)
-  const messages = mockMessages[selectedConv] ?? []
+  const messages = allMessages[selectedConv] ?? []
 
   const filteredConversations = searchTerm
     ? mockConversations.filter(
@@ -128,14 +139,93 @@ export default function WhatsAppPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = () => {
-    if (!message.trim()) return
-    setMessage('')
+  const now = () => {
+    const d = new Date()
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
   }
+
+  const addMessage = useCallback((msg: Message) => {
+    setAllMessages((prev) => ({
+      ...prev,
+      [selectedConv]: [...(prev[selectedConv] ?? []), msg],
+    }))
+  }, [selectedConv])
+
+  const handleSend = useCallback(() => {
+    if (!message.trim()) return
+    const newMsg: Message = {
+      id: `msg-${Date.now()}`,
+      text: message.trim(),
+      time: now(),
+      sender: 'me',
+      status: 'sent',
+      type: 'text',
+    }
+    addMessage(newMsg)
+    setMessage('')
+    setShowEmojiPanel(false)
+  }, [message, addMessage])
 
   const handleQuickReply = (text: string) => {
     setMessage(text)
     setShowQuickReplies(false)
+    inputRef.current?.focus()
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    addMessage({
+      id: `msg-${Date.now()}`,
+      text: `[Arquivo: ${file.name}]`,
+      time: now(),
+      sender: 'me',
+      status: 'sent',
+      type: 'document',
+    })
+    e.target.value = ''
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    addMessage({
+      id: `msg-${Date.now()}`,
+      text: '[Imagem enviada]',
+      time: now(),
+      sender: 'me',
+      status: 'sent',
+      type: 'image',
+    })
+    e.target.value = ''
+  }
+
+  const handleAudioToggle = () => {
+    if (isRecording) {
+      setIsRecording(false)
+      addMessage({
+        id: `msg-${Date.now()}`,
+        text: '[Audio enviado]',
+        time: now(),
+        sender: 'me',
+        status: 'sent',
+        type: 'audio',
+      })
+    } else {
+      setIsRecording(true)
+    }
+  }
+
+  const handleEmojiClick = (emoji: string) => {
+    setMessage((prev) => prev + emoji)
+    inputRef.current?.focus()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
   }
 
   // Stats
@@ -143,6 +233,10 @@ export default function WhatsAppPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)]">
+      {/* Hidden file inputs */}
+      <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+      <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+
       {/* Top bar with stats */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -328,7 +422,7 @@ export default function WhatsAppPage() {
               >
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-gray-500">Respostas Rápidas</p>
+                    <p className="text-xs font-medium text-gray-500">Respostas Rapidas</p>
                     <button onClick={() => setShowQuickReplies(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -349,12 +443,71 @@ export default function WhatsAppPage() {
             )}
           </AnimatePresence>
 
+          {/* Emoji Panel */}
+          <AnimatePresence>
+            {showEmojiPanel && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="px-4 pb-2"
+              >
+                <div className="bg-white border border-gray-200 rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-gray-500">Emojis</p>
+                    <button onClick={() => setShowEmojiPanel(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {EMOJI_LIST.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleEmojiClick(emoji)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-lg"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Recording indicator */}
+          {isRecording && (
+            <div className="px-4 pb-2">
+              <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2">
+                <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                <span className="text-sm text-rose-700 font-medium">Gravando...</span>
+                <button
+                  onClick={handleAudioToggle}
+                  className="ml-auto text-xs text-rose-600 hover:text-rose-800 font-medium"
+                >
+                  Parar e enviar
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Message input */}
           <div className="p-3 border-t border-gray-200">
             <div className="flex items-end gap-2">
               <div className="flex items-center gap-1">
-                <button className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                  title="Enviar arquivo"
+                >
                   <Paperclip className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => imageInputRef.current?.click()}
+                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                  title="Enviar imagem"
+                >
+                  <Image className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setShowQuickReplies(!showQuickReplies)}
@@ -369,16 +522,23 @@ export default function WhatsAppPage() {
 
               <div className="flex-1 relative">
                 <input
+                  ref={inputRef}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                  onKeyDown={handleKeyDown}
                   placeholder="Digite uma mensagem..."
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
 
               <div className="flex items-center gap-1">
-                <button className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">
+                <button
+                  onClick={() => setShowEmojiPanel(!showEmojiPanel)}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    showEmojiPanel ? 'text-emerald-400 bg-emerald-500/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                  )}
+                >
                   <Smile className="w-4 h-4" />
                 </button>
                 {message.trim() ? (
@@ -389,7 +549,15 @@ export default function WhatsAppPage() {
                     <Send className="w-4 h-4" />
                   </button>
                 ) : (
-                  <button className="p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors">
+                  <button
+                    onClick={handleAudioToggle}
+                    className={cn(
+                      'p-2.5 rounded-xl transition-colors',
+                      isRecording
+                        ? 'bg-rose-500 hover:bg-rose-400 text-white'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                    )}
+                  >
                     <Mic className="w-4 h-4" />
                   </button>
                 )}
@@ -425,7 +593,7 @@ export default function WhatsAppPage() {
                 </div>
 
                 <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-3">
-                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Informações</h4>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Informacoes</h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                       <Phone className="w-3.5 h-3.5 text-gray-400" />
@@ -437,7 +605,7 @@ export default function WhatsAppPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="text-gray-700">São Paulo, SP</span>
+                      <span className="text-gray-700">Sao Paulo, SP</span>
                     </div>
                   </div>
                 </div>
@@ -455,11 +623,11 @@ export default function WhatsAppPage() {
                 </div>
 
                 <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-3">
-                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Ações Rápidas</h4>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Acoes Rapidas</h4>
                   <div className="space-y-2">
                     <button className="w-full flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-100 text-sm text-gray-700 rounded-lg transition-colors">
                       <Star className="w-3.5 h-3.5 text-amber-400" />
-                      Marcar como prioritário
+                      Marcar como prioritario
                     </button>
                     <button className="w-full flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-100 text-sm text-gray-700 rounded-lg transition-colors">
                       <User className="w-3.5 h-3.5 text-indigo-400" />
@@ -467,7 +635,7 @@ export default function WhatsAppPage() {
                     </button>
                     <button className="w-full flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-100 text-sm text-gray-700 rounded-lg transition-colors">
                       <FileText className="w-3.5 h-3.5 text-violet-400" />
-                      Criar negócio
+                      Criar negocio
                     </button>
                   </div>
                 </div>
@@ -505,8 +673,8 @@ export default function WhatsAppPage() {
                   <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-emerald-500 focus:outline-none transition-colors">
                     <option>Boas-vindas</option>
                     <option>Follow-up</option>
-                    <option>Promoção</option>
-                    <option>Reativação</option>
+                    <option>Promocao</option>
+                    <option>Reativacao</option>
                   </select>
                 </div>
                 <div>
@@ -515,18 +683,18 @@ export default function WhatsAppPage() {
                     <option>Todos os leads</option>
                     <option>Leads quentes</option>
                     <option>Leads frios</option>
-                    <option>Sem interação 7+ dias</option>
+                    <option>Sem interacao 7+ dias</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-500 mb-2">Prévia da Mensagem</label>
+                  <label className="block text-sm text-gray-500 mb-2">Previa da Mensagem</label>
                   <textarea
                     rows={3}
-                    defaultValue="Olá {{nome}}! Temos uma novidade especial para você..."
+                    defaultValue="Ola {{nome}}! Temos uma novidade especial para voce..."
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-emerald-500 focus:outline-none transition-colors resize-none"
                   />
                 </div>
-                <p className="text-xs text-gray-400">Estimativa: 234 destinatários</p>
+                <p className="text-xs text-gray-400">Estimativa: 234 destinatarios</p>
               </div>
               <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
                 <button

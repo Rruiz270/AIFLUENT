@@ -45,10 +45,10 @@ type Template = {
 const categoryConfig: Record<TemplateCategory, { label: string; color: string; bg: string }> = {
   'boas-vindas': { label: 'Boas-vindas', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20' },
   'follow-up': { label: 'Follow-up', color: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-400/20' },
-  'promocao': { label: 'Promoção', color: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20' },
-  'cobranca': { label: 'Cobrança', color: 'text-rose-400', bg: 'bg-rose-400/10 border-rose-400/20' },
+  'promocao': { label: 'Promocao', color: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20' },
+  'cobranca': { label: 'Cobranca', color: 'text-rose-400', bg: 'bg-rose-400/10 border-rose-400/20' },
   'evento': { label: 'Evento', color: 'text-violet-400', bg: 'bg-violet-400/10 border-violet-400/20' },
-  'reativacao': { label: 'Reativação', color: 'text-cyan-400', bg: 'bg-cyan-400/10 border-cyan-400/20' },
+  'reativacao': { label: 'Reativacao', color: 'text-cyan-400', bg: 'bg-cyan-400/10 border-cyan-400/20' },
 }
 
 const channelConfig: Record<TemplateChannel, { label: string; icon: typeof MessageSquare; color: string }> = {
@@ -57,15 +57,15 @@ const channelConfig: Record<TemplateChannel, { label: string; icon: typeof Messa
   sms: { label: 'SMS', icon: Smartphone, color: 'text-amber-400' },
 }
 
-// ── Mock Data ───────────────────────────────────────────────────────────────
+// ── Initial Data ───────────────────────────────────────────────────────────
 
-const mockTemplates: Template[] = [
+const initialTemplates: Template[] = [
   {
     id: 't1',
     name: 'Boas-vindas - Novo Lead',
     category: 'boas-vindas',
     channel: 'whatsapp',
-    content: 'Olá {{nome}}! 👋 Bem-vindo(a) ao AIFLUENT! Somos especializados em {{curso}}. Posso ajudar com mais informações? Nosso consultor {{consultor}} está à disposição.',
+    content: 'Ola {{nome}}! Bem-vindo(a) ao AIFLUENT! Somos especializados em {{curso}}. Posso ajudar com mais informacoes? Nosso consultor {{consultor}} esta a disposicao.',
     usageCount: 1245,
     status: 'active',
     variables: ['nome', 'curso', 'consultor'],
@@ -77,7 +77,7 @@ const mockTemplates: Template[] = [
     name: 'Follow-up 3 dias',
     category: 'follow-up',
     channel: 'whatsapp',
-    content: 'Oi {{nome}}, tudo bem? Passando para saber se ficou alguma dúvida sobre o {{curso}}. O investimento é de {{valor}} e temos condições especiais essa semana!',
+    content: 'Oi {{nome}}, tudo bem? Passando para saber se ficou alguma duvida sobre o {{curso}}. O investimento e de {{valor}} e temos condicoes especiais essa semana!',
     usageCount: 892,
     status: 'active',
     variables: ['nome', 'curso', 'valor'],
@@ -86,10 +86,10 @@ const mockTemplates: Template[] = [
   },
   {
     id: 't3',
-    name: 'Promoção de Fim de Semestre',
+    name: 'Promocao de Fim de Semestre',
     category: 'promocao',
     channel: 'email',
-    content: 'Prezado(a) {{nome}},\n\nTemos uma oportunidade imperdível! O curso de {{curso}} está com 20% de desconto. De {{valor}} por apenas R$ XX.\n\nGaranta sua vaga com o consultor {{consultor}}.\n\nAtenciosamente,\nEquipe AIFLUENT',
+    content: 'Prezado(a) {{nome}},\n\nTemos uma oportunidade imperdivel! O curso de {{curso}} esta com 20% de desconto. De {{valor}} por apenas R$ XX.\n\nGaranta sua vaga com o consultor {{consultor}}.\n\nAtenciosamente,\nEquipe AIFLUENT',
     usageCount: 567,
     status: 'active',
     variables: ['nome', 'curso', 'valor', 'consultor'],
@@ -101,7 +101,7 @@ const mockTemplates: Template[] = [
     name: 'Lembrete de Pagamento',
     category: 'cobranca',
     channel: 'sms',
-    content: 'AIFLUENT: Olá {{nome}}, lembrete amigável sobre o pagamento de {{valor}} com vencimento em breve. Dúvidas? Fale com {{consultor}}.',
+    content: 'AIFLUENT: Ola {{nome}}, lembrete amigavel sobre o pagamento de {{valor}} com vencimento em breve. Duvidas? Fale com {{consultor}}.',
     usageCount: 334,
     status: 'active',
     variables: ['nome', 'valor', 'consultor'],
@@ -113,7 +113,7 @@ const mockTemplates: Template[] = [
     name: 'Convite para Evento Presencial',
     category: 'evento',
     channel: 'whatsapp',
-    content: 'Oi {{nome}}! 🎓 Você está convidado(a) para nosso evento exclusivo sobre {{curso}}. Data: [data]. Local: [local]. Confirme sua presença respondendo esta mensagem!',
+    content: 'Oi {{nome}}! Voce esta convidado(a) para nosso evento exclusivo sobre {{curso}}. Data: [data]. Local: [local]. Confirme sua presenca respondendo esta mensagem!',
     usageCount: 203,
     status: 'active',
     variables: ['nome', 'curso'],
@@ -122,10 +122,10 @@ const mockTemplates: Template[] = [
   },
   {
     id: 't6',
-    name: 'Reativação de Leads Frios',
+    name: 'Reativacao de Leads Frios',
     category: 'reativacao',
     channel: 'whatsapp',
-    content: 'Olá {{nome}}, sentimos sua falta! 😊 Temos novidades sobre o {{curso}} que podem te interessar. O investimento está a partir de {{valor}}. Quer saber mais?',
+    content: 'Ola {{nome}}, sentimos sua falta! Temos novidades sobre o {{curso}} que podem te interessar. O investimento esta a partir de {{valor}}. Quer saber mais?',
     usageCount: 456,
     status: 'active',
     variables: ['nome', 'curso', 'valor'],
@@ -137,7 +137,7 @@ const mockTemplates: Template[] = [
     name: 'Boas-vindas Email',
     category: 'boas-vindas',
     channel: 'email',
-    content: 'Prezado(a) {{nome}},\n\nObrigado por seu interesse no {{curso}}! Estamos felizes em tê-lo(a) conosco.\n\nSeu consultor {{consultor}} entrará em contato em breve.\n\nAtenciosamente,\nEquipe AIFLUENT',
+    content: 'Prezado(a) {{nome}},\n\nObrigado por seu interesse no {{curso}}! Estamos felizes em te-lo(a) conosco.\n\nSeu consultor {{consultor}} entrara em contato em breve.\n\nAtenciosamente,\nEquipe AIFLUENT',
     usageCount: 789,
     status: 'active',
     variables: ['nome', 'curso', 'consultor'],
@@ -146,10 +146,10 @@ const mockTemplates: Template[] = [
   },
   {
     id: 't8',
-    name: 'Follow-up Pós-evento',
+    name: 'Follow-up Pos-evento',
     category: 'follow-up',
     channel: 'email',
-    content: 'Oi {{nome}},\n\nFoi ótimo ter você no nosso evento! Como prometido, seguem os materiais e condições especiais.\n\nO {{curso}} tem valor promocional de {{valor}} para participantes.\n\nAbraço,\n{{consultor}}',
+    content: 'Oi {{nome}},\n\nFoi otimo ter voce no nosso evento! Como prometido, seguem os materiais e condicoes especiais.\n\nO {{curso}} tem valor promocional de {{valor}} para participantes.\n\nAbraco,\n{{consultor}}',
     usageCount: 145,
     status: 'draft',
     variables: ['nome', 'curso', 'valor', 'consultor'],
@@ -158,10 +158,10 @@ const mockTemplates: Template[] = [
   },
   {
     id: 't9',
-    name: 'Confirmação SMS',
+    name: 'Confirmacao SMS',
     category: 'evento',
     channel: 'sms',
-    content: 'AIFLUENT: {{nome}}, confirmamos sua presença no evento de {{curso}}. Nos vemos lá! Dúvidas: (11) 99999-9999',
+    content: 'AIFLUENT: {{nome}}, confirmamos sua presenca no evento de {{curso}}. Nos vemos la! Duvidas: (11) 99999-9999',
     usageCount: 98,
     status: 'active',
     variables: ['nome', 'curso'],
@@ -170,10 +170,10 @@ const mockTemplates: Template[] = [
   },
   {
     id: 't10',
-    name: 'Promoção Black Friday',
+    name: 'Promocao Black Friday',
     category: 'promocao',
     channel: 'whatsapp',
-    content: '🔥 BLACK FRIDAY AIFLUENT! {{nome}}, aproveite até 40% OFF no {{curso}}! De {{valor}} por condições imperdíveis. Fale com {{consultor}} e garanta sua vaga!',
+    content: 'BLACK FRIDAY AIFLUENT! {{nome}}, aproveite ate 40% OFF no {{curso}}! De {{valor}} por condicoes imperdiveis. Fale com {{consultor}} e garanta sua vaga!',
     usageCount: 0,
     status: 'draft',
     variables: ['nome', 'curso', 'valor', 'consultor'],
@@ -182,16 +182,26 @@ const mockTemplates: Template[] = [
   },
 ]
 
+// ── Helper to extract variables from content ────────────────────────────────
+
+function extractVariables(content: string): string[] {
+  const matches = content.match(/\{\{(\w+)\}\}/g)
+  if (!matches) return []
+  return [...new Set(matches.map((m) => m.replace(/\{\{|\}\}/g, '')))]
+}
+
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function TemplatesPage() {
+  const [templates, setTemplates] = useState<Template[]>(initialTemplates)
   const [channelFilter, setChannelFilter] = useState<'all' | TemplateChannel>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null)
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
   const [showNewTemplate, setShowNewTemplate] = useState(false)
 
   const filtered = useMemo(() => {
-    let items = mockTemplates
+    let items = templates
 
     if (channelFilter !== 'all') {
       items = items.filter((t) => t.channel === channelFilter)
@@ -208,14 +218,62 @@ export default function TemplatesPage() {
     }
 
     return items
-  }, [channelFilter, searchTerm])
+  }, [channelFilter, searchTerm, templates])
 
   const stats = useMemo(() => ({
-    total: mockTemplates.length,
-    active: mockTemplates.filter((t) => t.status === 'active').length,
-    drafts: mockTemplates.filter((t) => t.status === 'draft').length,
-    totalUsage: mockTemplates.reduce((s, t) => s + t.usageCount, 0),
-  }), [])
+    total: templates.length,
+    active: templates.filter((t) => t.status === 'active').length,
+    drafts: templates.filter((t) => t.status === 'draft').length,
+    totalUsage: templates.reduce((s, t) => s + t.usageCount, 0),
+  }), [templates])
+
+  const handleCreateTemplate = (data: { name: string; channel: TemplateChannel; category: TemplateCategory; content: string; status: TemplateStatus }) => {
+    const today = new Date().toISOString().split('T')[0]
+    const newTemplate: Template = {
+      id: `t-${Date.now()}`,
+      name: data.name,
+      category: data.category,
+      channel: data.channel,
+      content: data.content,
+      usageCount: 0,
+      status: data.status,
+      variables: extractVariables(data.content),
+      createdAt: today,
+      updatedAt: today,
+    }
+    setTemplates((prev) => [newTemplate, ...prev])
+    setShowNewTemplate(false)
+  }
+
+  const handleUpdateTemplate = (id: string, data: { name: string; channel: TemplateChannel; category: TemplateCategory; content: string; status: TemplateStatus }) => {
+    const today = new Date().toISOString().split('T')[0]
+    setTemplates((prev) =>
+      prev.map((t) =>
+        t.id === id
+          ? { ...t, name: data.name, channel: data.channel, category: data.category, content: data.content, status: data.status, variables: extractVariables(data.content), updatedAt: today }
+          : t
+      )
+    )
+    setEditingTemplate(null)
+  }
+
+  const handleDeleteTemplate = (id: string) => {
+    setTemplates((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  const handleDuplicateTemplate = (template: Template) => {
+    const today = new Date().toISOString().split('T')[0]
+    const newTemplate: Template = {
+      ...template,
+      id: `t-${Date.now()}`,
+      name: `${template.name} (Copia)`,
+      usageCount: 0,
+      status: 'draft',
+      createdAt: today,
+      updatedAt: today,
+    }
+    setTemplates((prev) => [newTemplate, ...prev])
+  }
 
   return (
     <div className="space-y-6">
@@ -378,13 +436,25 @@ export default function TemplatesPage() {
                     >
                       <Eye className="w-3.5 h-3.5" />
                     </button>
-                    <button className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" title="Duplicar">
+                    <button
+                      onClick={() => handleDuplicateTemplate(template)}
+                      className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                      title="Duplicar"
+                    >
                       <Copy className="w-3.5 h-3.5" />
                     </button>
-                    <button className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors" title="Editar">
+                    <button
+                      onClick={() => setEditingTemplate(template)}
+                      className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                      title="Editar"
+                    >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button className="p-1.5 text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition-colors" title="Excluir">
+                    <button
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      className="p-1.5 text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition-colors"
+                      title="Excluir"
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -409,6 +479,10 @@ export default function TemplatesPage() {
           <TemplatePreviewModal
             template={previewTemplate}
             onClose={() => setPreviewTemplate(null)}
+            onEdit={() => {
+              setEditingTemplate(previewTemplate)
+              setPreviewTemplate(null)
+            }}
           />
         )}
       </AnimatePresence>
@@ -416,7 +490,21 @@ export default function TemplatesPage() {
       {/* New Template Modal */}
       <AnimatePresence>
         {showNewTemplate && (
-          <NewTemplateModal onClose={() => setShowNewTemplate(false)} />
+          <TemplateFormModal
+            onClose={() => setShowNewTemplate(false)}
+            onSubmit={handleCreateTemplate}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Edit Template Modal */}
+      <AnimatePresence>
+        {editingTemplate && (
+          <TemplateFormModal
+            template={editingTemplate}
+            onClose={() => setEditingTemplate(null)}
+            onSubmit={(data) => handleUpdateTemplate(editingTemplate.id, data)}
+          />
         )}
       </AnimatePresence>
     </div>
@@ -425,14 +513,14 @@ export default function TemplatesPage() {
 
 // ── Preview Modal ───────────────────────────────────────────────────────────
 
-function TemplatePreviewModal({ template, onClose }: { template: Template; onClose: () => void }) {
+function TemplatePreviewModal({ template, onClose, onEdit }: { template: Template; onClose: () => void; onEdit: () => void }) {
   const ChannelIcon = channelConfig[template.channel].icon
 
   // Simulated preview with replaced variables
   const previewText = template.content
-    .replace(/\{\{nome\}\}/g, 'João Silva')
-    .replace(/\{\{curso\}\}/g, 'MBA em Gestão')
-    .replace(/\{\{valor\}\}/g, 'R$ 890/mês')
+    .replace(/\{\{nome\}\}/g, 'Joao Silva')
+    .replace(/\{\{curso\}\}/g, 'MBA em Gestao')
+    .replace(/\{\{valor\}\}/g, 'R$ 890/mes')
     .replace(/\{\{consultor\}\}/g, 'Maria Consultora')
 
   return (
@@ -480,7 +568,7 @@ function TemplatePreviewModal({ template, onClose }: { template: Template; onClo
           </div>
 
           <div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Prévia (com variáveis preenchidas)</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Previa (com variaveis preenchidas)</p>
             <div className={cn(
               'rounded-xl p-4',
               template.channel === 'whatsapp'
@@ -494,7 +582,7 @@ function TemplatePreviewModal({ template, onClose }: { template: Template; onClo
           </div>
 
           <div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Variáveis</p>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Variaveis</p>
             <div className="flex flex-wrap gap-2">
               {template.variables.map((v) => (
                 <span key={v} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg text-xs font-mono">
@@ -518,7 +606,10 @@ function TemplatePreviewModal({ template, onClose }: { template: Template; onClo
           >
             Fechar
           </button>
-          <button className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors">
+          <button
+            onClick={onEdit}
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors"
+          >
             Editar Template
           </button>
         </div>
@@ -527,13 +618,35 @@ function TemplatePreviewModal({ template, onClose }: { template: Template; onClo
   )
 }
 
-// ── New Template Modal ──────────────────────────────────────────────────────
+// ── Template Form Modal (Create + Edit) ─────────────────────────────────────
 
-function NewTemplateModal({ onClose }: { onClose: () => void }) {
-  const [content, setContent] = useState('')
+function TemplateFormModal({
+  template,
+  onClose,
+  onSubmit,
+}: {
+  template?: Template
+  onClose: () => void
+  onSubmit: (data: { name: string; channel: TemplateChannel; category: TemplateCategory; content: string; status: TemplateStatus }) => void
+}) {
+  const [name, setName] = useState(template?.name ?? '')
+  const [channel, setChannel] = useState<TemplateChannel>(template?.channel ?? 'whatsapp')
+  const [category, setCategory] = useState<TemplateCategory>(template?.category ?? 'boas-vindas')
+  const [content, setContent] = useState(template?.content ?? '')
+  const isEditing = !!template
 
   const insertVariable = (v: string) => {
     setContent((prev) => prev + `{{${v}}}`)
+  }
+
+  const handleSubmitActive = () => {
+    if (!name.trim() || !content.trim()) return
+    onSubmit({ name, channel, category, content, status: 'active' })
+  }
+
+  const handleSubmitDraft = () => {
+    if (!name.trim()) return
+    onSubmit({ name, channel, category, content, status: 'draft' })
   }
 
   return (
@@ -551,7 +664,9 @@ function NewTemplateModal({ onClose }: { onClose: () => void }) {
         className="w-full max-w-lg bg-white border border-gray-200 rounded-2xl shadow-2xl"
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Novo Template</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {isEditing ? 'Editar Template' : 'Novo Template'}
+          </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-900 transition-colors">
             <X className="w-5 h-5" />
           </button>
@@ -561,6 +676,8 @@ function NewTemplateModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="block text-sm text-gray-500 mb-2">Nome do Template</label>
             <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Follow-up de 7 dias"
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none transition-colors"
             />
@@ -569,7 +686,11 @@ function NewTemplateModal({ onClose }: { onClose: () => void }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-500 mb-2">Canal</label>
-              <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-indigo-500 focus:outline-none transition-colors">
+              <select
+                value={channel}
+                onChange={(e) => setChannel(e.target.value as TemplateChannel)}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-indigo-500 focus:outline-none transition-colors"
+              >
                 <option value="whatsapp">WhatsApp</option>
                 <option value="email">Email</option>
                 <option value="sms">SMS</option>
@@ -577,7 +698,11 @@ function NewTemplateModal({ onClose }: { onClose: () => void }) {
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-2">Categoria</label>
-              <select className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-indigo-500 focus:outline-none transition-colors">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as TemplateCategory)}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:border-indigo-500 focus:outline-none transition-colors"
+              >
                 {Object.entries(categoryConfig).map(([key, cfg]) => (
                   <option key={key} value={key}>{cfg.label}</option>
                 ))}
@@ -586,18 +711,18 @@ function NewTemplateModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-500 mb-2">Conteúdo</label>
+            <label className="block text-sm text-gray-500 mb-2">Conteudo</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={5}
-              placeholder="Digite o conteúdo do template..."
+              placeholder="Digite o conteudo do template..."
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none transition-colors resize-none"
             />
           </div>
 
           <div>
-            <p className="text-xs text-gray-400 mb-2">Inserir variável:</p>
+            <p className="text-xs text-gray-400 mb-2">Inserir variavel:</p>
             <div className="flex flex-wrap gap-2">
               {['nome', 'curso', 'valor', 'consultor'].map((v) => (
                 <button
@@ -620,16 +745,16 @@ function NewTemplateModal({ onClose }: { onClose: () => void }) {
             Cancelar
           </button>
           <button
-            onClick={onClose}
-            className="px-4 py-2.5 bg-gray-200 hover:bg-gray-200 text-gray-900 text-sm font-medium rounded-xl transition-colors"
+            onClick={handleSubmitDraft}
+            className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-900 text-sm font-medium rounded-xl transition-colors"
           >
             Salvar Rascunho
           </button>
           <button
-            onClick={onClose}
+            onClick={handleSubmitActive}
             className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors"
           >
-            Criar Template
+            {isEditing ? 'Salvar Alteracoes' : 'Criar Template'}
           </button>
         </div>
       </motion.div>

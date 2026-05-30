@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Send, Paperclip, Smile, MoreHorizontal, Phone, Video, Bot,
@@ -36,6 +36,11 @@ interface Message {
   sender?: string
 }
 
+const EMOJI_LIST = [
+  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '😊', '😇',
+  '🥰', '😍', '🤩', '😘', '😋', '😜', '🤗', '🤔', '👍', '👋',
+]
+
 const mockConversations: Conversation[] = [
   { id: '1', channel: 'whatsapp', lead: { name: 'Ana Carolina Silva', phone: '+55 11 99999-1234' }, lastMessage: 'Oi, gostaria de saber mais sobre o curso de ingles!', lastMessageAt: '2 min', unreadCount: 3, status: 'open', priority: 'urgent', assignee: 'Maria', aiSuggestion: 'Responder com informacoes do curso Business English' },
   { id: '2', channel: 'instagram', lead: { name: 'Pedro Henrique', phone: '+55 21 98888-5678' }, lastMessage: 'Vi o anuncio de voces, qual o valor da mensalidade?', lastMessageAt: '15 min', unreadCount: 1, status: 'open', priority: 'high' },
@@ -47,7 +52,7 @@ const mockConversations: Conversation[] = [
   { id: '8', channel: 'whatsapp', lead: { name: 'Marcos Silva', phone: '+55 21 93333-5678' }, lastMessage: 'Boa tarde! Recebi o material, muito bom.', lastMessageAt: '1d', unreadCount: 0, status: 'pending', priority: 'normal' },
 ]
 
-const mockMessages: Message[] = [
+const initialMessages: Message[] = [
   { id: '1', direction: 'inbound', content: 'Ola! Vi o anuncio de voces no Instagram sobre o curso de ingles para negocios.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:30' },
   { id: '2', direction: 'inbound', content: 'Gostaria de saber mais informacoes sobre valores e horarios disponiveis.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:31' },
   { id: '3', direction: 'outbound', content: 'Ola Ana! Tudo bem? Que bom que voce se interessou pelo nosso curso Business English! Temos turmas nos seguintes horarios:\n\n- Segunda e Quarta: 19h-20h30\n- Terca e Quinta: 18h-19h30\n- Sabado: 9h-12h\n\nO investimento e de R$397/mes com material incluso.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:45', sender: 'Maria Consultora' },
@@ -81,7 +86,13 @@ export default function InboxPage() {
   const [selectedId, setSelectedId] = useState<string>('1')
   const [messageText, setMessageText] = useState('')
   const [showAiSuggestion, setShowAiSuggestion] = useState(true)
+  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [isRecording, setIsRecording] = useState(false)
+  const [showEmojiPanel, setShowEmojiPanel] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const filtered = mockConversations.filter((c) => {
     if (channel !== 'all' && c.channel !== channel) return false
@@ -93,12 +104,115 @@ export default function InboxPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [selectedId])
+  }, [selectedId, messages])
 
   const totalUnread = mockConversations.reduce((sum, c) => sum + c.unreadCount, 0)
 
+  const now = () => {
+    const d = new Date()
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+  }
+
+  const handleSend = useCallback(() => {
+    if (!messageText.trim()) return
+    const newMsg: Message = {
+      id: `msg-${Date.now()}`,
+      direction: 'outbound',
+      content: messageText.trim(),
+      type: 'text',
+      status: 'sent',
+      aiGenerated: false,
+      createdAt: now(),
+    }
+    setMessages((prev) => [...prev, newMsg])
+    setMessageText('')
+    setShowEmojiPanel(false)
+  }, [messageText])
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const newMsg: Message = {
+      id: `msg-${Date.now()}`,
+      direction: 'outbound',
+      content: `[Arquivo: ${file.name}]`,
+      type: 'document',
+      status: 'sent',
+      aiGenerated: false,
+      createdAt: now(),
+    }
+    setMessages((prev) => [...prev, newMsg])
+    e.target.value = ''
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const newMsg: Message = {
+      id: `msg-${Date.now()}`,
+      direction: 'outbound',
+      content: '[Imagem enviada]',
+      type: 'image',
+      status: 'sent',
+      aiGenerated: false,
+      createdAt: now(),
+    }
+    setMessages((prev) => [...prev, newMsg])
+    e.target.value = ''
+  }
+
+  const handleAudioToggle = () => {
+    if (isRecording) {
+      setIsRecording(false)
+      const newMsg: Message = {
+        id: `msg-${Date.now()}`,
+        direction: 'outbound',
+        content: '[Audio enviado]',
+        type: 'audio',
+        status: 'sent',
+        aiGenerated: false,
+        createdAt: now(),
+      }
+      setMessages((prev) => [...prev, newMsg])
+    } else {
+      setIsRecording(true)
+    }
+  }
+
+  const handleEmojiClick = (emoji: string) => {
+    setMessageText((prev) => prev + emoji)
+    textareaRef.current?.focus()
+  }
+
+  const handleAiResponse = () => {
+    setTimeout(() => {
+      const aiMsg: Message = {
+        id: `msg-${Date.now()}`,
+        direction: 'outbound',
+        content: 'Baseado no historico, sugiro oferecer a aula experimental gratuita para aumentar a conversao.',
+        type: 'text',
+        status: 'sent',
+        aiGenerated: true,
+        createdAt: now(),
+        sender: 'IA',
+      }
+      setMessages((prev) => [...prev, aiMsg])
+    }, 1000)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
   return (
     <div className="flex h-[calc(100dvh-4rem)] -m-6">
+      {/* Hidden file inputs */}
+      <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+      <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+
       {/* Conversation List */}
       <div className="w-[380px] flex flex-col border-r border-gray-200 bg-white">
         {/* List Header */}
@@ -285,7 +399,7 @@ export default function InboxPage() {
               <span className="text-[10px] text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200">Hoje</span>
             </div>
 
-            {mockMessages.map((msg) => (
+            {messages.map((msg) => (
               <motion.div
                 key={msg.id}
                 initial={{ opacity: 0, y: 8 }}
@@ -324,36 +438,118 @@ export default function InboxPage() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Emoji Panel */}
+          <AnimatePresence>
+            {showEmojiPanel && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="px-6 pb-2"
+              >
+                <div className="bg-white border border-gray-200 rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-gray-500">Emojis</p>
+                    <button onClick={() => setShowEmojiPanel(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {EMOJI_LIST.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleEmojiClick(emoji)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-lg"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Recording indicator */}
+          {isRecording && (
+            <div className="px-6 pb-2">
+              <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2">
+                <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                <span className="text-sm text-rose-700 font-medium">Gravando...</span>
+                <button
+                  onClick={handleAudioToggle}
+                  className="ml-auto text-xs text-rose-600 hover:text-rose-800 font-medium"
+                >
+                  Parar e enviar
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Input Area */}
           <div className="px-6 py-4 bg-white border-t border-gray-200">
             <div className="flex items-end gap-2">
               <div className="flex gap-1">
-                <button className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                  title="Enviar arquivo"
+                >
                   <Paperclip className="w-5 h-5" />
                 </button>
-                <button className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() => imageInputRef.current?.click()}
+                  className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                  title="Enviar imagem"
+                >
                   <Image className="w-5 h-5" />
                 </button>
-                <button className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={handleAudioToggle}
+                  className={cn(
+                    'p-2 rounded-lg transition-colors',
+                    isRecording
+                      ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'
+                      : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'
+                  )}
+                  title={isRecording ? 'Parar gravacao' : 'Gravar audio'}
+                >
                   <Mic className="w-5 h-5" />
                 </button>
               </div>
               <div className="flex-1 relative">
                 <textarea
+                  ref={textareaRef}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="Digite sua mensagem..."
                   rows={1}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500/30 focus:outline-none resize-none transition-colors"
                 />
               </div>
-              <button className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors">
+              <button
+                onClick={() => setShowEmojiPanel(!showEmojiPanel)}
+                className={cn(
+                  'p-2 rounded-lg transition-colors',
+                  showEmojiPanel
+                    ? 'text-indigo-500 bg-indigo-50'
+                    : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'
+                )}
+              >
                 <Smile className="w-5 h-5" />
               </button>
-              <button className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors">
+              <button
+                onClick={handleSend}
+                className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+              >
                 <Send className="w-5 h-5" />
               </button>
-              <button className="p-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white transition-colors" title="Gerar resposta com IA">
+              <button
+                onClick={handleAiResponse}
+                className="p-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white transition-colors"
+                title="Gerar resposta com IA"
+              >
                 <Bot className="w-5 h-5" />
               </button>
             </div>

@@ -16,6 +16,12 @@ import {
   GitBranch,
   LayoutGrid,
   List,
+  X,
+  Clock,
+  Eye,
+  MessageCircle,
+  Target,
+  ArrowLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -29,7 +35,7 @@ import type { CampaignChannel, CampaignStatus } from '@/types'
 
 // ── Mock data ────────────────────────────────────────────────────────────────
 
-const mockCampaigns: CampaignCardData[] = [
+const initialCampaigns: CampaignCardData[] = [
   {
     id: 'c1',
     name: 'Vestibular 2026 - Primeiro Contato',
@@ -113,17 +119,148 @@ const mockCampaigns: CampaignCardData[] = [
   },
 ]
 
+// ── Detail Panel ─────────────────────────────────────────────────────────────
+
+const channelLabels: Record<string, string> = {
+  whatsapp: 'WhatsApp',
+  email: 'Email',
+  sms: 'SMS',
+  instagram: 'Instagram',
+  messenger: 'Messenger',
+}
+
+const statusLabels: Record<string, string> = {
+  draft: 'Rascunho',
+  scheduled: 'Agendada',
+  sending: 'Enviando',
+  completed: 'Concluida',
+  paused: 'Pausada',
+  cancelled: 'Cancelada',
+}
+
+function CampaignDetailPanel({ campaign, onClose }: { campaign: CampaignCardData; onClose: () => void }) {
+  const { sent, delivered, opened, replied, converted } = campaign.metrics
+  const openRate = delivered > 0 ? ((opened / delivered) * 100).toFixed(1) : '0'
+  const responseRate = delivered > 0 ? ((replied / delivered) * 100).toFixed(1) : '0'
+  const conversionRate = delivered > 0 ? ((converted / delivered) * 100).toFixed(1) : '0'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="w-full max-w-lg bg-white border border-gray-200 rounded-2xl shadow-2xl"
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">{campaign.name}</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-gray-500">{channelLabels[campaign.channel] || campaign.channel}</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-xs text-gray-500 capitalize">{campaign.type}</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-xs text-gray-500">{statusLabels[campaign.status] || campaign.status}</span>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-900 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Metrics grid */}
+          <div>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Metricas</p>
+            <div className="grid grid-cols-5 gap-3">
+              {[
+                { label: 'Enviados', value: sent, icon: Send, color: 'text-gray-600' },
+                { label: 'Entregues', value: delivered, icon: Eye, color: 'text-blue-500' },
+                { label: 'Abertos', value: opened, icon: Eye, color: 'text-indigo-500' },
+                { label: 'Respondidos', value: replied, icon: MessageCircle, color: 'text-emerald-500' },
+                { label: 'Convertidos', value: converted, icon: Target, color: 'text-amber-500' },
+              ].map((m) => {
+                const Icon = m.icon
+                return (
+                  <div key={m.label} className="text-center">
+                    <Icon className={cn('w-4 h-4 mx-auto mb-1', m.color)} />
+                    <p className={cn('text-lg font-bold tabular-nums', m.color)}>{m.value.toLocaleString('pt-BR')}</p>
+                    <p className="text-[10px] text-gray-400">{m.label}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Rates */}
+          <div>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Taxas</p>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Abertura', value: `${openRate}%`, color: 'text-indigo-500' },
+                { label: 'Resposta', value: `${responseRate}%`, color: 'text-emerald-500' },
+                { label: 'Conversao', value: `${conversionRate}%`, color: 'text-amber-500' },
+              ].map((r) => (
+                <div key={r.label} className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+                  <p className={cn('text-xl font-bold', r.color)}>{r.value}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{r.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Details */}
+          <div>
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Detalhes</p>
+            <div className="space-y-2">
+              {[
+                { label: 'Criado por', value: campaign.createdBy },
+                { label: 'Data de criacao', value: new Date(campaign.createdAt).toLocaleDateString('pt-BR') },
+                { label: 'Canal', value: channelLabels[campaign.channel] || campaign.channel },
+                { label: 'Tipo', value: campaign.type === 'broadcast' ? 'Disparo em massa' : campaign.type === 'sequence' ? 'Sequencia' : 'Automacao' },
+                ...(campaign.scheduledFor ? [{ label: 'Agendado para', value: new Date(campaign.scheduledFor).toLocaleString('pt-BR') }] : []),
+              ].map((item) => (
+                <div key={item.label} className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">{item.label}</span>
+                  <span className="text-xs text-gray-900 font-medium">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function CampaignsPage() {
+  const [campaigns, setCampaigns] = React.useState<CampaignCardData[]>(initialCampaigns)
   const [activeTab, setActiveTab] = React.useState('all')
   const [search, setSearch] = React.useState('')
   const [showBuilder, setShowBuilder] = React.useState(false)
   const [viewMetrics, setViewMetrics] = React.useState<string | null>(null)
+  const [viewDetail, setViewDetail] = React.useState<string | null>(null)
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid')
 
   const filtered = React.useMemo(() => {
-    let items = mockCampaigns
+    let items = campaigns
 
     // Tab filter
     if (activeTab === 'whatsapp') items = items.filter((c) => c.channel === 'whatsapp')
@@ -143,24 +280,68 @@ export default function CampaignsPage() {
     }
 
     return items
-  }, [activeTab, search])
+  }, [activeTab, search, campaigns])
 
   // Stats
   const stats = React.useMemo(() => {
-    const total = mockCampaigns.length
-    const active = mockCampaigns.filter((c) => c.status === 'sending' || c.status === 'scheduled').length
-    const draft = mockCampaigns.filter((c) => c.status === 'draft').length
-    const completed = mockCampaigns.filter((c) => c.status === 'completed').length
+    const total = campaigns.length
+    const active = campaigns.filter((c) => c.status === 'sending' || c.status === 'scheduled').length
+    const draft = campaigns.filter((c) => c.status === 'draft').length
+    const completed = campaigns.filter((c) => c.status === 'completed').length
     return { total, active, draft, completed }
-  }, [])
+  }, [campaigns])
+
+  const handleCampaignSubmit = (data: Record<string, unknown>) => {
+    const formData = data as {
+      name: string
+      channel: CampaignChannel | null
+      type: 'broadcast' | 'sequence' | 'automation'
+      audience: { selectedCount: number }
+      content: { message: string }
+      schedule: { mode: string; date?: string; time?: string }
+    }
+    const today = new Date().toISOString().split('T')[0]
+    const newCampaign: CampaignCardData = {
+      id: `c-${Date.now()}`,
+      name: formData.name || 'Nova Campanha',
+      channel: (formData.channel || 'whatsapp') as CampaignChannel,
+      status: formData.schedule?.mode === 'later' ? 'scheduled' : formData.schedule?.mode === 'now' ? 'sending' : 'draft',
+      type: formData.type || 'broadcast',
+      metrics: { sent: 0, delivered: 0, opened: 0, replied: 0, converted: 0 },
+      createdAt: today,
+      createdBy: 'Voce',
+      ...(formData.schedule?.mode === 'later' && formData.schedule.date
+        ? { scheduledFor: `${formData.schedule.date}T${formData.schedule.time || '10:00'}:00` }
+        : {}),
+    }
+    setCampaigns((prev) => [newCampaign, ...prev])
+    setShowBuilder(false)
+  }
+
+  const handleDelete = (id: string) => {
+    setCampaigns((prev) => prev.filter((c) => c.id !== id))
+  }
+
+  const handlePause = (id: string) => {
+    setCampaigns((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: 'paused' as CampaignStatus } : c))
+    )
+  }
+
+  const handleResume = (id: string) => {
+    setCampaigns((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: 'sending' as CampaignStatus } : c))
+    )
+  }
 
   // If viewing metrics for a specific campaign
   if (viewMetrics) {
-    const camp = mockCampaigns.find((c) => c.id === viewMetrics)
+    const camp = campaigns.find((c) => c.id === viewMetrics)
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => setViewMetrics(null)}>
+            <ArrowLeft className="h-4 w-4 mr-1" />
             Voltar
           </Button>
           <h2 className="text-lg font-semibold text-gray-900">{camp?.name}</h2>
@@ -169,6 +350,9 @@ export default function CampaignsPage() {
       </div>
     )
   }
+
+  // Detail campaign for modal view
+  const detailCampaign = viewDetail ? campaigns.find((c) => c.id === viewDetail) : null
 
   return (
     <div className="space-y-6">
@@ -303,12 +487,26 @@ export default function CampaignsPage() {
                     <CampaignCard
                       key={campaign.id}
                       campaign={campaign}
-                      onClick={(id) => setViewMetrics(id)}
-                      onEdit={(id) => console.log('edit', id)}
-                      onDuplicate={(id) => console.log('duplicate', id)}
-                      onPause={(id) => console.log('pause', id)}
-                      onResume={(id) => console.log('resume', id)}
-                      onDelete={(id) => console.log('delete', id)}
+                      onClick={(id) => setViewDetail(id)}
+                      onEdit={(id) => setViewDetail(id)}
+                      onDuplicate={(id) => {
+                        const original = campaigns.find((c) => c.id === id)
+                        if (original) {
+                          const dup: CampaignCardData = {
+                            ...original,
+                            id: `c-${Date.now()}`,
+                            name: `${original.name} (Copia)`,
+                            status: 'draft',
+                            metrics: { sent: 0, delivered: 0, opened: 0, replied: 0, converted: 0 },
+                            createdAt: new Date().toISOString().split('T')[0],
+                            createdBy: 'Voce',
+                          }
+                          setCampaigns((prev) => [dup, ...prev])
+                        }
+                      }}
+                      onPause={handlePause}
+                      onResume={handleResume}
+                      onDelete={handleDelete}
                     />
                   ))}
                 </AnimatePresence>
@@ -323,7 +521,17 @@ export default function CampaignsPage() {
         {showBuilder && (
           <CampaignBuilder
             onClose={() => setShowBuilder(false)}
-            onSubmit={(data) => console.log('campaign submitted', data)}
+            onSubmit={(data) => handleCampaignSubmit(data as unknown as Record<string, unknown>)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Campaign detail modal */}
+      <AnimatePresence>
+        {detailCampaign && (
+          <CampaignDetailPanel
+            campaign={detailCampaign}
+            onClose={() => setViewDetail(null)}
           />
         )}
       </AnimatePresence>
