@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, Kanban, Handshake, Inbox, MessageCircle,
-  Megaphone, FileText, Phone, Bot, Workflow, Target, CheckSquare,
+  Megaphone, FileText, Phone, Send, Bot, Workflow, Target, CheckSquare,
   Trophy, UsersRound, BarChart3, Plug, Settings, Shield,
   ChevronLeft, ChevronRight, LogOut,
 } from 'lucide-react'
@@ -32,6 +32,7 @@ const navigation: NavSection[] = [
       { label: 'WhatsApp', href: '/whatsapp', icon: MessageCircle },
       { label: 'Telefonia', href: '/phone', icon: Phone },
       { label: 'Campanhas', href: '/campaigns', icon: Megaphone },
+      { label: 'Disparos', href: '/disparos', icon: Send },
       { label: 'Templates', href: '/templates', icon: FileText },
     ],
   },
