@@ -231,7 +231,7 @@ export default function PhonePage() {
                   onClick={() => setDialNumber(call.phone)}
                   className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors text-left"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shrink-0">
                     <span className="text-xs font-bold text-gray-900">
                       {call.leadName.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                     </span>
@@ -246,7 +246,7 @@ export default function PhonePage() {
             </div>
 
             <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mt-6">Ultima Chamada - Resumo IA</h3>
-            <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl p-5 space-y-3">
+            <div className="bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <Bot className="w-5 h-5 text-amber-400" />
                 <span className="text-sm font-semibold text-gray-900">Ana Silva - 11:30</span>
@@ -338,7 +338,7 @@ export default function PhonePage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 border border-indigo-500/10 rounded-2xl p-5 space-y-3"
+                className="bg-gradient-to-br from-indigo-500/5 to-blue-500/5 border border-indigo-500/10 rounded-2xl p-5 space-y-3"
               >
                 <div className="flex items-center gap-2">
                   <Bot className="w-4 h-4 text-amber-400" />
@@ -374,7 +374,7 @@ export default function PhonePage() {
             ].map((agent, i) => (
               <div key={agent.name} className="flex items-center gap-4 p-3 rounded-xl bg-white">
                 <span className="text-xs text-gray-400 w-4">{i + 1}</span>
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shrink-0">
                   <span className="text-[10px] font-bold text-gray-900">{agent.name.split(' ').map((n) => n[0]).join('')}</span>
                 </div>
                 <div className="flex-1">

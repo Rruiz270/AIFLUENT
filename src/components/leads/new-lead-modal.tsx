@@ -216,7 +216,7 @@ export function NewLeadModal({ open, onOpenChange, onCreated }: NewLeadModalProp
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center">
               <UserPlus className="w-5 h-5 text-gray-900" />
             </div>
             <div>
@@ -226,7 +226,7 @@ export function NewLeadModal({ open, onOpenChange, onCreated }: NewLeadModalProp
           </div>
           <div className="flex items-center gap-3">
             {/* AI Score */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 rounded-lg">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span className="text-xs font-bold text-gray-900">{aiScore}</span>
               <span className="text-[10px] text-gray-500">Score IA</span>
@@ -438,7 +438,7 @@ export function NewLeadModal({ open, onOpenChange, onCreated }: NewLeadModalProp
                 </div>
 
                 {/* AI Prediction */}
-                <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl p-4">
+                <div className="bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-amber-400" />
                     <span className="text-sm font-semibold text-gray-900">Previsao IA</span>
@@ -567,7 +567,7 @@ export function NewLeadModal({ open, onOpenChange, onCreated }: NewLeadModalProp
                 Proximo <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
-              <button onClick={handleSubmit} disabled={loading} className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50">
+              <button onClick={handleSubmit} disabled={loading} className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                 {loading ? 'Criando...' : 'Criar Lead'}
               </button>

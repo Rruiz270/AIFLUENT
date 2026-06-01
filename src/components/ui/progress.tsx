@@ -35,7 +35,7 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
           {...props}
         >
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-500"
+            className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-blue-500"
             initial={{ width: 0 }}
             animate={{ width: `${percentage}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}

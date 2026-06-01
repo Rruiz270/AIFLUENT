@@ -178,7 +178,7 @@ export default function SecurityPage() {
                 { name: 'Julia Assistente', email: 'julia@aifluent.com', role: 'Agente', enabled: false },
               ].map((user) => (
                 <div key={user.email} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                     <span className="text-[10px] font-bold text-gray-900">{user.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}</span>
                   </div>
                   <div className="flex-1">

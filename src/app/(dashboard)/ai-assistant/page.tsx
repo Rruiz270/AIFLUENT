@@ -126,7 +126,7 @@ export default function AIAssistantPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <Bot className="w-5 h-5 text-gray-900" />
             </div>
             <div>
@@ -155,14 +155,14 @@ export default function AIAssistantPage() {
               className={cn('flex gap-3', msg.role === 'user' ? 'justify-end' : 'justify-start')}
             >
               {msg.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shrink-0 mt-1">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shrink-0 mt-1">
                   <Bot className="w-4 h-4 text-gray-900" />
                 </div>
               )}
               <div className={cn(
                 'max-w-[70%] rounded-2xl px-4 py-3',
                 msg.role === 'user'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-sky-500 text-white'
                   : 'bg-gray-50 border border-gray-200'
               )}>
                 <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -172,7 +172,7 @@ export default function AIAssistantPage() {
                     {msg.actions.map((action) => (
                       <button
                         key={action.label}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 text-xs rounded-lg transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-500/20 hover:bg-sky-400/30 text-sky-300 text-xs rounded-lg transition-colors"
                       >
                         <action.icon className="w-3 h-3" />
                         {action.label}
@@ -207,7 +207,7 @@ export default function AIAssistantPage() {
               animate={{ opacity: 1, y: 0 }}
               className="flex gap-3"
             >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shrink-0">
                 <Bot className="w-4 h-4 text-gray-900" />
               </div>
               <div className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3">
@@ -262,7 +262,7 @@ export default function AIAssistantPage() {
             </button>
             <button
               onClick={handleSend}
-              className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+              className="p-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white transition-colors"
             >
               <Send className="w-5 h-5" />
             </button>
@@ -290,7 +290,7 @@ export default function AIAssistantPage() {
               <h4 className="text-sm font-semibold text-gray-900">{card.title}</h4>
             </div>
             <p className="text-xs text-gray-700">{card.desc}</p>
-            <button className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+            <button className="flex items-center gap-1 text-xs text-indigo-400 hover:text-sky-300 transition-colors">
               {card.action} <ArrowRight className="w-3 h-3" />
             </button>
           </motion.div>

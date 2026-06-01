@@ -69,7 +69,7 @@ const AnimatedTabTrigger = React.forwardRef<
     {children}
     {isActive && (
       <motion.div
-        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full"
         layoutId={layoutId}
         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
       />

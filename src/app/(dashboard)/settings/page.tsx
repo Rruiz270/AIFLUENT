@@ -255,7 +255,7 @@ export default function SettingsPage() {
                   <div>
                     <label className="block text-sm text-gray-500 mb-2">Logo da Empresa</label>
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                         <span className="text-xl font-bold text-gray-900">AI</span>
                       </div>
                       <button className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-xl border border-gray-200 transition-colors">
@@ -307,7 +307,7 @@ export default function SettingsPage() {
                     className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-2xl hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                         <span className="text-xs font-bold text-gray-900">
                           {member.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                         </span>

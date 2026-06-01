@@ -98,7 +98,7 @@ export default function TeamPage() {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center relative">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center relative">
                     <span className="text-sm font-bold text-gray-900">
                       {member.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                     </span>

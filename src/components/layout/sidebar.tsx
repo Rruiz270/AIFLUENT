@@ -140,7 +140,7 @@ export function Sidebar() {
 
       <div className="border-t border-gray-200 p-3">
         <div className={cn('flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-gray-50', collapsed && 'justify-center')}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-500">
             <span className="text-xs font-bold text-white">RR</span>
           </div>
           <AnimatePresence>

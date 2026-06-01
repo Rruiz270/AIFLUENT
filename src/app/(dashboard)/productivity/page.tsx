@@ -95,7 +95,7 @@ export default function ProductivityPage() {
             <Flame className="w-4 h-4 text-amber-400" />
             <span className="text-sm font-bold text-amber-400">Streak: 15 dias</span>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 rounded-xl">
+          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-400/20 to-blue-500/20 border border-indigo-500/30 rounded-xl">
             <Star className="w-4 h-4 text-indigo-400" />
             <span className="text-sm font-bold text-indigo-400">4.850 XP</span>
           </div>
@@ -103,10 +103,10 @@ export default function ProductivityPage() {
       </div>
 
       {/* Level Progress */}
-      <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl p-5">
+      <div className="bg-gradient-to-r from-sky-400/10 to-blue-500/10 border border-indigo-500/20 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
               <span className="text-lg font-extrabold text-gray-900">12</span>
             </div>
             <div>
@@ -123,7 +123,7 @@ export default function ProductivityPage() {
             initial={{ width: 0 }}
             animate={{ width: '85%' }}
             transition={{ duration: 1.5, ease: 'easeOut' }}
-            className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full"
+            className="h-full bg-gradient-to-r from-sky-500 to-blue-600 rounded-full"
           />
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function ProductivityPage() {
                 </div>
 
                 {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shrink-0">
                   <span className="text-xs font-bold text-gray-900">
                     {member.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                   </span>
@@ -296,7 +296,7 @@ export default function ProductivityPage() {
               className={cn(
                 'relative overflow-hidden rounded-2xl p-5 border transition-colors',
                 achievement.unlocked
-                  ? 'bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20'
+                  ? 'bg-gradient-to-br from-sky-400/10 to-blue-500/10 border-indigo-500/20'
                   : 'bg-white border-gray-200 opacity-70'
               )}
             >

@@ -76,7 +76,7 @@ export function Header() {
           </div>
           <div className="relative">
             <button onClick={() => setUserMenuOpen((o) => !o)} className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-gray-50">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-500">
                 <span className="text-xs font-bold text-white">RR</span>
               </div>
               <ChevronDown className="h-3.5 w-3.5 text-gray-400" />

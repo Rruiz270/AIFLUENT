@@ -329,7 +329,7 @@ function DealsTable({ deals }: { deals: Deal[] }) {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                       <span className="text-[10px] font-bold text-gray-900">
                         {deal.assignedTo.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                       </span>
@@ -419,7 +419,7 @@ function DealsPipeline({ deals }: { deals: Deal[] }) {
 
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                         <span className="text-[8px] font-bold text-gray-900">
                           {deal.assignedTo.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                         </span>

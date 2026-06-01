@@ -217,7 +217,7 @@ export default function AutomationsPage() {
       </div>
 
       {/* Flow Builder Preview */}
-      <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 border border-indigo-500/10 rounded-2xl p-6">
+      <div className="bg-gradient-to-br from-indigo-500/5 to-blue-500/5 border border-indigo-500/10 rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-4">
           <GitBranch className="w-5 h-5 text-indigo-400" />
           <h3 className="text-lg font-semibold text-gray-900">Exemplo de Fluxo: Boas-vindas WhatsApp</h3>

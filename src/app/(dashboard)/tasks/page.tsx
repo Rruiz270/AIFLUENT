@@ -198,7 +198,7 @@ export default function TasksPage() {
 
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
                       <span className="text-[10px] font-bold text-gray-900">
                         {task.assignee.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
                       </span>

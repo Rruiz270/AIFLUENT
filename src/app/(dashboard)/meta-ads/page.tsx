@@ -234,7 +234,7 @@ export default function MetaAdsPage() {
               {/* Modal Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center">
                     <Megaphone className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -623,7 +623,7 @@ export default function MetaAdsPage() {
                 { name: 'Felipe Martins', campaign: 'Business English - Lead Gen', source: 'Instagram Reels', time: '5h', temp: 'warm' },
               ].map((lead, i) => (
                 <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 hover:bg-gray-50 transition-colors">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shrink-0">
                     <span className="text-[10px] font-bold text-gray-900">{lead.name.split(' ').map((n) => n[0]).join('')}</span>
                   </div>
                   <div className="flex-1 min-w-0">
@@ -688,7 +688,7 @@ export default function MetaAdsPage() {
       {/* Insights Tab */}
       {tab === 'insights' && (
         <div className="space-y-4">
-          <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl p-6 space-y-4">
+          <div className="bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-amber-400" />
               <h3 className="text-lg font-semibold text-gray-900">Insights Inteligentes</h3>
