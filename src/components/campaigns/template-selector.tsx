@@ -158,8 +158,6 @@ export function TemplateSelector({ channel, onSelect, onClose }: TemplateSelecto
     return [...new Set(base.map((t) => t.category))]
   }, [channel])
 
-  const previewTemplate = previewId ? mockTemplates.find((t) => t.id === previewId) : null
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
