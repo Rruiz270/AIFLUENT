@@ -9,6 +9,8 @@ export function canAccess(userRole: UserRole, requiredRole: UserRole): boolean {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.AUTH_SECRET || 'aifluent-default-secret-change-me',
+  trustHost: true,
   providers: [
     Credentials({
       name: 'credentials',
