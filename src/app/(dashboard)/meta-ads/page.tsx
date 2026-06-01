@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Target, TrendingUp, TrendingDown, DollarSign, Eye, MousePointer, Users,
   BarChart3, Plus, Filter, RefreshCw, ExternalLink, Pause, Play,
   MessagesSquare, Camera, Sparkles, ArrowUpRight, ArrowDownRight,
-  Layers, Megaphone, Zap, Calendar, Globe,
+  Layers, Megaphone, Zap, Calendar, Globe, X, CheckCircle2, Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -29,9 +29,42 @@ interface AdCampaign {
   cpl: number
   ctr: number
   roas: number
+  startDate?: string
+  endDate?: string
+  targeting?: string
 }
 
-const mockCampaigns: AdCampaign[] = [
+interface NewCampaignForm {
+  name: string
+  platform: 'facebook' | 'instagram' | 'both'
+  objective: string
+  budget: number
+  budgetType: 'daily' | 'lifetime'
+  startDate: string
+  endDate: string
+  targeting: string
+}
+
+const defaultNewCampaign: NewCampaignForm = {
+  name: '',
+  platform: 'both',
+  objective: 'Lead Generation',
+  budget: 100,
+  budgetType: 'daily',
+  startDate: '',
+  endDate: '',
+  targeting: '',
+}
+
+const objectiveOptions = [
+  'Lead Generation',
+  'Conversions',
+  'Traffic',
+  'Awareness',
+  'Engagement',
+]
+
+const initialCampaigns: AdCampaign[] = [
   { id: '1', name: 'Business English - Lead Gen', platform: 'both', objective: 'Lead Generation', status: 'active', budget: 150, budgetType: 'daily', spend: 3247, impressions: 145000, clicks: 4350, leads: 187, conversions: 34, cpc: 0.75, cpl: 17.36, ctr: 3.0, roas: 4.2 },
   { id: '2', name: 'Espanhol Intensivo - Awareness', platform: 'instagram', objective: 'Awareness', status: 'active', budget: 80, budgetType: 'daily', spend: 1890, impressions: 230000, clicks: 6900, leads: 92, conversions: 18, cpc: 0.27, cpl: 20.54, ctr: 3.0, roas: 3.1 },
   { id: '3', name: 'Remarketing - Visitantes Site', platform: 'facebook', objective: 'Conversions', status: 'active', budget: 50, budgetType: 'daily', spend: 1120, impressions: 45000, clicks: 2250, leads: 56, conversions: 23, cpc: 0.50, cpl: 20.0, ctr: 5.0, roas: 6.8 },
@@ -59,20 +92,360 @@ function formatNumber(value: number): string {
 
 export default function MetaAdsPage() {
   const [tab, setTab] = useState<TabType>('campaigns')
+  const [campaigns, setCampaigns] = useState<AdCampaign[]>(initialCampaigns)
+  const [showNewCampaign, setShowNewCampaign] = useState(false)
+  const [newCampaign, setNewCampaign] = useState<NewCampaignForm>({ ...defaultNewCampaign })
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false })
 
-  const totals = {
-    spend: mockCampaigns.reduce((s, c) => s + c.spend, 0),
-    impressions: mockCampaigns.reduce((s, c) => s + c.impressions, 0),
-    clicks: mockCampaigns.reduce((s, c) => s + c.clicks, 0),
-    leads: mockCampaigns.reduce((s, c) => s + c.leads, 0),
-    conversions: mockCampaigns.reduce((s, c) => s + c.conversions, 0),
-  }
+  const totals = useMemo(() => ({
+    spend: campaigns.reduce((s, c) => s + c.spend, 0),
+    impressions: campaigns.reduce((s, c) => s + c.impressions, 0),
+    clicks: campaigns.reduce((s, c) => s + c.clicks, 0),
+    leads: campaigns.reduce((s, c) => s + c.leads, 0),
+    conversions: campaigns.reduce((s, c) => s + c.conversions, 0),
+  }), [campaigns])
+
   const avgCPL = totals.leads > 0 ? totals.spend / totals.leads : 0
   const avgCTR = totals.impressions > 0 ? (totals.clicks / totals.impressions * 100) : 0
-  const avgROAS = 4.1
+  const avgROAS = useMemo(() => {
+    const campaignsWithROAS = campaigns.filter((c) => c.roas > 0)
+    if (campaignsWithROAS.length === 0) return 0
+    return Number((campaignsWithROAS.reduce((s, c) => s + c.roas, 0) / campaignsWithROAS.length).toFixed(1))
+  }, [campaigns])
+
+  const updateNewCampaign = <K extends keyof NewCampaignForm>(key: K, value: NewCampaignForm[K]) => {
+    setNewCampaign((prev) => ({ ...prev, [key]: value }))
+    if (key in formErrors) setFormErrors((prev) => { const n = { ...prev }; delete n[key as string]; return n })
+  }
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {}
+    if (!newCampaign.name.trim()) errors.name = 'Nome da campanha obrigatorio'
+    if (newCampaign.budget <= 0) errors.budget = 'Orcamento deve ser maior que zero'
+    if (!newCampaign.startDate) errors.startDate = 'Data de inicio obrigatoria'
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleCreateCampaign = () => {
+    if (!validateForm()) return
+    setSubmitting(true)
+    // Simulate a short delay for UX
+    setTimeout(() => {
+      const campaign: AdCampaign = {
+        id: String(Date.now()),
+        name: newCampaign.name.trim(),
+        platform: newCampaign.platform,
+        objective: newCampaign.objective,
+        status: 'draft',
+        budget: newCampaign.budget,
+        budgetType: newCampaign.budgetType,
+        spend: 0,
+        impressions: 0,
+        clicks: 0,
+        leads: 0,
+        conversions: 0,
+        cpc: 0,
+        cpl: 0,
+        ctr: 0,
+        roas: 0,
+        startDate: newCampaign.startDate,
+        endDate: newCampaign.endDate,
+        targeting: newCampaign.targeting,
+      }
+      setCampaigns((prev) => [campaign, ...prev])
+      setSubmitting(false)
+      setShowSuccess(true)
+      setTimeout(() => {
+        setShowSuccess(false)
+        setShowNewCampaign(false)
+        setNewCampaign({ ...defaultNewCampaign })
+        setFormErrors({})
+        setToast({ message: `Campanha "${campaign.name}" criada com sucesso!`, visible: true })
+        setTimeout(() => setToast({ message: '', visible: false }), 3500)
+      }, 1000)
+    }, 500)
+  }
+
+  const handleCloseModal = () => {
+    if (submitting) return
+    setShowNewCampaign(false)
+    setNewCampaign({ ...defaultNewCampaign })
+    setFormErrors({})
+    setShowSuccess(false)
+  }
 
   return (
     <div className="p-8 space-y-6">
+      {/* Success Toast */}
+      <AnimatePresence>
+        {toast.visible && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 right-6 z-[60] flex items-center gap-3 px-5 py-3 bg-white border border-emerald-200 rounded-xl shadow-lg shadow-emerald-100/50"
+          >
+            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+            <span className="text-sm font-medium text-gray-900">{toast.message}</span>
+            <button onClick={() => setToast({ message: '', visible: false })} className="p-1 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* New Campaign Modal */}
+      <AnimatePresence>
+        {showNewCampaign && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/30" onClick={handleCloseModal} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl shadow-black/50"
+            >
+              {/* Success Overlay */}
+              <AnimatePresence>
+                {showSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                      className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4"
+                    >
+                      <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+                    </motion.div>
+                    <p className="text-xl font-bold text-gray-900">Campanha Criada!</p>
+                    <p className="text-sm text-gray-500 mt-1">{newCampaign.name} foi adicionada com sucesso</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
+                    <Megaphone className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">Nova Campanha</h2>
+                    <p className="text-xs text-gray-400">Configure e lance uma nova campanha Meta Ads</p>
+                  </div>
+                </div>
+                <button onClick={handleCloseModal} className="p-2 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="overflow-y-auto p-6 space-y-5" style={{ maxHeight: 'calc(90vh - 160px)' }}>
+                {/* Nome da Campanha */}
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1.5">Nome da Campanha *</label>
+                  <input
+                    value={newCampaign.name}
+                    onChange={(e) => updateNewCampaign('name', e.target.value)}
+                    placeholder="Ex: Black Friday - Lead Gen"
+                    className={cn(
+                      'w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500/50 focus:outline-none transition-colors',
+                      formErrors.name ? 'border-rose-500/50' : 'border-gray-200'
+                    )}
+                  />
+                  {formErrors.name && <p className="text-[10px] text-rose-400 mt-1">{formErrors.name}</p>}
+                </div>
+
+                {/* Plataforma */}
+                <div>
+                  <label className="block text-sm text-gray-500 mb-2">Plataforma</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([
+                      { value: 'facebook' as const, label: 'Facebook', icon: MessagesSquare, color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
+                      { value: 'instagram' as const, label: 'Instagram', icon: Camera, color: 'text-pink-400 bg-pink-500/10 border-pink-500/30' },
+                      { value: 'both' as const, label: 'Ambas', icon: Globe, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30' },
+                    ]).map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => updateNewCampaign('platform', opt.value)}
+                        className={cn(
+                          'flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all',
+                          newCampaign.platform === opt.value ? opt.color : 'text-gray-400 bg-white border-gray-200 hover:bg-gray-50'
+                        )}
+                      >
+                        <opt.icon className="w-4 h-4" />
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Objetivo */}
+                <div>
+                  <label className="block text-sm text-gray-500 mb-2">Objetivo</label>
+                  <div className="flex flex-wrap gap-2">
+                    {objectiveOptions.map((obj) => (
+                      <button
+                        key={obj}
+                        type="button"
+                        onClick={() => updateNewCampaign('objective', obj)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                          newCampaign.objective === obj
+                            ? 'bg-indigo-600/20 text-indigo-600 border-indigo-500/30'
+                            : 'text-gray-500 bg-white border-gray-200 hover:bg-gray-50'
+                        )}
+                      >
+                        {obj}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Orcamento */}
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1.5">Orcamento (R$) *</label>
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="number"
+                        min={1}
+                        value={newCampaign.budget}
+                        onChange={(e) => updateNewCampaign('budget', Number(e.target.value))}
+                        placeholder="100"
+                        className={cn(
+                          'w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500/50 focus:outline-none transition-colors',
+                          formErrors.budget ? 'border-rose-500/50' : 'border-gray-200'
+                        )}
+                      />
+                    </div>
+                    <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => updateNewCampaign('budgetType', 'daily')}
+                        className={cn(
+                          'px-4 py-2.5 text-xs font-medium transition-colors',
+                          newCampaign.budgetType === 'daily'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white text-gray-500 hover:bg-gray-50'
+                        )}
+                      >
+                        Diario
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateNewCampaign('budgetType', 'lifetime')}
+                        className={cn(
+                          'px-4 py-2.5 text-xs font-medium transition-colors border-l border-gray-200',
+                          newCampaign.budgetType === 'lifetime'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white text-gray-500 hover:bg-gray-50'
+                        )}
+                      >
+                        Vitalicio
+                      </button>
+                    </div>
+                  </div>
+                  {formErrors.budget && <p className="text-[10px] text-rose-400 mt-1">{formErrors.budget}</p>}
+                </div>
+
+                {/* Datas */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1.5">Data de Inicio *</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="date"
+                        value={newCampaign.startDate}
+                        onChange={(e) => updateNewCampaign('startDate', e.target.value)}
+                        className={cn(
+                          'w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl text-sm text-gray-900 focus:border-indigo-500/50 focus:outline-none transition-colors',
+                          formErrors.startDate ? 'border-rose-500/50' : 'border-gray-200'
+                        )}
+                      />
+                    </div>
+                    {formErrors.startDate && <p className="text-[10px] text-rose-400 mt-1">{formErrors.startDate}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-500 mb-1.5">Data de Fim</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="date"
+                        value={newCampaign.endDate}
+                        onChange={(e) => updateNewCampaign('endDate', e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:border-indigo-500/50 focus:outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Segmentacao */}
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1.5">Segmentacao / Targeting</label>
+                  <textarea
+                    value={newCampaign.targeting}
+                    onChange={(e) => updateNewCampaign('targeting', e.target.value)}
+                    placeholder="Descreva o publico-alvo: idade, interesses, localizacao, comportamento..."
+                    rows={3}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500/50 focus:outline-none resize-none transition-colors"
+                  />
+                </div>
+
+                {/* Summary Preview */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Resumo</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: 'Campanha', value: newCampaign.name || '-' },
+                      { label: 'Plataforma', value: newCampaign.platform === 'both' ? 'Facebook + Instagram' : newCampaign.platform === 'facebook' ? 'Facebook' : 'Instagram' },
+                      { label: 'Objetivo', value: newCampaign.objective },
+                      { label: 'Orcamento', value: `${formatCurrency(newCampaign.budget)}${newCampaign.budgetType === 'daily' ? '/dia' : ' total'}` },
+                      { label: 'Inicio', value: newCampaign.startDate || '-' },
+                      { label: 'Status', value: 'Rascunho' },
+                    ].map((item) => (
+                      <div key={item.label} className="flex justify-between">
+                        <span className="text-[10px] text-gray-400">{item.label}</span>
+                        <span className="text-[10px] text-gray-700 font-medium text-right truncate ml-2">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <button
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCreateCampaign}
+                  disabled={submitting}
+                  className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                >
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  {submitting ? 'Criando...' : 'Criar Campanha'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -84,7 +457,10 @@ export default function MetaAdsPage() {
             <RefreshCw className="w-4 h-4" />
             Sincronizar
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition-colors">
+          <button
+            onClick={() => setShowNewCampaign(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition-colors"
+          >
             <Plus className="w-4 h-4" />
             Nova Campanha
           </button>
@@ -147,7 +523,7 @@ export default function MetaAdsPage() {
       {/* Campaigns Tab */}
       {tab === 'campaigns' && (
         <div className="space-y-3">
-          {mockCampaigns.map((campaign, i) => (
+          {campaigns.map((campaign, i) => (
             <motion.div
               key={campaign.id}
               initial={{ opacity: 0, y: 10 }}
