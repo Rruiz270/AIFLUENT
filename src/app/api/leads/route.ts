@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
 const memoryLeads: Record<string, unknown>[] = []
 
@@ -25,6 +26,28 @@ async function ensureDefaultOrg(prisma: Awaited<ReturnType<typeof getPrisma>>) {
   } catch { /* ignore */ }
   return DEFAULT_ORG_ID
 }
+
+const createLeadSchema = z.object({
+  firstName: z.string().min(1, 'Nome obrigatorio'),
+  lastName: z.string().optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  phone: z.string().optional(),
+  whatsapp: z.string().optional(),
+  company: z.string().optional(),
+  jobTitle: z.string().optional(),
+  source: z.string().default('manual'),
+  temperature: z.enum(['cold', 'warm', 'hot']).default('warm'),
+  courseInterest: z.string().optional(),
+  languageLevel: z.string().optional(),
+  notes: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  organizationId: z.string().optional(),
+  stageId: z.string().optional(),
+  consultantId: z.string().optional(),
+  createdById: z.string().optional(),
+})
 
 export async function GET(request: NextRequest) {
   const prisma = await getPrisma()
@@ -89,32 +112,47 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json()
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'JSON invalido' }, { status: 400 })
+  }
+
+  const parsed = createLeadSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Dados invalidos', details: parsed.error.flatten().fieldErrors },
+      { status: 400 },
+    )
+  }
+
+  const data = parsed.data
 
   try {
     const prisma = await getPrisma()
     if (prisma) {
-      const orgId = body.organizationId || await ensureDefaultOrg(prisma)
+      const orgId = data.organizationId || await ensureDefaultOrg(prisma)
       const lead = await prisma.lead.create({
         data: {
-          firstName: body.firstName,
-          lastName: body.lastName,
-          email: body.email,
-          phone: body.phone,
-          whatsapp: body.whatsapp,
-          company: body.company,
-          jobTitle: body.jobTitle,
-          source: body.source || 'manual',
-          temperature: body.temperature || 'warm',
-          courseInterest: body.courseInterest,
-          languageLevel: body.languageLevel,
-          notes: body.notes,
-          city: body.city,
-          state: body.state,
-          stageId: body.stageId,
-          consultantId: body.consultantId,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          whatsapp: data.whatsapp,
+          company: data.company,
+          jobTitle: data.jobTitle,
+          source: data.source,
+          temperature: data.temperature,
+          courseInterest: data.courseInterest,
+          languageLevel: data.languageLevel,
+          notes: data.notes,
+          city: data.city,
+          state: data.state,
+          stageId: data.stageId,
+          consultantId: data.consultantId,
           organizationId: orgId,
-          createdById: body.createdById,
+          createdById: data.createdById,
         },
         include: {
           consultant: { select: { id: true, name: true, avatar: true } },
@@ -123,8 +161,8 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      if (body.tags && Array.isArray(body.tags) && body.tags.length > 0) {
-        for (const tagName of body.tags) {
+      if (data.tags && data.tags.length > 0) {
+        for (const tagName of data.tags) {
           let tag = await prisma.tag.findFirst({
             where: { name: tagName, organizationId: orgId },
           })
@@ -139,6 +177,19 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Audit log
+      try {
+        await prisma.auditLog.create({
+          data: {
+            action: 'lead_created',
+            entity: 'Lead',
+            entityId: lead.id,
+            details: JSON.stringify({ firstName: lead.firstName, source: lead.source }),
+            organizationId: orgId,
+          },
+        })
+      } catch {} // Don't fail if audit fails
+
       return NextResponse.json(lead, { status: 201 })
     }
   } catch (error) {
@@ -147,7 +198,7 @@ export async function POST(request: NextRequest) {
 
   const fakeLead = {
     id: `lead_${Date.now()}`,
-    ...body,
+    ...data,
     status: 'new',
     score: 0,
     country: 'Brasil',
@@ -155,7 +206,7 @@ export async function POST(request: NextRequest) {
     updatedAt: new Date().toISOString(),
     consultant: null,
     stage: null,
-    tags: (body.tags || []).map((t: string) => ({ tag: { name: t } })),
+    tags: (data.tags || []).map((t: string) => ({ tag: { name: t } })),
   }
   memoryLeads.unshift(fakeLead)
   return NextResponse.json(fakeLead, { status: 201 })

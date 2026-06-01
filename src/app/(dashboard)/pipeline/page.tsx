@@ -190,12 +190,11 @@ export default function PipelinePage() {
   const origins = computeOrigins(stages)
   const totalLeads = filteredStages.reduce((s, st) => s + st.leads.length, 0)
   const totalValue = filteredStages.flatMap((s) => s.leads).reduce((s, l) => s + (l.dealValue || 0), 0)
-  const activeFilters = [filterDate, filterTag, filterOwner, filterStatus].filter(Boolean).length
 
   return (
     <div className="flex h-[calc(100dvh-4rem)] -m-6">
       {/* Sidebar de Origens */}
-      <div className="w-[240px] border-r border-gray-200 bg-white flex flex-col shrink-0">
+      <div className="hidden lg:flex w-[240px] border-r border-gray-200 bg-white flex-col shrink-0">
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Origens</span>

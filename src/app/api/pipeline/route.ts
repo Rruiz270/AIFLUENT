@@ -1,6 +1,12 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
+const moveLeadSchema = z.object({
+  leadId: z.string().min(1, 'leadId e obrigatorio'),
+  stageId: z.string().min(1, 'stageId e obrigatorio'),
+  newOrder: z.number().int().nonnegative().optional().default(0),
+})
 
 export async function GET() {
   try {
@@ -33,19 +39,26 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { leadId, stageId, newOrder } = body
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'JSON invalido' }, { status: 400 })
+    }
 
-    if (!leadId || typeof leadId !== 'string') {
-      return NextResponse.json({ error: 'leadId e obrigatorio' }, { status: 400 })
+    const parsed = moveLeadSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Dados invalidos', details: parsed.error.flatten().fieldErrors },
+        { status: 400 },
+      )
     }
-    if (!stageId || typeof stageId !== 'string') {
-      return NextResponse.json({ error: 'stageId e obrigatorio' }, { status: 400 })
-    }
+
+    const { leadId, stageId, newOrder } = parsed.data
 
     await prisma.lead.update({
       where: { id: leadId },
-      data: { stageId, stageOrder: newOrder ?? 0 },
+      data: { stageId, stageOrder: newOrder },
     })
 
     return NextResponse.json({ success: true })

@@ -1,4 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const aiRequestSchema = z.object({
+  action: z.enum(['generate-campaign-message', 'score-lead', 'suggest-follow-up'], {
+    message: 'action invalida',
+  }),
+  channel: z.string().optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
+})
 
 const campaignTemplates: Record<string, string[]> = {
   whatsapp: [
@@ -17,14 +26,24 @@ const campaignTemplates: Record<string, string[]> = {
 }
 
 export async function POST(request: NextRequest) {
-  let body: Record<string, unknown>
+  let body: unknown
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'JSON invalido' }, { status: 400 })
   }
+
+  const parsed = aiRequestSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Dados invalidos', details: parsed.error.flatten().fieldErrors },
+      { status: 400 },
+    )
+  }
+
+  const { action, channel } = parsed.data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { action, channel, context } = body as { action?: string; channel?: string; context?: Record<string, any> }
+  const context = parsed.data.context as Record<string, any> | undefined
 
   if (action === 'generate-campaign-message') {
     const templates = campaignTemplates[channel || 'whatsapp'] || campaignTemplates.whatsapp

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -8,7 +9,7 @@ import {
   LayoutDashboard, Users, Kanban, Handshake, Inbox, MessageCircle,
   Megaphone, FileText, Phone, Send, Bot, Workflow, Target, CheckSquare,
   Trophy, UsersRound, BarChart3, Plug, Settings, Shield,
-  ChevronLeft, ChevronRight, LogOut,
+  ChevronLeft, ChevronRight, LogOut, X, Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -68,28 +69,11 @@ const navigation: NavSection[] = [
   },
 ]
 
-export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
+function SidebarContent({ collapsed, onLinkClick }: { collapsed: boolean; onLinkClick?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 72 : 280 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="relative flex h-dvh flex-col border-r border-gray-200 bg-white"
-    >
-      <div className="flex h-16 items-center gap-3 border-b border-gray-200 px-5">
-        <img src="/logo.png" alt="AIFLUENT" className="h-9 w-9 shrink-0 rounded-lg object-contain" />
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.span initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.15 }} className="gradient-text text-lg font-bold tracking-tight">
-              AIFLUENT
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </div>
-
+    <>
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
         {navigation.map((section) => (
           <div key={section.title}>
@@ -107,6 +91,7 @@ export function Sidebar() {
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      onClick={onLinkClick}
                       className={cn(
                         'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
                         collapsed && 'justify-center px-0',
@@ -160,6 +145,32 @@ export function Sidebar() {
           </AnimatePresence>
         </div>
       </div>
+    </>
+  )
+}
+
+export function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false)
+
+  return (
+    <motion.aside
+      initial={false}
+      animate={{ width: collapsed ? 72 : 280 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      className="relative hidden lg:flex h-dvh flex-col border-r border-gray-200 bg-white"
+    >
+      <div className="flex h-16 items-center gap-3 border-b border-gray-200 px-5">
+        <Image src="/logo.png" alt="AIFLUENT" width={36} height={36} className="shrink-0 rounded-lg object-contain" />
+        <AnimatePresence>
+          {!collapsed && (
+            <motion.span initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.15 }} className="gradient-text text-lg font-bold tracking-tight">
+              AIFLUENT
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <SidebarContent collapsed={collapsed} />
 
       <button
         onClick={() => setCollapsed((c) => !c)}
@@ -169,5 +180,58 @@ export function Sidebar() {
         {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
       </button>
     </motion.aside>
+  )
+}
+
+export function MobileMenuButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+      aria-label="Abrir menu"
+    >
+      <Menu className="h-5 w-5" />
+    </button>
+  )
+}
+
+export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+            onClick={onClose}
+          />
+          <motion.aside
+            initial={{ x: -280 }}
+            animate={{ x: 0 }}
+            exit={{ x: -280 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-white shadow-xl lg:hidden"
+          >
+            <div className="flex h-16 items-center justify-between border-b border-gray-200 px-5">
+              <div className="flex items-center gap-3">
+                <Image src="/logo.png" alt="AIFLUENT" width={36} height={36} className="shrink-0 rounded-lg object-contain" />
+                <span className="gradient-text text-lg font-bold tracking-tight">AIFLUENT</span>
+              </div>
+              <button
+                onClick={onClose}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                aria-label="Fechar menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <SidebarContent collapsed={false} onLinkClick={onClose} />
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
   )
 }

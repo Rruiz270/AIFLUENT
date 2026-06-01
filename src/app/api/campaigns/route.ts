@@ -1,6 +1,17 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 
+const createCampaignSchema = z.object({
+  name: z.string().min(1, 'Nome da campanha e obrigatorio').transform((v) => v.trim()),
+  type: z.string().default('broadcast'),
+  channel: z.string().default('whatsapp'),
+  subject: z.string().optional(),
+  content: z.string().optional(),
+  scheduledAt: z.string().optional().nullable(),
+  organizationId: z.string(),
+  createdById: z.string(),
+})
 
 export async function GET() {
   try {
@@ -21,22 +32,33 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-
-    if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
-      return NextResponse.json({ error: 'Nome da campanha e obrigatorio' }, { status: 400 })
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'JSON invalido' }, { status: 400 })
     }
+
+    const parsed = createCampaignSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Dados invalidos', details: parsed.error.flatten().fieldErrors },
+        { status: 400 },
+      )
+    }
+
+    const data = parsed.data
 
     const campaign = await prisma.campaign.create({
       data: {
-        name: body.name.trim(),
-        type: body.type || 'broadcast',
-        channel: body.channel || 'whatsapp',
-        subject: body.subject,
-        content: body.content,
-        scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : null,
-        organizationId: body.organizationId,
-        createdById: body.createdById,
+        name: data.name,
+        type: data.type,
+        channel: data.channel,
+        subject: data.subject,
+        content: data.content,
+        scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
+        organizationId: data.organizationId,
+        createdById: data.createdById,
       },
     })
 
