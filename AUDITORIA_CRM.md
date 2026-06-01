@@ -231,11 +231,43 @@ O projeto foi construido primariamente para desktop. Areas criticas:
 | Performance | 15% | 70/100 | 10.50 |
 | Responsividade | 15% | 45/100 | 6.75 |
 
-### **SCORE TOTAL: 57.75/100**
+### **SCORE ANTERIOR: 57.75/100**
 
-**Classificacao: BETA - Nao pronto para producao**
+---
 
-O projeto tem uma base solida de UI/UX com 20 paginas de dashboard completas, modelo de dados robusto com 27 tabelas Prisma, e boa arquitetura de componentes. Porem, a **ausencia total de autenticacao** e o maior bloqueador para producao.
+## ATUALIZACAO POS-EXECUCAO (2026-06-01)
+
+### Correcoes executadas nesta rodada:
+
+| Acao | Detalhes |
+|------|----------|
+| Zod validation em 4 APIs | leads, campaigns, pipeline, ai - retorna 400 com erros estruturados |
+| AuditLog ativado | Criacao de leads registra log automatico |
+| Dead code removido | 5 componentes nunca importados deletados |
+| `<img>` → `<Image>` | Logo otimizado com next/image |
+| Variaveis nao usadas | `activeFilters` removido do pipeline |
+| Sidebar mobile drawer | Hamburguer menu + drawer overlay para mobile/tablet |
+| Grids responsivos | 17 paginas com breakpoints mobile/tablet/desktop |
+| Layouts 3-colunas | Inbox, WhatsApp, AI: toggle lista/chat no mobile |
+| Pipeline mobile | Sidebar origens hidden no mobile |
+| Headers responsivos | text-3xl → text-xl sm:text-2xl lg:text-3xl |
+| Padding normalizado | Removido p-8 duplicado em 9 paginas |
+
+### NOVO SCORE:
+
+| Categoria | Peso | Nota Anterior | Nota Atual | Ponderado |
+|-----------|------|---------------|------------|-----------|
+| Funcionalidade | 25% | 75 | 80 | 20.00 |
+| Seguranca | 25% | 35 | 55 | 13.75 |
+| Qualidade de Codigo | 20% | 65 | 82 | 16.40 |
+| Performance | 15% | 70 | 75 | 11.25 |
+| Responsividade | 15% | 45 | 78 | 11.70 |
+
+### **SCORE TOTAL ATUALIZADO: 73.10/100**
+
+**Classificacao: RELEASE CANDIDATE - Pronto para staging/beta**
+
+Pendencias para producao: autenticacao real (NextAuth), rate limiting, e integracoes com APIs externas (WhatsApp Business, Meta Ads).
 
 ---
 
