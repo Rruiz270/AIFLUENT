@@ -27,15 +27,21 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        setError('Credenciais invalidas. Tente novamente.')
+        if (result.error === 'Configuration') {
+          setError('Erro de configuracao do servidor. Verifique AUTH_SECRET.')
+        } else if (result.error === 'CredentialsSignin') {
+          setError('Email ou senha incorretos.')
+        } else {
+          setError(`Erro: ${result.error}`)
+        }
         setLoading(false)
         return
       }
 
       router.push('/dashboard')
       router.refresh()
-    } catch {
-      setError('Erro ao fazer login. Tente novamente.')
+    } catch (err) {
+      setError(`Erro ao conectar: ${err instanceof Error ? err.message : 'Tente novamente'}`)
       setLoading(false)
     }
   }
