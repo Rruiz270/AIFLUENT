@@ -4,26 +4,13 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageSquare,
-  Send,
-  Paperclip,
-  Smile,
-  Mic,
   Phone,
   Video,
-  MoreVertical,
   Search,
-  Check,
-  CheckCheck,
-  Clock,
   Wifi,
   WifiOff,
   Users,
-  ArrowUpRight,
-  Zap,
-  Reply,
-  Image,
   FileText,
-  ChevronDown,
   X,
   User,
   Mail,
@@ -33,6 +20,9 @@ import {
   ArrowLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ChatMessageBubble } from '@/components/chat/chat-message-bubble'
+import { ChatInput } from '@/components/chat/chat-input'
+import { useChat, type ChatMessage } from '@/hooks/use-chat'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -48,15 +38,6 @@ type Conversation = {
   tags: string[]
 }
 
-type Message = {
-  id: string
-  text: string
-  time: string
-  sender: 'me' | 'them'
-  status: 'sent' | 'delivered' | 'read'
-  type: 'text' | 'image' | 'document' | 'audio'
-}
-
 type QuickReply = {
   id: string
   label: string
@@ -66,67 +47,65 @@ type QuickReply = {
 // ── Mock Data ───────────────────────────────────────────────────────────────
 
 const mockConversations: Conversation[] = [
-  { id: 'c1', name: 'Maria Silva', phone: '(11) 99876-5432', avatar: 'MS', lastMessage: 'Olá, gostaria de saber mais sobre o MBA...', lastMessageTime: '10:32', unreadCount: 3, status: 'online', tags: ['quente', 'MBA'] },
-  { id: 'c2', name: 'Carlos Eduardo', phone: '(21) 98765-4321', avatar: 'CE', lastMessage: 'Vocês têm bolsa de estudo?', lastMessageTime: '09:45', unreadCount: 1, status: 'online', tags: ['bolsa'] },
-  { id: 'c3', name: 'Ana Paula Ferreira', phone: '(31) 97654-3210', avatar: 'AF', lastMessage: 'Perfeito, vou pensar e te retorno!', lastMessageTime: '09:12', unreadCount: 0, status: 'offline', tags: ['pós-graduação'] },
-  { id: 'c4', name: 'Roberto Lima', phone: '(41) 96543-2109', avatar: 'RL', lastMessage: 'Qual o valor da mensalidade?', lastMessageTime: 'Ontem', unreadCount: 0, status: 'offline', tags: ['graduação'] },
-  { id: 'c5', name: 'Juliana Martins', phone: '(51) 95432-1098', avatar: 'JM', lastMessage: 'Obrigada pela informação!', lastMessageTime: 'Ontem', unreadCount: 0, status: 'offline', tags: ['inglês'] },
-  { id: 'c6', name: 'Pedro Henrique', phone: '(61) 94321-0987', avatar: 'PH', lastMessage: 'Quando começa a próxima turma?', lastMessageTime: 'Ontem', unreadCount: 2, status: 'online', tags: ['quente', 'data science'] },
-  { id: 'c7', name: 'Fernanda Costa', phone: '(71) 93210-9876', avatar: 'FC', lastMessage: 'Enviei os documentos por email', lastMessageTime: '25/05', unreadCount: 0, status: 'offline', tags: ['matrícula'] },
-  { id: 'c8', name: 'Diego Santos', phone: '(81) 92109-8765', avatar: 'DS', lastMessage: 'Bom dia! Vi o anúncio no Instagram', lastMessageTime: '24/05', unreadCount: 0, status: 'offline', tags: ['instagram'] },
+  { id: 'c1', name: 'Maria Silva', phone: '(11) 99876-5432', avatar: 'MS', lastMessage: 'Ola, gostaria de saber mais sobre o MBA...', lastMessageTime: '10:32', unreadCount: 3, status: 'online', tags: ['quente', 'MBA'] },
+  { id: 'c2', name: 'Carlos Eduardo', phone: '(21) 98765-4321', avatar: 'CE', lastMessage: 'Voces tem bolsa de estudo?', lastMessageTime: '09:45', unreadCount: 1, status: 'online', tags: ['bolsa'] },
+  { id: 'c3', name: 'Ana Paula Ferreira', phone: '(31) 97654-3210', avatar: 'AF', lastMessage: 'Perfeito, vou pensar e te retorno!', lastMessageTime: '09:12', unreadCount: 0, status: 'offline', tags: ['pos-graduacao'] },
+  { id: 'c4', name: 'Roberto Lima', phone: '(41) 96543-2109', avatar: 'RL', lastMessage: 'Qual o valor da mensalidade?', lastMessageTime: 'Ontem', unreadCount: 0, status: 'offline', tags: ['graduacao'] },
+  { id: 'c5', name: 'Juliana Martins', phone: '(51) 95432-1098', avatar: 'JM', lastMessage: 'Obrigada pela informacao!', lastMessageTime: 'Ontem', unreadCount: 0, status: 'offline', tags: ['ingles'] },
+  { id: 'c6', name: 'Pedro Henrique', phone: '(61) 94321-0987', avatar: 'PH', lastMessage: 'Quando comeca a proxima turma?', lastMessageTime: 'Ontem', unreadCount: 2, status: 'online', tags: ['quente', 'data science'] },
+  { id: 'c7', name: 'Fernanda Costa', phone: '(71) 93210-9876', avatar: 'FC', lastMessage: 'Enviei os documentos por email', lastMessageTime: '25/05', unreadCount: 0, status: 'offline', tags: ['matricula'] },
+  { id: 'c8', name: 'Diego Santos', phone: '(81) 92109-8765', avatar: 'DS', lastMessage: 'Bom dia! Vi o anuncio no Instagram', lastMessageTime: '24/05', unreadCount: 0, status: 'offline', tags: ['instagram'] },
 ]
 
-const initialMockMessages: Record<string, Message[]> = {
+const initialMockMessages: Record<string, ChatMessage[]> = {
   c1: [
-    { id: 'm1', text: 'Olá Maria! Bem-vinda ao AIFLUENT. Como posso te ajudar?', time: '10:00', sender: 'me', status: 'read', type: 'text' },
-    { id: 'm2', text: 'Oi! Vi o anúncio de vocês no Instagram sobre o MBA em Gestão.', time: '10:15', sender: 'them', status: 'read', type: 'text' },
-    { id: 'm3', text: 'Que legal! O MBA em Gestão Empresarial é um dos nossos cursos mais procurados. Ele tem duração de 18 meses, com aulas aos sábados.', time: '10:18', sender: 'me', status: 'read', type: 'text' },
-    { id: 'm4', text: 'Qual o valor do investimento?', time: '10:25', sender: 'them', status: 'read', type: 'text' },
-    { id: 'm5', text: 'O valor é de 24x de R$ 890,00 ou à vista com 15% de desconto. Temos também condições especiais para empresas parceiras!', time: '10:28', sender: 'me', status: 'read', type: 'text' },
-    { id: 'm6', text: 'Olá, gostaria de saber mais sobre o MBA...', time: '10:32', sender: 'them', status: 'read', type: 'text' },
-    { id: 'm7', text: 'Vocês têm alguma turma iniciando em julho?', time: '10:32', sender: 'them', status: 'read', type: 'text' },
-    { id: 'm8', text: 'Sim, temos! A próxima turma está prevista para 15 de julho. Posso reservar sua vaga?', time: '10:33', sender: 'them', status: 'read', type: 'text' },
+    { id: 'm1', direction: 'outbound', content: 'Ola Maria! Bem-vinda ao AIFLUENT. Como posso te ajudar?', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:00' },
+    { id: 'm2', direction: 'inbound', content: 'Oi! Vi o anuncio de voces no Instagram sobre o MBA em Gestao.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:15' },
+    { id: 'm3', direction: 'outbound', content: 'Que legal! O MBA em Gestao Empresarial e um dos nossos cursos mais procurados. Ele tem duracao de 18 meses, com aulas aos sabados.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:18' },
+    { id: 'm4', direction: 'inbound', content: 'Qual o valor do investimento?', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:25' },
+    { id: 'm5', direction: 'outbound', content: 'O valor e de 24x de R$ 890,00 ou a vista com 15% de desconto. Temos tambem condicoes especiais para empresas parceiras!', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:28' },
+    { id: 'm6', direction: 'inbound', content: 'Ola, gostaria de saber mais sobre o MBA...', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:32' },
+    { id: 'm7', direction: 'inbound', content: 'Voces tem alguma turma iniciando em julho?', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:32' },
+    { id: 'm8', direction: 'inbound', content: 'Sim, temos! A proxima turma esta prevista para 15 de julho. Posso reservar sua vaga?', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:33' },
   ],
   c2: [
-    { id: 'm1', text: 'Boa tarde, Carlos! Tudo bem?', time: '09:30', sender: 'me', status: 'read', type: 'text' },
-    { id: 'm2', text: 'Tudo ótimo! Estou interessado em fazer uma pós-graduação.', time: '09:35', sender: 'them', status: 'read', type: 'text' },
-    { id: 'm3', text: 'Vocês têm bolsa de estudo?', time: '09:45', sender: 'them', status: 'read', type: 'text' },
+    { id: 'm1', direction: 'outbound', content: 'Boa tarde, Carlos! Tudo bem?', type: 'text', status: 'read', aiGenerated: false, createdAt: '09:30' },
+    { id: 'm2', direction: 'inbound', content: 'Tudo otimo! Estou interessado em fazer uma pos-graduacao.', type: 'text', status: 'read', aiGenerated: false, createdAt: '09:35' },
+    { id: 'm3', direction: 'inbound', content: 'Voces tem bolsa de estudo?', type: 'text', status: 'read', aiGenerated: false, createdAt: '09:45' },
   ],
 }
 
 const quickReplies: QuickReply[] = [
-  { id: 'qr1', label: 'Boas-vindas', text: 'Olá! Bem-vindo(a) ao AIFLUENT. Em que posso ajudar?' },
-  { id: 'qr2', label: 'Horários', text: 'Nosso horário de atendimento é de segunda a sexta, das 8h às 18h, e sábados das 8h às 12h.' },
-  { id: 'qr3', label: 'Catálogo', text: 'Vou enviar nosso catálogo de cursos atualizado. Um momento!' },
-  { id: 'qr4', label: 'Follow-up', text: 'Olá! Estou entrando em contato para saber se ficou alguma dúvida sobre nossa conversa anterior.' },
-  { id: 'qr5', label: 'Agendamento', text: 'Gostaria de agendar uma visita presencial ou uma chamada de vídeo para tirar suas dúvidas?' },
-]
-
-const EMOJI_LIST = [
-  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '😊', '😇',
-  '🥰', '😍', '🤩', '😘', '😋', '😜', '🤗', '🤔', '👍', '👋',
+  { id: 'qr1', label: 'Boas-vindas', text: 'Ola! Bem-vindo(a) ao AIFLUENT. Em que posso ajudar?' },
+  { id: 'qr2', label: 'Horarios', text: 'Nosso horario de atendimento e de segunda a sexta, das 8h as 18h, e sabados das 8h as 12h.' },
+  { id: 'qr3', label: 'Catalogo', text: 'Vou enviar nosso catalogo de cursos atualizado. Um momento!' },
+  { id: 'qr4', label: 'Follow-up', text: 'Ola! Estou entrando em contato para saber se ficou alguma duvida sobre nossa conversa anterior.' },
+  { id: 'qr5', label: 'Agendamento', text: 'Gostaria de agendar uma visita presencial ou uma chamada de video para tirar suas duvidas?' },
 ]
 
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function WhatsAppPage() {
   const [selectedConv, setSelectedConv] = useState<string>('c1')
-  const [message, setMessage] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [showQuickReplies, setShowQuickReplies] = useState(false)
   const [showContactInfo, setShowContactInfo] = useState(false)
   const [showBulkSend, setShowBulkSend] = useState(false)
-  const [showEmojiPanel, setShowEmojiPanel] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
   const [apiStatus] = useState<'connected' | 'disconnected'>('connected')
-  const [allMessages, setAllMessages] = useState<Record<string, Message[]>>(initialMockMessages)
+  const [allMessages, setAllMessages] = useState<Record<string, ChatMessage[]>>(initialMockMessages)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const imageInputRef = useRef<HTMLInputElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
 
   const currentConv = mockConversations.find((c) => c.id === selectedConv)
-  const messages = allMessages[selectedConv] ?? []
+  const currentMessages = allMessages[selectedConv] ?? []
+
+  const {
+    input,
+    setInput,
+    recording,
+    showEmoji,
+    setShowEmoji,
+    handleAudioToggle,
+  } = useChat([])
 
   const filteredConversations = searchTerm
     ? mockConversations.filter(
@@ -138,14 +117,14 @@ export default function WhatsAppPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [currentMessages])
 
   const now = () => {
     const d = new Date()
     return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
   }
 
-  const addMessage = useCallback((msg: Message) => {
+  const addMessage = useCallback((msg: ChatMessage) => {
     setAllMessages((prev) => ({
       ...prev,
       [selectedConv]: [...(prev[selectedConv] ?? []), msg],
@@ -153,91 +132,58 @@ export default function WhatsAppPage() {
   }, [selectedConv])
 
   const handleSend = useCallback(() => {
-    if (!message.trim()) return
-    const newMsg: Message = {
+    if (!input.trim()) return
+    const newMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
-      text: message.trim(),
-      time: now(),
-      sender: 'me',
-      status: 'sent',
+      direction: 'outbound',
+      content: input.trim(),
       type: 'text',
+      status: 'sent',
+      aiGenerated: false,
+      createdAt: now(),
     }
     addMessage(newMsg)
-    setMessage('')
-    setShowEmojiPanel(false)
-  }, [message, addMessage])
+    setInput('')
+    setShowEmoji(false)
+  }, [input, addMessage, setInput, setShowEmoji])
 
   const handleQuickReply = (text: string) => {
-    setMessage(text)
+    setInput(text)
     setShowQuickReplies(false)
-    inputRef.current?.focus()
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleFileUpload = useCallback((file: File, type: 'document' | 'image') => {
     addMessage({
       id: `msg-${Date.now()}`,
-      text: `[Arquivo: ${file.name}]`,
-      time: now(),
-      sender: 'me',
+      direction: 'outbound',
+      content: type === 'image' ? '[Imagem enviada]' : `[Arquivo: ${file.name}]`,
+      type: type === 'image' ? 'image' : 'document',
       status: 'sent',
-      type: 'document',
+      aiGenerated: false,
+      createdAt: now(),
     })
-    e.target.value = ''
-  }
+  }, [addMessage])
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    addMessage({
-      id: `msg-${Date.now()}`,
-      text: '[Imagem enviada]',
-      time: now(),
-      sender: 'me',
-      status: 'sent',
-      type: 'image',
-    })
-    e.target.value = ''
-  }
-
-  const handleAudioToggle = () => {
-    if (isRecording) {
-      setIsRecording(false)
+  const handleAudioToggleLocal = useCallback(() => {
+    if (recording) {
       addMessage({
         id: `msg-${Date.now()}`,
-        text: '[Audio enviado]',
-        time: now(),
-        sender: 'me',
-        status: 'sent',
+        direction: 'outbound',
+        content: '[Audio enviado]',
         type: 'audio',
+        status: 'sent',
+        aiGenerated: false,
+        createdAt: now(),
       })
-    } else {
-      setIsRecording(true)
     }
-  }
-
-  const handleEmojiClick = (emoji: string) => {
-    setMessage((prev) => prev + emoji)
-    inputRef.current?.focus()
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
+    handleAudioToggle()
+  }, [recording, addMessage, handleAudioToggle])
 
   // Stats
   const totalUnread = mockConversations.reduce((s, c) => s + c.unreadCount, 0)
 
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)]">
-      {/* Hidden file inputs */}
-      <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
-      <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-
       {/* Top bar with stats */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -262,8 +208,8 @@ export default function WhatsAppPage() {
           {[
             { label: 'Mensagens hoje', value: '128' },
             { label: 'Taxa de resposta', value: '94%' },
-            { label: 'Tempo médio', value: '3min' },
-            { label: 'Não lidas', value: String(totalUnread) },
+            { label: 'Tempo medio', value: '3min' },
+            { label: 'Nao lidas', value: String(totalUnread) },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
               <p className="text-lg font-bold text-gray-900">{stat.value}</p>
@@ -358,7 +304,7 @@ export default function WhatsAppPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-900">{currentConv.name}</p>
                   <p className="text-xs text-gray-400">
-                    {currentConv.status === 'online' ? 'Online' : 'Visto por último recentemente'}
+                    {currentConv.status === 'online' ? 'Online' : 'Visto por ultimo recentemente'}
                   </p>
                 </div>
               </div>
@@ -385,36 +331,16 @@ export default function WhatsAppPage() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.map((msg) => (
-              <div
+            {currentMessages.map((msg) => (
+              <ChatMessageBubble
                 key={msg.id}
-                className={cn(
-                  'flex',
-                  msg.sender === 'me' ? 'justify-end' : 'justify-start'
-                )}
-              >
-                <div
-                  className={cn(
-                    'max-w-[70%] rounded-2xl px-4 py-2.5 text-sm',
-                    msg.sender === 'me'
-                      ? 'bg-sky-500/80 text-white rounded-br-sm'
-                      : 'bg-gray-50 text-gray-800 rounded-bl-sm'
-                  )}
-                >
-                  <p className="leading-relaxed">{msg.text}</p>
-                  <div className={cn(
-                    'flex items-center gap-1 mt-1',
-                    msg.sender === 'me' ? 'justify-end' : 'justify-start'
-                  )}>
-                    <span className="text-[10px] opacity-60">{msg.time}</span>
-                    {msg.sender === 'me' && (
-                      msg.status === 'read' ? <CheckCheck className="w-3 h-3 text-blue-300" /> :
-                      msg.status === 'delivered' ? <CheckCheck className="w-3 h-3 opacity-60" /> :
-                      <Check className="w-3 h-3 opacity-60" />
-                    )}
-                  </div>
-                </div>
-              </div>
+                direction={msg.direction}
+                content={msg.content}
+                timestamp={msg.createdAt}
+                status={msg.status}
+                aiGenerated={msg.aiGenerated}
+                senderName={msg.sender}
+              />
             ))}
             <div ref={messagesEndRef} />
           </div>
@@ -451,127 +377,17 @@ export default function WhatsAppPage() {
             )}
           </AnimatePresence>
 
-          {/* Emoji Panel */}
-          <AnimatePresence>
-            {showEmojiPanel && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="px-4 pb-2"
-              >
-                <div className="bg-white border border-gray-200 rounded-xl p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-gray-500">Emojis</p>
-                    <button onClick={() => setShowEmojiPanel(false)} className="text-gray-400 hover:text-gray-900 transition-colors">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {EMOJI_LIST.map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => handleEmojiClick(emoji)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-lg"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Recording indicator */}
-          {isRecording && (
-            <div className="px-4 pb-2">
-              <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2">
-                <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                <span className="text-sm text-rose-700 font-medium">Gravando...</span>
-                <button
-                  onClick={handleAudioToggle}
-                  className="ml-auto text-xs text-rose-600 hover:text-rose-800 font-medium"
-                >
-                  Parar e enviar
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Message input */}
-          <div className="p-3 border-t border-gray-200">
-            <div className="flex items-end gap-2">
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
-                  title="Enviar arquivo"
-                >
-                  <Paperclip className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => imageInputRef.current?.click()}
-                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
-                  title="Enviar imagem"
-                >
-                  <Image className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setShowQuickReplies(!showQuickReplies)}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    showQuickReplies ? 'text-sky-400 bg-sky-500/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                  )}
-                >
-                  <Zap className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex-1 relative">
-                <input
-                  ref={inputRef}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Digite uma mensagem..."
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:outline-none transition-colors"
-                />
-              </div>
-
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setShowEmojiPanel(!showEmojiPanel)}
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    showEmojiPanel ? 'text-sky-400 bg-sky-500/10' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                  )}
-                >
-                  <Smile className="w-4 h-4" />
-                </button>
-                {message.trim() ? (
-                  <button
-                    onClick={handleSend}
-                    className="p-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-xl transition-colors"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleAudioToggle}
-                    className={cn(
-                      'p-2.5 rounded-xl transition-colors',
-                      isRecording
-                        ? 'bg-rose-500 hover:bg-rose-400 text-white'
-                        : 'bg-sky-500 hover:bg-sky-400 text-white'
-                    )}
-                  >
-                    <Mic className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+          {/* Shared Chat Input */}
+          <ChatInput
+            value={input}
+            onChange={setInput}
+            onSend={handleSend}
+            onFileUpload={handleFileUpload}
+            onAudioToggle={handleAudioToggleLocal}
+            isRecording={recording}
+            showEmoji={showEmoji}
+            onToggleEmoji={() => setShowEmoji(!showEmoji)}
+          />
         </div>
 
         {/* Right: Contact info panel */}

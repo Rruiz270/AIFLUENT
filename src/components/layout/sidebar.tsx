@@ -11,6 +11,7 @@ import {
   Trophy, UsersRound, BarChart3, Plug, Settings, Shield,
   ChevronLeft, ChevronRight, LogOut, X, Menu,
 } from 'lucide-react'
+import { signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
 interface NavItem { label: string; href: string; icon: React.ElementType; badge?: string }
@@ -138,7 +139,14 @@ function SidebarContent({ collapsed, onLinkClick }: { collapsed: boolean; onLink
           </AnimatePresence>
           <AnimatePresence>
             {!collapsed && (
-              <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Sair">
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Sair"
+              >
                 <LogOut className="h-4 w-4" />
               </motion.button>
             )}

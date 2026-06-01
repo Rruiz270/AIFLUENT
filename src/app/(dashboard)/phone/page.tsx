@@ -6,7 +6,6 @@ import {
   Phone, PhoneCall, PhoneOff, PhoneMissed, PhoneOutgoing, PhoneIncoming,
   Mic, MicOff, Pause, Play, Clock, Search,
   MoreHorizontal, Download, FileText, Bot, Sparkles, BarChart3,
-  ArrowDownLeft, Hash, Star,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

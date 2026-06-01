@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/theme-provider'
+import { SessionProvider } from '@/components/session-provider'
 import './globals.css'
 
 const inter = Inter({
@@ -33,9 +34,11 @@ export default function RootLayout({
         `}} />
       </head>
       <body className="min-h-dvh bg-background text-foreground antialiased">
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </SessionProvider>
         <Toaster position="top-right" />
       </body>
     </html>

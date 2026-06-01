@@ -355,8 +355,8 @@ export default function PipelinePage() {
               <KanbanBoard
                 filteredStages={filteredStages}
                 onMoveLead={handleMoveLead}
-                onAddLead={(stageId) => console.log('Add to:', stageId)}
-                onCardClick={(card) => console.log('Click:', card.id)}
+                onAddLead={() => { /* TODO: open add-lead modal */ }}
+                onCardClick={() => { /* TODO: open lead detail */ }}
                 onAddStage={handleAddStage}
                 onRenameStage={handleRenameStage}
                 onUpdateStageColor={handleUpdateStageColor}

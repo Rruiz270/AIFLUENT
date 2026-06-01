@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Bell, UserPlus, Sparkles, Command, ChevronDown, LogOut, Settings, User, Menu,
 } from 'lucide-react'
+import { signOut } from 'next-auth/react'
 import { CommandPalette } from './command-palette'
 
 const routeTitles: Record<string, string> = {
@@ -104,7 +105,7 @@ export function Header({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
                       </a>
                     ))}
                     <div className="mt-1 border-t border-gray-100 pt-1">
-                      <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-rose-500 transition-colors hover:bg-rose-50">
+                      <button onClick={() => signOut({ callbackUrl: '/login' })} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-rose-500 transition-colors hover:bg-rose-50">
                         <LogOut className="h-4 w-4" /> Sair
                       </button>
                     </div>

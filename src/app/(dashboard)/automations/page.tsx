@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Workflow, Plus, Play, Pause, Zap, Clock, Users, MessageCircle,
-  Tag, ArrowRight, MoreHorizontal, Activity, Sparkles,
+  Tag, ArrowRight, MoreHorizontal, Activity,
   GitBranch, Target, Bell, Bot, CheckCircle2,
   ChevronRight, Filter, Search,
 } from 'lucide-react'

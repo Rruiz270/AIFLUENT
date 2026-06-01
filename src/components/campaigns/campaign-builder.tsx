@@ -16,12 +16,10 @@ import {
   Sparkles,
   Plus,
   X,
-  Smile,
   Tag,
   Filter,
   Rocket,
   Calendar,
-  Wand2,
   Layout,
   ChevronRight,
   Search,
@@ -248,7 +246,6 @@ Atenciosamente,
         <div className="px-5 pt-4 pb-2 border-b border-gray-200 shrink-0">
           <div className="flex items-center gap-1">
             {STEPS.map((s, idx) => {
-              const StepIcon = s.icon
               const isActive = s.id === step
               const isCompleted = s.id < step
               return (

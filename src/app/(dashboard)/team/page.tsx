@@ -34,7 +34,6 @@ const roleConfig = {
 }
 
 export default function TeamPage() {
-  const [view, setView] = useState<'grid' | 'list'>('grid')
   const [members, setMembers] = useState<TeamMember[]>(initialMembers)
   const [showAddMember, setShowAddMember] = useState(false)
   const [successMsg, setSuccessMsg] = useState(false)

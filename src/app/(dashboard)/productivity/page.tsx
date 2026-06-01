@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Trophy, Star, Flame, Zap, Target, Crown, Medal, Award,
-  TrendingUp, Users, Clock, CheckCircle2, Calendar,
-  ArrowUpRight, BarChart3, Sparkles, ChevronRight,
+  TrendingUp, Users, Clock, CheckCircle2,
+  ArrowUpRight, Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react'
@@ -11,13 +12,32 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    // Simulated auth -- redirect to dashboard
-    await new Promise((r) => setTimeout(r, 800))
-    router.push('/dashboard')
+    setError('')
+
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        setError('Credenciais invalidas. Tente novamente.')
+        setLoading(false)
+        return
+      }
+
+      router.push('/dashboard')
+      router.refresh()
+    } catch {
+      setError('Erro ao fazer login. Tente novamente.')
+      setLoading(false)
+    }
   }
 
   return (
@@ -71,6 +91,13 @@ export default function LoginPage() {
               CRM Inteligente
             </p>
           </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-600">
+              {error}
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">

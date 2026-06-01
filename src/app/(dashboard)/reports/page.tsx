@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  BarChart3, TrendingUp, Users, Target, MessageSquare,
-  Download, Calendar, ArrowUpRight, ArrowDownRight,
+  TrendingUp, Users, Target, MessageSquare,
+  Download, ArrowUpRight, ArrowDownRight,
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,

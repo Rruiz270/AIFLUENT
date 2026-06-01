@@ -13,10 +13,8 @@ import {
   Copy,
   Pencil,
   Trash2,
-  MoreHorizontal,
   X,
   Check,
-  Zap,
   BarChart3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
