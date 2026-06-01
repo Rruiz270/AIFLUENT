@@ -28,7 +28,7 @@ interface RecentLead {
   date: string
 }
 
-const mockLeads: RecentLead[] = [
+const initialLeads: RecentLead[] = [
   { id: '1', name: 'Maria Silva', source: 'instagram', course: 'Administração', temperature: 'hot', score: 92, consultant: 'Ana Souza', date: '2026-05-27' },
   { id: '2', name: 'João Oliveira', source: 'google', course: 'Engenharia', temperature: 'warm', score: 78, consultant: 'Carlos Lima', date: '2026-05-27' },
   { id: '3', name: 'Fernanda Costa', source: 'whatsapp', course: 'Direito', temperature: 'hot', score: 88, consultant: 'Ana Souza', date: '2026-05-27' },
@@ -141,7 +141,7 @@ export function RecentLeads() {
             </tr>
           </thead>
           <tbody>
-            {mockLeads.map((lead, index) => {
+            {initialLeads.map((lead, index) => {
               const SourceIcon = sourceIcons[lead.source]
 
               return (

@@ -36,7 +36,7 @@ interface Activity {
   timeAgo: string
 }
 
-const mockActivities: Activity[] = [
+const initialActivities: Activity[] = [
   {
     id: '1',
     type: 'lead_created',
@@ -198,10 +198,10 @@ export function ActivityTimeline() {
       </div>
 
       <div className="relative space-y-0">
-        {mockActivities.map((activity, index) => {
+        {initialActivities.map((activity, index) => {
           const Icon = activityIcons[activity.type]
           const colors = activityColors[activity.type]
-          const isLast = index === mockActivities.length - 1
+          const isLast = index === initialActivities.length - 1
 
           return (
             <motion.div

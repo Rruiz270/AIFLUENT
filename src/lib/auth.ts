@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
+import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
 export type UserRole = 'admin' | 'gestor' | 'operador'
@@ -10,41 +11,67 @@ export function canAccess(userRole: UserRole, requiredRole: UserRole): boolean {
   return roleHierarchy[userRole] >= roleHierarchy[requiredRole]
 }
 
-// Predefined users for the initial deployment
-// In production, these should come from the database with bcrypt-hashed passwords
-const USERS = [
-  {
-    id: 'user-admin',
-    name: 'AIFLUENT Admin',
-    email: 'admin@aifluent.com',
-    role: 'admin' as UserRole,
-  },
-  {
-    id: 'user-gestor',
-    name: 'Gestor AIFLUENT',
-    email: 'gestor@aifluent.com',
-    role: 'gestor' as UserRole,
-  },
-  {
-    id: 'user-operador',
-    name: 'Operador AIFLUENT',
-    email: 'operador@aifluent.com',
-    role: 'operador' as UserRole,
-  },
-]
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+})
 
-// Predefined passwords for initial deployment
-// TODO: migrate to bcrypt-hashed passwords stored in the database
-const VALID_PASSWORDS: Record<string, string> = {
-  'admin@aifluent.com': 'Admin@2026',
-  'gestor@aifluent.com': 'Gestor@2026',
-  'operador@aifluent.com': 'Operador@2026',
+async function getPrismaForAuth() {
+  try {
+    const { prisma } = await import('@/lib/prisma')
+    return prisma
+  } catch {
+    return null
+  }
 }
 
-const loginSchema = z.object({
-  email: z.string().email('Email invalido'),
-  password: z.string().min(6, 'Senha deve ter no minimo 6 caracteres'),
-})
+async function ensureDefaultUsers(
+  prisma: NonNullable<Awaited<ReturnType<typeof getPrismaForAuth>>>,
+) {
+  const count = await prisma.user.count()
+  if (count > 0) return
+
+  // First time setup - create default org and users
+  let org = await prisma.organization.findFirst()
+  if (!org) {
+    org = await prisma.organization.create({
+      data: { name: 'AIFLUENT', slug: 'aifluent' },
+    })
+  }
+
+  const users = [
+    {
+      name: 'AIFLUENT Admin',
+      email: 'admin@aifluent.com',
+      password: 'Admin@2026',
+      role: 'admin',
+    },
+    {
+      name: 'Gestor AIFLUENT',
+      email: 'gestor@aifluent.com',
+      password: 'Gestor@2026',
+      role: 'gestor',
+    },
+    {
+      name: 'Operador AIFLUENT',
+      email: 'operador@aifluent.com',
+      password: 'Operador@2026',
+      role: 'operador',
+    },
+  ]
+
+  for (const u of users) {
+    await prisma.user.create({
+      data: {
+        name: u.name,
+        email: u.email,
+        passwordHash: await bcrypt.hash(u.password, 10),
+        role: u.role,
+        organizationId: org.id,
+      },
+    })
+  }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET || 'k9$mP2xR7vL4nQ8wJ5tY1zA3bF6cH0dG',
@@ -61,14 +88,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null
 
         const { email, password } = parsed.data
+        const prisma = await getPrismaForAuth()
+        if (!prisma) return null
 
-        // Find user by email (case-insensitive)
-        const user = USERS.find(u => u.email.toLowerCase() === email.toLowerCase())
+        // Ensure default users exist on first run
+        try {
+          await ensureDefaultUsers(prisma)
+        } catch {
+          /* ignore seed errors */
+        }
+
+        // Find user in database
+        const user = await prisma.user.findUnique({
+          where: { email: email.toLowerCase() },
+        })
         if (!user) return null
+        if (!user.isActive) return null
 
-        // Validate password against known credentials
-        const expectedPassword = VALID_PASSWORDS[email.toLowerCase()]
-        if (!expectedPassword || password !== expectedPassword) return null
+        // Verify password with bcrypt
+        const valid = await bcrypt.compare(password, user.passwordHash)
+        if (!valid) return null
+
+        // Update lastLoginAt
+        try {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          })
+        } catch {
+          /* ignore update errors */
+        }
 
         return {
           id: user.id,
@@ -96,10 +145,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     session({ session, token }) {
       if (session.user) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const user = session.user as any
-        user.role = token.role
-        user.id = token.id
+        const u = session.user as unknown as Record<string, unknown>
+        u.role = token.role
+        u.id = token.id
       }
       return session
     },

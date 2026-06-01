@@ -22,7 +22,7 @@ interface ActiveCampaign {
   openRate: number
 }
 
-const mockCampaigns: ActiveCampaign[] = [
+const initialCampaigns: ActiveCampaign[] = [
   {
     id: '1',
     name: 'Vestibular 2026.2 - Lembrete',
@@ -117,7 +117,7 @@ export function ActiveCampaigns() {
       </div>
 
       <div className="space-y-4">
-        {mockCampaigns.map((campaign, index) => {
+        {initialCampaigns.map((campaign, index) => {
           const ChannelIcon = channelIcons[campaign.channel]
           const statusCfg = statusConfig[campaign.status]
           const progress = campaign.total > 0 ? (campaign.sent / campaign.total) * 100 : 0

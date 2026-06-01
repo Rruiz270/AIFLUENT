@@ -34,54 +34,7 @@ const ORIGINS = [
   { label: 'Landing Page', count: 0 },
 ]
 
-const MOCK_LEADS: { stage: string; leads: KanbanCard[] }[] = [
-  {
-    stage: 'Base',
-    leads: [
-      { id: 'l1', name: 'Paola Mendes', photo: null, phone: '11999881234', whatsapp: '11999881234', email: 'paola@email.com', source: 'whatsapp', consultant: 'Gustavo', lastInteraction: '2026-05-27T14:00:00Z', temperature: 'cold', aiScore: 42, tags: ['Botao whatsapp site'], courseInterest: 'Ingles Business', status: 'new', entryDate: '2026-05-27T10:00:00Z', lastMessage: 'Qual o seu nome c...', lastMessageAt: '27/05', dealValue: 0, messageCount: 0, totalMessages: 2, daysSinceEntry: '27h' },
-      { id: 'l2', name: 'Jovan Costa', photo: null, phone: '11988776655', whatsapp: '11988776655', email: null, source: 'whatsapp', consultant: 'Gustavo', lastInteraction: '2026-05-26T09:00:00Z', temperature: 'cold', aiScore: 35, tags: ['Botao whatsapp site'], courseInterest: 'Espanhol', status: 'new', entryDate: '2026-05-26T08:00:00Z', lastMessage: 'so pro dia 5 de junho...', lastMessageAt: '26/05', dealValue: 0, messageCount: 0, totalMessages: 2, daysSinceEntry: '2d' },
-      { id: 'l3', name: '48996604048', photo: null, phone: '48996604048', whatsapp: '48996604048', email: null, source: 'whatsapp', consultant: 'Gustavo', lastInteraction: '2026-05-26T15:00:00Z', temperature: 'cold', aiScore: 20, tags: ['Botao whatsapp site'], courseInterest: null, status: 'new', entryDate: '2026-05-26T14:00:00Z', lastMessage: 'Mensagem nao su...', lastMessageAt: '26/05', dealValue: 0, messageCount: 0, totalMessages: 2, daysSinceEntry: '3d' },
-      { id: 'l14', name: 'achilen', photo: null, phone: '11977665544', whatsapp: '11977665544', email: null, source: 'website', consultant: null, lastInteraction: null, temperature: 'cold', aiScore: 18, tags: ['Home_NEW'], courseInterest: null, status: 'new', entryDate: '2026-05-20T10:00:00Z', lastMessage: 'Certo, referente a parc...', lastMessageAt: '20/05', dealValue: 0, messageCount: 0, totalMessages: 2, daysSinceEntry: '7d' },
-    ],
-  },
-  {
-    stage: 'Prospeccao',
-    leads: [
-      { id: 'l4', name: 'Michelle Rocha da Silva', photo: null, phone: '21988554433', whatsapp: '21988554433', email: 'michelle@email.com', source: 'website', consultant: 'Ana', lastInteraction: '2026-05-28T09:05:00Z', temperature: 'warm', aiScore: 58, tags: ['Home_NEW'], courseInterest: 'Ingles Conversacao', status: 'contacted', entryDate: '2026-05-22T10:00:00Z', lastMessage: 'Bom dia, tudo bem?', lastMessageAt: '09:05', dealValue: 0, messageCount: 0, totalMessages: 12, daysSinceEntry: '19h' },
-      { id: 'l5', name: 'Zibordi', photo: null, phone: '31977443322', whatsapp: '31977443322', email: null, source: 'whatsapp', consultant: 'Carlos', lastInteraction: '2026-05-28T09:00:00Z', temperature: 'warm', aiScore: 52, tags: ['Botao whatsapp site'], courseInterest: 'Espanhol Business', status: 'contacted', entryDate: '2026-05-20T08:00:00Z', lastMessage: 'Ola Zibordi, bom di...', lastMessageAt: '09:00', dealValue: 0, messageCount: 0, totalMessages: 12, daysSinceEntry: '19h' },
-      { id: 'l6', name: 'Mariana', photo: null, phone: '41966332211', whatsapp: '41966332211', email: 'mariana@email.com', source: 'whatsapp', consultant: 'Pedro', lastInteraction: '2026-05-26T14:00:00Z', temperature: 'warm', aiScore: 55, tags: ['Botao whatsapp site'], courseInterest: 'Ingles', status: 'contacted', entryDate: '2026-05-25T09:00:00Z', lastMessage: 'Ola, Mariana. B...', lastMessageAt: '26/05', dealValue: 0, messageCount: 0, totalMessages: 12, daysSinceEntry: '3d' },
-      { id: 'l15', name: 'Vivi', photo: null, phone: '51955221100', whatsapp: '51955221100', email: null, source: 'whatsapp', consultant: 'Maria', lastInteraction: '2026-05-26T11:00:00Z', temperature: 'warm', aiScore: 48, tags: ['Botao whatsapp site'], courseInterest: null, status: 'contacted', entryDate: '2026-05-24T08:00:00Z', lastMessage: 'Ola, Vivi. Ulti...', lastMessageAt: '26/05', dealValue: 0, messageCount: 0, totalMessages: 12, daysSinceEntry: '3d' },
-    ],
-  },
-  {
-    stage: 'Conexao',
-    leads: [
-      { id: 'l7', name: 'Karine Ferreira', photo: null, phone: '51955443322', whatsapp: '51955443322', email: 'karine@email.com', source: 'meta_ads', consultant: 'Ana', lastInteraction: '2026-05-15T10:00:00Z', temperature: 'warm', aiScore: 72, tags: ['ex_alunos_MSI_300_50%'], courseInterest: 'Ingles Business', status: 'qualified', entryDate: '2026-05-08T10:00:00Z', lastMessage: 'Boa tarde, tudo ...', lastMessageAt: '15/05', dealValue: 3000, messageCount: 0, totalMessages: 0, daysSinceEntry: '20d' },
-      { id: 'l8', name: 'Milene', photo: null, phone: '61944332211', whatsapp: '61944332211', email: null, source: 'meta_ads', consultant: 'Ana', lastInteraction: '2026-05-15T14:00:00Z', temperature: 'warm', aiScore: 68, tags: ['ex_alunos_MSI_50%off'], courseInterest: 'Espanhol', status: 'qualified', entryDate: '2026-05-10T09:00:00Z', lastMessage: 'Boa tarde, tudo ...', lastMessageAt: '15/05', dealValue: 0, messageCount: 0, totalMessages: 0, daysSinceEntry: '20d' },
-      { id: 'l9', name: 'ANTONIO', photo: null, phone: '71933221100', whatsapp: '71933221100', email: null, source: 'meta_ads', consultant: 'Carlos', lastInteraction: '2026-05-15T16:00:00Z', temperature: 'hot', aiScore: 78, tags: ['Black_MSI_EX', 'no duplicates'], courseInterest: 'Ingles Conversacao', status: 'qualified', entryDate: '2026-05-12T08:00:00Z', lastMessage: 'Boa tarde, tudo ...', lastMessageAt: '15/05', dealValue: 0, messageCount: 0, totalMessages: 0, daysSinceEntry: '20d' },
-    ],
-  },
-  {
-    stage: 'Proposta',
-    leads: [
-      { id: 'l10', name: 'Natalia Souza', photo: null, phone: '11922334455', whatsapp: '11922334455', email: 'natalia@empresa.com', source: 'referral', consultant: 'Pedro', lastInteraction: '2026-05-27T16:00:00Z', temperature: 'hot', aiScore: 85, tags: ['Home_NEW', 'RMKT 1 MES'], courseInterest: 'Ingles Business', status: 'negotiating', entryDate: '2026-05-15T10:00:00Z', lastMessage: 'Paguei por algo que na...', lastMessageAt: '27/05', dealValue: 36928, messageCount: 3, totalMessages: 8, daysSinceEntry: '13d' },
-      { id: 'l11', name: 'Beatriz Bastos', photo: null, phone: '21911223344', whatsapp: '21911223344', email: 'beatriz@email.com', source: 'meta_ads', consultant: 'Maria', lastInteraction: '2026-05-26T10:00:00Z', temperature: 'hot', aiScore: 82, tags: ['LP - Ingles MSI', 'RMKT 1 MES'], courseInterest: 'Ingles Preparatorio', status: 'negotiating', entryDate: '2026-05-18T09:00:00Z', lastMessage: 'Ola, Beatriz Bast...', lastMessageAt: '26/05', dealValue: 0, messageCount: 2, totalMessages: 6, daysSinceEntry: '10d' },
-    ],
-  },
-  {
-    stage: 'Negociacao',
-    leads: [
-      { id: 'l12', name: 'Allana Torres', photo: null, phone: '31900112233', whatsapp: '31900112233', email: 'allana@email.com', source: 'meta_ads', consultant: 'Pedro', lastInteraction: '2026-05-27T11:00:00Z', temperature: 'hot', aiScore: 91, tags: ['ultima semana cliente'], courseInterest: 'Ingles Business', status: 'negotiating', entryDate: '2026-05-10T10:00:00Z', lastMessage: 'Agradeco a oportunidade...', lastMessageAt: '27/05', dealValue: 4500, messageCount: 5, totalMessages: 15, daysSinceEntry: '18d' },
-    ],
-  },
-  {
-    stage: 'Fechamento',
-    leads: [
-      { id: 'l13', name: 'Vinicius Pinheiro', photo: null, phone: '41988001122', whatsapp: '41988001122', email: 'vinicius@empresa.com', source: 'meta_ads', consultant: 'Carlos', lastInteraction: '2026-05-27T09:00:00Z', temperature: 'hot', aiScore: 95, tags: ['MSI', 'RENOVACAO MSI'], courseInterest: 'Ingles Business', status: 'converted', entryDate: '2026-05-01T10:00:00Z', lastMessage: 'Boa tarde, tudo ...', lastMessageAt: '27/05', dealValue: 8900, messageCount: 8, totalMessages: 22, daysSinceEntry: '27d' },
-    ],
-  },
-  { stage: 'Perdido', leads: [] },
-]
+// No mock data — pipeline loads from API only. Empty columns shown when no leads exist.
 
 function computeOrigins(stages: PipelineStage[]) {
   const all = stages.flatMap((s) => s.leads)
@@ -145,8 +98,7 @@ export default function PipelinePage() {
     } catch { /* fallback */ }
 
     const defaultStages: PipelineStage[] = STAGES.map((s, i) => {
-      const mockStage = MOCK_LEADS.find((m) => m.stage === s.name)
-      return { id: `stage-${i}`, name: s.name, color: s.color, order: i, isWon: s.isWon, isLost: s.isLost, leads: mockStage?.leads || [] }
+      return { id: `stage-${i}`, name: s.name, color: s.color, order: i, isWon: s.isWon, isLost: s.isLost, leads: [] }
     })
     setStages(defaultStages)
     setLoading(false)

@@ -119,7 +119,7 @@ const VARIABLES = [
   { label: 'Telefone', value: '{{telefone}}' },
 ]
 
-const MOCK_TAGS = ['matricula-2026', 'vestibular', 'pos-graduacao', 'ead', 'presencial', 'bolsista', 'indicacao', 'evento-maio']
+const INITIAL_TAGS = ['matricula-2026', 'vestibular', 'pos-graduacao', 'ead', 'presencial', 'bolsista', 'indicacao', 'evento-maio']
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -486,7 +486,7 @@ Atenciosamente,
                       Selecione as tags
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {MOCK_TAGS.map((tag) => {
+                      {INITIAL_TAGS.map((tag) => {
                         const selected = form.audience.tags.includes(tag)
                         return (
                           <button

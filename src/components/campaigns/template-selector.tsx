@@ -33,9 +33,9 @@ interface TemplateSelectorProps {
   onClose: () => void
 }
 
-// ── Mock data ────────────────────────────────────────────────────────────────
+// ── Initial data ────────────────────────────────────────────────────────────
 
-const mockTemplates: MessageTemplate[] = [
+const initialTemplates: MessageTemplate[] = [
   {
     id: 't1',
     name: 'Boas-vindas novo lead',
@@ -136,7 +136,7 @@ export function TemplateSelector({ channel, onSelect, onClose }: TemplateSelecto
   const [previewId, setPreviewId] = React.useState<string | null>(null)
 
   const filtered = React.useMemo(() => {
-    return mockTemplates.filter((t) => {
+    return initialTemplates.filter((t) => {
       if (channel && t.channel !== channel) return false
       if (selectedCategory && t.category !== selectedCategory) return false
       if (search) {
@@ -153,8 +153,8 @@ export function TemplateSelector({ channel, onSelect, onClose }: TemplateSelecto
 
   const categories = React.useMemo(() => {
     const base = channel
-      ? mockTemplates.filter((t) => t.channel === channel)
-      : mockTemplates
+      ? initialTemplates.filter((t) => t.channel === channel)
+      : initialTemplates
     return [...new Set(base.map((t) => t.category))]
   }, [channel])
 
