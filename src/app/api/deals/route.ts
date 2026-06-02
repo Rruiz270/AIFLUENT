@@ -18,10 +18,19 @@ export async function GET(request: Request) {
   const rl = checkRateLimit(request, apiLimiter); if (rl) return rl
   const { error, session } = await requireAuth(); if (error) return error
   const orgId = getOrgId(session)
+  const userRole = (session!.user as Record<string, unknown>).role as string
+  const userId = (session!.user as Record<string, unknown>).id as string
   try {
     const { prisma } = await import('@/lib/prisma')
+    const where: Record<string, unknown> = orgId ? { lead: { organizationId: orgId } } : {}
+
+    // Role-based data isolation: operador sees only deals linked to their leads
+    if (userRole === 'operador' && userId) {
+      where.lead = { ...((where.lead as Record<string, unknown>) || {}), consultantId: userId }
+    }
+
     const deals = await prisma.deal.findMany({
-      where: orgId ? { lead: { organizationId: orgId } } : {},
+      where,
       orderBy: { createdAt: 'desc' },
       take: 100,
       include: {

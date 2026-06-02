@@ -17,10 +17,19 @@ export async function GET(request: Request) {
   const rl = checkRateLimit(request, apiLimiter); if (rl) return rl
   const { error, session } = await requireAuth(); if (error) return error
   const orgId = getOrgId(session)
+  const userRole = (session!.user as Record<string, unknown>).role as string
+  const userId = (session!.user as Record<string, unknown>).id as string
   try {
     const { prisma } = await import('@/lib/prisma')
+    const where: Record<string, unknown> = orgId ? { organizationId: orgId } : {}
+
+    // Role-based data isolation: operador sees only tasks assigned to or created by them
+    if (userRole === 'operador' && userId) {
+      where.OR = [{ assigneeId: userId }, { creatorId: userId }]
+    }
+
     const tasks = await prisma.task.findMany({
-      where: orgId ? { organizationId: orgId } : {},
+      where,
       orderBy: { createdAt: 'desc' },
       take: 50,
       include: {

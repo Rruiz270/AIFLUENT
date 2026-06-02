@@ -19,6 +19,7 @@ export const PERMISSIONS = {
   'page:reports': ['admin', 'gestor'],
   'page:relatorios': ['admin', 'gestor'],
   'page:settings': ['admin'],
+  'page:configuracoes': ['admin'],
   'page:security': ['admin'],
   'page:integrations': ['admin'],
   'page:ai-assistant': ['admin', 'gestor'],

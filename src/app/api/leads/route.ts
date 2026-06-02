@@ -59,6 +59,8 @@ export async function GET(request: NextRequest) {
   if (error) return error
 
   const orgId = getOrgId(session)
+  const userRole = (session!.user as Record<string, unknown>).role as string
+  const userId = (session!.user as Record<string, unknown>).id as string
   const prisma = await getPrisma()
 
   if (prisma) {
@@ -76,6 +78,11 @@ export async function GET(request: NextRequest) {
 
       const where: Record<string, unknown> = {}
       if (orgId) where.organizationId = orgId
+
+      // Role-based data isolation: operador sees only their assigned leads
+      if (userRole === 'operador' && userId) {
+        where.consultantId = userId
+      }
       if (search) {
         where.OR = [
           { firstName: { contains: search } },

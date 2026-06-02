@@ -24,11 +24,17 @@ export async function POST(request: NextRequest) {
     const { prisma } = await import('@/lib/prisma')
     const orgId = getOrgId(session)
     const userId = (session!.user as Record<string, unknown>).id as string
+    const userRole = (session!.user as Record<string, unknown>).role as string
 
     // Verify lead belongs to org
     const lead = await prisma.lead.findUnique({ where: { id: parsed.data.leadId } })
     if (!lead) return NextResponse.json({ error: 'Lead nao encontrado' }, { status: 404 })
     if (orgId && lead.organizationId !== orgId) return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+
+    // Role-based isolation: operador can only create activities on their leads
+    if (userRole === 'operador' && userId && lead.consultantId !== userId) {
+      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+    }
 
     const activity = await prisma.activity.create({
       data: { ...parsed.data, userId },
@@ -54,11 +60,18 @@ export async function GET(request: NextRequest) {
 
     const { prisma } = await import('@/lib/prisma')
     const orgId = getOrgId(session)
+    const userRole = (session!.user as Record<string, unknown>).role as string
+    const userId = (session!.user as Record<string, unknown>).id as string
 
     // Verify lead belongs to org
     const lead = await prisma.lead.findUnique({ where: { id: leadId } })
     if (!lead) return NextResponse.json({ error: 'Lead nao encontrado' }, { status: 404 })
     if (orgId && lead.organizationId !== orgId) return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+
+    // Role-based isolation: operador can only view activities on their leads
+    if (userRole === 'operador' && userId && lead.consultantId !== userId) {
+      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
+    }
 
     const activities = await prisma.activity.findMany({
       where: { leadId },

@@ -12,14 +12,28 @@ export async function GET(request: Request) {
   try {
     const { prisma } = await import('@/lib/prisma')
     const orgId = (session!.user as Record<string, unknown>).organizationId as string | undefined
-    const where = orgId ? { organizationId: orgId } : {}
+    const userRole = (session!.user as Record<string, unknown>).role as string
+    const userId = (session!.user as Record<string, unknown>).id as string
+
+    // Base org filter
+    const leadWhere: Record<string, unknown> = orgId ? { organizationId: orgId } : {}
+    const dealWhere: Record<string, unknown> = { status: 'open', ...(orgId ? { lead: { organizationId: orgId } } : {}) }
+    const wonDealWhere: Record<string, unknown> = { status: 'won', ...(orgId ? { lead: { organizationId: orgId } } : {}) }
+    const campaignWhere: Record<string, unknown> = orgId ? { organizationId: orgId } : {}
+
+    // Role-based data isolation: operador sees only their own metrics
+    if (userRole === 'operador' && userId) {
+      leadWhere.consultantId = userId
+      dealWhere.lead = { ...((dealWhere.lead as Record<string, unknown>) || {}), consultantId: userId }
+      wonDealWhere.lead = { ...((wonDealWhere.lead as Record<string, unknown>) || {}), consultantId: userId }
+    }
 
     const [totalLeads, newToday, activeDeals, totalRevenue, campaignsSent] = await Promise.all([
-      prisma.lead.count({ where }),
-      prisma.lead.count({ where: { ...where, createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } } }),
-      prisma.deal.count({ where: { status: 'open', ...(orgId ? { lead: { organizationId: orgId } } : {}) } }),
-      prisma.deal.aggregate({ _sum: { value: true }, where: { status: 'won', ...(orgId ? { lead: { organizationId: orgId } } : {}) } }),
-      prisma.campaign.count({ where }),
+      prisma.lead.count({ where: leadWhere }),
+      prisma.lead.count({ where: { ...leadWhere, createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } } }),
+      prisma.deal.count({ where: dealWhere }),
+      prisma.deal.aggregate({ _sum: { value: true }, where: wonDealWhere }),
+      prisma.campaign.count({ where: campaignWhere }),
     ])
 
     return NextResponse.json({
