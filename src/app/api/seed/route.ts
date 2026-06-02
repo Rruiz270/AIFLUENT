@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, checkRateLimit } from '@/lib/api-auth'
 import { seedLimiter } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 
 const firstNames = [
@@ -274,7 +275,7 @@ export async function POST(request: NextRequest) {
     stats: { leads: 200, campaigns: campaignNames.length, templates: templateData.length, tasks: 15 },
   })
   } catch (error) {
-    console.error('POST /api/seed error:', error)
+    logger.error('POST /api/seed error', error)
     return NextResponse.json({ error: 'Erro ao executar seed' }, { status: 500 })
   }
 }

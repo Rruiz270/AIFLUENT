@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth, checkRateLimit } from '@/lib/api-auth'
+import { requireAuth, checkRateLimit, getOrgId } from '@/lib/api-auth'
+import { logger } from '@/lib/logger'
 
 const createCampaignSchema = z.object({
   name: z.string().min(1, 'Nome da campanha e obrigatorio').transform((v) => v.trim()),
@@ -18,11 +19,14 @@ export async function GET(request: NextRequest) {
   const rateLimited = checkRateLimit(request)
   if (rateLimited) return rateLimited
 
-  const { error } = await requireAuth()
+  const { error, session } = await requireAuth()
   if (error) return error
+
+  const orgId = getOrgId(session)
 
   try {
     const campaigns = await prisma.campaign.findMany({
+      where: orgId ? { organizationId: orgId } : {},
       include: {
         createdBy: { select: { id: true, name: true, avatar: true } },
         _count: { select: { leads: true, sequences: true } },
@@ -32,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(campaigns)
   } catch (error) {
-    console.error('GET /api/campaigns error:', error)
+    logger.error('GET /api/campaigns error', error)
     return NextResponse.json({ error: 'Erro ao buscar campanhas' }, { status: 500 })
   }
 }
@@ -41,8 +45,10 @@ export async function POST(request: NextRequest) {
   const rateLimited = checkRateLimit(request)
   if (rateLimited) return rateLimited
 
-  const { error: authError } = await requireAuth('gestor')
+  const { error: authError, session: postSession } = await requireAuth('gestor')
   if (authError) return authError
+
+  const postOrgId = getOrgId(postSession)
 
   try {
     let body: unknown
@@ -70,14 +76,14 @@ export async function POST(request: NextRequest) {
         subject: data.subject,
         content: data.content,
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
-        organizationId: data.organizationId,
+        organizationId: postOrgId || data.organizationId,
         createdById: data.createdById,
       },
     })
 
     return NextResponse.json(campaign, { status: 201 })
   } catch (error) {
-    console.error('POST /api/campaigns error:', error)
+    logger.error('POST /api/campaigns error', error)
     return NextResponse.json({ error: 'Erro ao criar campanha' }, { status: 500 })
   }
 }

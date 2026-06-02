@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, checkRateLimit } from '@/lib/api-auth'
 import { whatsapp } from '@/lib/whatsapp'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   // Webhook verification (no auth required - Meta calls this)
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     const parsed = whatsapp.processWebhookPayload(body)
     if (parsed) {
       // TODO: persist incoming message to database / trigger automation
-      console.log('[WhatsApp Webhook] Incoming message:', parsed)
+      logger.info('[WhatsApp Webhook] Incoming message', { parsed })
     }
     // Meta requires 200 OK response for all webhook deliveries
     return NextResponse.json({ status: 'received' }, { status: 200 })

@@ -65,3 +65,11 @@ export async function requireAuth(requiredRole?: UserRole) {
 
   return { error: null, session }
 }
+
+/**
+ * Extract the organizationId from the authenticated session.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getOrgId(session: any): string | null {
+  return (session?.user?.organizationId as string) || null
+}

@@ -18,29 +18,13 @@ interface ChatMessage {
   actions?: { label: string; icon: React.ElementType }[]
 }
 
-// Initial demo data — replace with API when backend ready
+// TODO: Connect to /api/ai when backend is ready
 const initialChat: ChatMessage[] = [
   {
     id: '1',
     role: 'assistant',
     content: 'Ola! Sou seu copiloto comercial com IA. Posso ajudar com analise de leads, sugestoes de campanhas, resumo de conversas, previsao de fechamento e muito mais. Como posso ajudar?',
-    timestamp: '10:00',
-  },
-  {
-    id: '2',
-    role: 'user',
-    content: 'Quais leads tem mais chance de fechar essa semana?',
-    timestamp: '10:02',
-  },
-  {
-    id: '3',
-    role: 'assistant',
-    content: 'Analisei sua base e identifiquei **5 leads com alta probabilidade de fechamento** esta semana:\n\n1. **Ana Carolina Silva** - Score 92/100 - Pediu proposta, agendou retorno quinta\n2. **Camila Rodrigues** - Score 87/100 - Engajamento alto, quer comecar rapido\n3. **Pedro Santos** - Score 85/100 - Negociando valor, demonstrou urgencia\n4. **Ricardo Oliveira** - Score 82/100 - Aula experimental agendada\n5. **Juliana Santos** - Score 78/100 - Retorno agendado para amanha\n\nReceita potencial estimada: **R$8.940** (baseado nos cursos de interesse).\n\nSugestao: Priorize Ana e Camila — ambas demonstraram sinais de urgencia.',
-    timestamp: '10:02',
-    actions: [
-      { label: 'Ver detalhes dos leads', icon: Users },
-      { label: 'Criar follow-up automatico', icon: Zap },
-    ],
+    timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
   },
 ]
 

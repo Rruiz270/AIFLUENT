@@ -64,14 +64,8 @@ const objectiveOptions = [
   'Engagement',
 ]
 
-const initialCampaigns: AdCampaign[] = [
-  { id: '1', name: 'Business English - Lead Gen', platform: 'both', objective: 'Lead Generation', status: 'active', budget: 150, budgetType: 'daily', spend: 3247, impressions: 145000, clicks: 4350, leads: 187, conversions: 34, cpc: 0.75, cpl: 17.36, ctr: 3.0, roas: 4.2 },
-  { id: '2', name: 'Espanhol Intensivo - Awareness', platform: 'instagram', objective: 'Awareness', status: 'active', budget: 80, budgetType: 'daily', spend: 1890, impressions: 230000, clicks: 6900, leads: 92, conversions: 18, cpc: 0.27, cpl: 20.54, ctr: 3.0, roas: 3.1 },
-  { id: '3', name: 'Remarketing - Visitantes Site', platform: 'facebook', objective: 'Conversions', status: 'active', budget: 50, budgetType: 'daily', spend: 1120, impressions: 45000, clicks: 2250, leads: 56, conversions: 23, cpc: 0.50, cpl: 20.0, ctr: 5.0, roas: 6.8 },
-  { id: '4', name: 'Francês para Negócios', platform: 'instagram', objective: 'Lead Generation', status: 'paused', budget: 100, budgetType: 'daily', spend: 2150, impressions: 98000, clicks: 2940, leads: 78, conversions: 12, cpc: 0.73, cpl: 27.56, ctr: 3.0, roas: 2.4 },
-  { id: '5', name: 'Campanha Corporativo B2B', platform: 'facebook', objective: 'Lead Generation', status: 'active', budget: 5000, budgetType: 'lifetime', spend: 3800, impressions: 67000, clicks: 3350, leads: 145, conversions: 28, cpc: 1.13, cpl: 26.21, ctr: 5.0, roas: 3.8 },
-  { id: '6', name: 'Kids & Teens - Matriculas', platform: 'both', objective: 'Traffic', status: 'draft', budget: 120, budgetType: 'daily', spend: 0, impressions: 0, clicks: 0, leads: 0, conversions: 0, cpc: 0, cpl: 0, ctr: 0, roas: 0 },
-]
+// TODO: Connect to /api/meta-ads when backend is ready
+const initialCampaigns: AdCampaign[] = []
 
 const statusConfig = {
   active: { label: 'Ativo', color: 'text-emerald-400 bg-emerald-500/10' },

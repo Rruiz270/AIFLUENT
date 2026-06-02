@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth, checkRateLimit } from '@/lib/api-auth'
+import { requireAuth, checkRateLimit, getOrgId } from '@/lib/api-auth'
+import { logger } from '@/lib/logger'
 
 const moveLeadSchema = z.object({
   leadId: z.string().min(1, 'leadId e obrigatorio'),
@@ -13,12 +14,14 @@ export async function GET(request: NextRequest) {
   const rateLimited = checkRateLimit(request)
   if (rateLimited) return rateLimited
 
-  const { error } = await requireAuth()
+  const { error, session } = await requireAuth()
   if (error) return error
+
+  const orgId = getOrgId(session)
 
   try {
     const pipeline = await prisma.pipeline.findFirst({
-      where: { isDefault: true },
+      where: { isDefault: true, ...(orgId ? { organizationId: orgId } : {}) },
       include: {
         stages: {
           orderBy: { order: 'asc' },
@@ -39,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(pipeline)
   } catch (error) {
-    console.error('GET /api/pipeline error:', error)
+    logger.error('GET /api/pipeline error', error)
     return NextResponse.json({ error: 'Erro ao buscar pipeline' }, { status: 500 })
   }
 }
@@ -76,7 +79,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('PATCH /api/pipeline error:', error)
+    logger.error('PATCH /api/pipeline error', error)
     return NextResponse.json({ error: 'Erro ao mover lead' }, { status: 500 })
   }
 }

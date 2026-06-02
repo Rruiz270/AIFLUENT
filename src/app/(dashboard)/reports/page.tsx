@@ -12,43 +12,22 @@ import {
 } from 'recharts'
 import { cn } from '@/lib/utils'
 
-const monthlyData = [
-  { month: 'Jan', leads: 320, conversoes: 28, receita: 42000 },
-  { month: 'Fev', leads: 380, conversoes: 35, receita: 52500 },
-  { month: 'Mar', leads: 450, conversoes: 42, receita: 63000 },
-  { month: 'Abr', leads: 410, conversoes: 38, receita: 57000 },
-  { month: 'Mai', leads: 520, conversoes: 52, receita: 78000 },
-  { month: 'Jun', leads: 480, conversoes: 48, receita: 72000 },
+// TODO: Connect to /api/reports when backend is ready
+const monthlyData: { month: string; leads: number; conversoes: number; receita: number }[] = []
+
+const sourceData: { name: string; value: number; color: string }[] = []
+
+const consultantData: { name: string; leads: number; conversoes: number; taxa: number }[] = []
+
+const campaignData: { name: string; enviados: number; abertos: number; respondidos: number; convertidos: number }[] = [
 ]
 
-const sourceData = [
-  { name: 'Instagram', value: 35, color: '#E1306C' },
-  { name: 'Facebook', value: 25, color: '#1877F2' },
-  { name: 'Google', value: 20, color: '#4285F4' },
-  { name: 'WhatsApp', value: 10, color: '#25D366' },
-  { name: 'Indicação', value: 7, color: '#8B5CF6' },
-  { name: 'Eventos', value: 3, color: '#F59E0B' },
-]
-
-const consultantData = [
-  { name: 'Maria', leads: 85, conversoes: 12, taxa: 14.1 },
-  { name: 'Carlos', leads: 72, conversoes: 9, taxa: 12.5 },
-  { name: 'Ana', leads: 68, conversoes: 11, taxa: 16.2 },
-  { name: 'Pedro', leads: 55, conversoes: 8, taxa: 14.5 },
-]
-
-const campaignData = [
-  { name: 'Black Friday', enviados: 4200, abertos: 2800, respondidos: 420, convertidos: 85 },
-  { name: 'Semana Espanhol', enviados: 2100, abertos: 1400, respondidos: 280, convertidos: 42 },
-  { name: 'Reativação', enviados: 3500, abertos: 1750, respondidos: 210, convertidos: 35 },
-  { name: 'Welcome Series', enviados: 1800, abertos: 1260, respondidos: 360, convertidos: 72 },
-]
-
+// TODO: Connect to /api/reports when backend is ready
 const kpis = [
-  { title: 'Total de Leads', value: '2.560', change: 12.5, icon: Users, positive: true },
-  { title: 'Taxa de Conversão', value: '8.7%', change: 2.3, icon: Target, positive: true },
-  { title: 'Receita Gerada', value: 'R$ 364.500', change: 18.2, icon: TrendingUp, positive: true },
-  { title: 'Campanhas Enviadas', value: '12.800', change: -3.1, icon: MessageSquare, positive: false },
+  { title: 'Total de Leads', value: '0', change: 0, icon: Users, positive: true },
+  { title: 'Taxa de Conversao', value: '0%', change: 0, icon: Target, positive: true },
+  { title: 'Receita Gerada', value: 'R$ 0', change: 0, icon: TrendingUp, positive: true },
+  { title: 'Campanhas Enviadas', value: '0', change: 0, icon: MessageSquare, positive: false },
 ]
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; name: string; color: string }>; label?: string }) {

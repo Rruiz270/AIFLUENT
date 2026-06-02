@@ -28,27 +28,10 @@ interface Conversation {
   aiSuggestion?: string
 }
 
-// Initial demo data — replace with API when backend ready
-const initialConversations: Conversation[] = [
-  { id: '1', channel: 'whatsapp', lead: { name: 'Ana Carolina Silva', phone: '+55 11 99999-1234' }, lastMessage: 'Oi, gostaria de saber mais sobre o curso de ingles!', lastMessageAt: '2 min', unreadCount: 3, status: 'open', priority: 'urgent', assignee: 'Maria', aiSuggestion: 'Responder com informacoes do curso Business English' },
-  { id: '2', channel: 'instagram', lead: { name: 'Pedro Henrique', phone: '+55 21 98888-5678' }, lastMessage: 'Vi o anuncio de voces, qual o valor da mensalidade?', lastMessageAt: '15 min', unreadCount: 1, status: 'open', priority: 'high' },
-  { id: '3', channel: 'messenger', lead: { name: 'Juliana Santos', phone: '+55 31 97777-9012' }, lastMessage: 'Obrigada! Vou pensar e retorno amanha.', lastMessageAt: '1h', unreadCount: 0, status: 'pending', assignee: 'Carlos', priority: 'normal' },
-  { id: '4', channel: 'whatsapp', lead: { name: 'Ricardo Oliveira', phone: '+55 41 96666-3456' }, lastMessage: 'Perfeito, podemos agendar uma aula experimental?', lastMessageAt: '2h', unreadCount: 0, status: 'open', assignee: 'Ana', priority: 'normal' },
-  { id: '5', channel: 'instagram', lead: { name: 'Fernanda Costa', phone: '+55 51 95555-7890' }, lastMessage: 'Tem turma no horario da noite?', lastMessageAt: '3h', unreadCount: 2, status: 'open', priority: 'normal' },
-  { id: '6', channel: 'whatsapp', lead: { name: 'Lucas Mendes', phone: '+55 11 94444-1234' }, lastMessage: 'Pode me enviar o contrato por favor?', lastMessageAt: '5h', unreadCount: 0, status: 'resolved', assignee: 'Maria', priority: 'normal' },
-  { id: '7', channel: 'messenger', lead: { name: 'Camila Rodrigues' }, lastMessage: 'Quero comecar o mais rapido possivel!', lastMessageAt: '6h', unreadCount: 1, status: 'open', priority: 'high', aiSuggestion: 'Lead quente - sugerir agendamento imediato' },
-  { id: '8', channel: 'whatsapp', lead: { name: 'Marcos Silva', phone: '+55 21 93333-5678' }, lastMessage: 'Boa tarde! Recebi o material, muito bom.', lastMessageAt: '1d', unreadCount: 0, status: 'pending', priority: 'normal' },
-]
+// TODO: Connect to /api/conversations when backend is ready
+const initialConversations: Conversation[] = []
 
-const initialMessages: ChatMessage[] = [
-  { id: '1', direction: 'inbound', content: 'Ola! Vi o anuncio de voces no Instagram sobre o curso de ingles para negocios.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:30' },
-  { id: '2', direction: 'inbound', content: 'Gostaria de saber mais informacoes sobre valores e horarios disponiveis.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:31' },
-  { id: '3', direction: 'outbound', content: 'Ola Ana! Tudo bem? Que bom que voce se interessou pelo nosso curso Business English! Temos turmas nos seguintes horarios:\n\n- Segunda e Quarta: 19h-20h30\n- Terca e Quinta: 18h-19h30\n- Sabado: 9h-12h\n\nO investimento e de R$397/mes com material incluso.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:45', sender: 'Maria Consultora' },
-  { id: '4', direction: 'inbound', content: 'Que legal! O horario de segunda e quarta seria perfeito pra mim.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:48' },
-  { id: '5', direction: 'inbound', content: 'Voces tem aula experimental?', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:48' },
-  { id: '6', direction: 'outbound', content: 'Sim! Oferecemos uma aula experimental gratuita para voce conhecer nossa metodologia. Posso agendar para a proxima segunda-feira as 19h?', type: 'text', status: 'delivered', aiGenerated: true, createdAt: '10:52', sender: 'IA' },
-  { id: '7', direction: 'inbound', content: 'Oi, gostaria de saber mais sobre o curso de ingles!', type: 'text', status: 'read', aiGenerated: false, createdAt: '11:15' },
-]
+const initialMessages: ChatMessage[] = []
 
 const channelIcons = {
   whatsapp: MessageCircle,

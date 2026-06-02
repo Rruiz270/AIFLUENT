@@ -26,16 +26,8 @@ interface CallRecord {
   agent: string
 }
 
-// Initial demo data — replace with API when backend ready
-const initialCalls: CallRecord[] = [
-  { id: '1', direction: 'outbound', status: 'completed', leadName: 'Ana Silva', phone: '+55 11 99999-1234', duration: 342, recordingUrl: '#', transcription: 'Conversa sobre curso Business English...', aiSummary: 'Lead demonstrou interesse no curso noturno. Pediu para enviar proposta por email. Agendou retorno para quinta-feira.', aiSentiment: 'positive', startedAt: '11:30', agent: 'Maria Consultora' },
-  { id: '2', direction: 'inbound', status: 'completed', leadName: 'Carlos Mendes', phone: '+55 21 98888-5678', duration: 186, recordingUrl: '#', aiSummary: 'Duvidas sobre formas de pagamento. Interessado no plano anual com desconto.', aiSentiment: 'positive', startedAt: '10:45', agent: 'Carlos Vendedor' },
-  { id: '3', direction: 'outbound', status: 'missed', leadName: 'Fernanda Costa', phone: '+55 31 97777-9012', duration: 0, aiSentiment: 'neutral', startedAt: '10:15', agent: 'Ana Especialista' },
-  { id: '4', direction: 'inbound', status: 'completed', leadName: 'Pedro Santos', phone: '+55 41 96666-3456', duration: 485, recordingUrl: '#', aiSummary: 'Reclamacao sobre demora no atendimento. Oferecemos desconto de 10% como compensacao. Cliente satisfeito ao final.', aiSentiment: 'neutral', startedAt: '09:30', agent: 'Maria Consultora' },
-  { id: '5', direction: 'outbound', status: 'completed', leadName: 'Juliana Oliveira', phone: '+55 51 95555-7890', duration: 267, recordingUrl: '#', aiSummary: 'Follow-up da proposta enviada. Lead confirmou interesse e pediu contrato.', aiSentiment: 'positive', startedAt: '09:00', agent: 'Pedro Closer' },
-  { id: '6', direction: 'outbound', status: 'failed', leadName: 'Ricardo Lima', phone: '+55 11 94444-1234', duration: 0, aiSentiment: 'neutral', startedAt: 'Ontem 17:30', agent: 'Carlos Vendedor' },
-  { id: '7', direction: 'inbound', status: 'missed', leadName: 'Desconhecido', phone: '+55 21 93333-5678', duration: 0, aiSentiment: 'neutral', startedAt: 'Ontem 16:00', agent: '-' },
-]
+// TODO: Connect to /api/phone-calls when backend is ready
+const initialCalls: CallRecord[] = []
 
 function formatDuration(seconds: number): string {
   if (seconds === 0) return '-'
@@ -69,14 +61,14 @@ export default function PhonePage() {
     c.phone.includes(search)
   )
 
+  const callsWithDuration = initialCalls.filter((c) => c.duration > 0)
   const stats = {
     total: initialCalls.length,
     completed: initialCalls.filter((c) => c.status === 'completed').length,
     missed: initialCalls.filter((c) => c.status === 'missed').length,
-    avgDuration: Math.round(
-      initialCalls.filter((c) => c.duration > 0).reduce((sum, c) => sum + c.duration, 0) /
-      initialCalls.filter((c) => c.duration > 0).length
-    ),
+    avgDuration: callsWithDuration.length > 0
+      ? Math.round(callsWithDuration.reduce((sum, c) => sum + c.duration, 0) / callsWithDuration.length)
+      : 0,
     positive: initialCalls.filter((c) => c.aiSentiment === 'positive').length,
   }
 
@@ -249,24 +241,11 @@ export default function PhonePage() {
             <div className="bg-gradient-to-br from-indigo-500/10 to-blue-500/10 border border-indigo-500/20 rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-2">
                 <Bot className="w-5 h-5 text-amber-400" />
-                <span className="text-sm font-semibold text-gray-900">Ana Silva - 11:30</span>
-                <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Positivo</span>
+                <span className="text-sm font-semibold text-gray-900">Nenhuma chamada registrada</span>
               </div>
-              <p className="text-sm text-gray-700">
-                Lead demonstrou interesse no curso noturno de Business English. Pediu para enviar proposta por email.
-                Agendou retorno para quinta-feira. Alta probabilidade de conversao.
+              <p className="text-sm text-gray-400">
+                Realize chamadas para ver resumos automaticos da IA aqui.
               </p>
-              <div className="flex gap-2">
-                <button className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-700 hover:text-gray-900 transition-colors">
-                  <Play className="w-3 h-3" /> Ouvir Gravacao
-                </button>
-                <button className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-700 hover:text-gray-900 transition-colors">
-                  <FileText className="w-3 h-3" /> Ver Transcricao
-                </button>
-                <button className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-700 hover:text-gray-900 transition-colors">
-                  <Download className="w-3 h-3" /> Download
-                </button>
-              </div>
             </div>
           </div>
         </div>

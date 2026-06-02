@@ -23,17 +23,8 @@ interface Automation {
   successRate: number
 }
 
-// Initial demo data — replace with API when backend ready
-const initialAutomations: Automation[] = [
-  { id: '1', name: 'Boas-vindas WhatsApp', description: 'Envia mensagem de boas-vindas para novos leads via WhatsApp', trigger: 'new_lead', triggerLabel: 'Novo Lead', isActive: true, lastRunAt: '5 min atras', runCount: 1247, stepsCount: 3, successRate: 98 },
-  { id: '2', name: 'Follow-up Automatico', description: 'Segue up com leads que nao responderam em 24h', trigger: 'no_response', triggerLabel: 'Sem Resposta', isActive: true, lastRunAt: '1h atras', runCount: 892, stepsCount: 5, successRate: 85 },
-  { id: '3', name: 'Lead Scoring IA', description: 'Analisa e classifica leads automaticamente com IA', trigger: 'new_lead', triggerLabel: 'Novo Lead', isActive: true, lastRunAt: '10 min atras', runCount: 3450, stepsCount: 4, successRate: 96 },
-  { id: '4', name: 'Captacao Meta Ads', description: 'Sincroniza leads de Facebook Lead Ads e distribui automaticamente', trigger: 'meta_ad_lead', triggerLabel: 'Meta Ad Lead', isActive: true, lastRunAt: '15 min atras', runCount: 567, stepsCount: 6, successRate: 99 },
-  { id: '5', name: 'Remarketing Abandonados', description: 'Envia campanha de remarketing para leads inativos ha 7 dias', trigger: 'scheduled', triggerLabel: 'Agendado', isActive: false, runCount: 234, stepsCount: 4, successRate: 72 },
-  { id: '6', name: 'Distribuicao Round-Robin', description: 'Distribui novos leads igualmente entre consultores', trigger: 'new_lead', triggerLabel: 'Novo Lead', isActive: true, lastRunAt: '30 min atras', runCount: 2100, stepsCount: 2, successRate: 100 },
-  { id: '7', name: 'Notificacao Lead Quente', description: 'Alerta equipe quando um lead atinge score alto', trigger: 'lead_status_change', triggerLabel: 'Mudanca Status', isActive: true, lastRunAt: '2h atras', runCount: 456, stepsCount: 3, successRate: 100 },
-  { id: '8', name: 'Sequencia Nurturing', description: 'Envia serie de conteudos educativos por 14 dias', trigger: 'tag_added', triggerLabel: 'Tag Adicionada', isActive: false, runCount: 189, stepsCount: 8, successRate: 81 },
-]
+// TODO: Connect to /api/automations when backend is ready
+const initialAutomations: Automation[] = []
 
 const triggerIcons: Record<string, React.ElementType> = {
   new_lead: Users,

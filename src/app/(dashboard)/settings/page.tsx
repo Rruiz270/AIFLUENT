@@ -21,10 +21,10 @@ const sections = [
 ]
 
 const integrations = [
-  { id: 'whatsapp', name: 'WhatsApp Business', desc: 'Conecte sua conta WhatsApp Business API', connected: true, icon: '💬' },
+  { id: 'whatsapp', name: 'WhatsApp Business', desc: 'Conecte sua conta WhatsApp Business API', connected: false, icon: '💬' },
   { id: 'meta', name: 'Meta (Facebook/Instagram)', desc: 'Integre leads do Facebook e Instagram Ads', connected: false, icon: '📘' },
   { id: 'google', name: 'Google Ads', desc: 'Importe leads de campanhas Google', connected: false, icon: '🔍' },
-  { id: 'stripe', name: 'Stripe', desc: 'Processamento de pagamentos', connected: true, icon: '💳' },
+  { id: 'stripe', name: 'Stripe', desc: 'Processamento de pagamentos', connected: false, icon: '💳' },
   { id: 'zapier', name: 'Zapier', desc: 'Automações com mais de 5000 apps', connected: false, icon: '⚡' },
   { id: 'make', name: 'Make (Integromat)', desc: 'Cenários avançados de automação', connected: false, icon: '🔄' },
 ]

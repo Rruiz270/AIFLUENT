@@ -13,19 +13,20 @@ import {
 import { TrendingUp } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
+// TODO: Connect to /api/dashboard/revenue when backend is ready
 const revenueData = [
-  { month: 'Jun', revenue: 42500, leads: 120 },
-  { month: 'Jul', revenue: 51200, leads: 145 },
-  { month: 'Ago', revenue: 48300, leads: 132 },
-  { month: 'Set', revenue: 62100, leads: 178 },
-  { month: 'Out', revenue: 58400, leads: 165 },
-  { month: 'Nov', revenue: 71200, leads: 201 },
-  { month: 'Dez', revenue: 85600, leads: 234 },
-  { month: 'Jan', revenue: 79300, leads: 215 },
-  { month: 'Fev', revenue: 92400, leads: 256 },
-  { month: 'Mar', revenue: 104500, leads: 289 },
-  { month: 'Abr', revenue: 118200, leads: 312 },
-  { month: 'Mai', revenue: 135800, leads: 348 },
+  { month: 'Jun', revenue: 0, leads: 0 },
+  { month: 'Jul', revenue: 0, leads: 0 },
+  { month: 'Ago', revenue: 0, leads: 0 },
+  { month: 'Set', revenue: 0, leads: 0 },
+  { month: 'Out', revenue: 0, leads: 0 },
+  { month: 'Nov', revenue: 0, leads: 0 },
+  { month: 'Dez', revenue: 0, leads: 0 },
+  { month: 'Jan', revenue: 0, leads: 0 },
+  { month: 'Fev', revenue: 0, leads: 0 },
+  { month: 'Mar', revenue: 0, leads: 0 },
+  { month: 'Abr', revenue: 0, leads: 0 },
+  { month: 'Mai', revenue: 0, leads: 0 },
 ]
 
 interface CustomTooltipProps {

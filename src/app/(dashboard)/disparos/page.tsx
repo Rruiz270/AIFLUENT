@@ -98,63 +98,13 @@ function ChannelIcon({ channel, className }: { channel: DisparoChannel; classNam
   return <Icon className={cn('h-4 w-4', colors[channel], className)} />
 }
 
-// Initial demo data — replace with API when backend ready
-
-const initialCampaigns: Campanha[] = [
-  { id: 'c1', name: 'Vestibular 2026 - Primeiro Contato', channel: 'whatsapp', status: 'em_execucao', type: 'broadcast', createdAt: '2026-05-25', scheduledAt: '2026-05-26', sent: 4820, total: 6000, audienceCount: 6000, delivered: 4650, read: 3720, replied: 1240, failed: 170 },
-  { id: 'c2', name: 'Newsletter Maio - Novidades', channel: 'email', status: 'concluida', type: 'broadcast', createdAt: '2026-05-20', scheduledAt: '2026-05-21', sent: 12400, total: 12400, audienceCount: 12400, delivered: 11800, read: 5900, replied: 820, failed: 600 },
-  { id: 'c3', name: 'Confirmacao de Matricula', channel: 'sms', status: 'agendada', type: 'broadcast', createdAt: '2026-05-28', scheduledAt: '2026-06-01', sent: 0, total: 3200, audienceCount: 3200, delivered: 0, read: 0, replied: 0, failed: 0 },
-  { id: 'c4', name: 'Reengajamento - Inativos 30d', channel: 'whatsapp', status: 'pausada', type: 'sequencia', createdAt: '2026-05-15', sent: 890, total: 2500, audienceCount: 2500, delivered: 850, read: 510, replied: 127, failed: 40 },
-  { id: 'c5', name: 'Black Friday Antecipada', channel: 'email', status: 'rascunho', type: 'broadcast', createdAt: '2026-05-29', sent: 0, total: 0, audienceCount: 8500, delivered: 0, read: 0, replied: 0, failed: 0 },
-  { id: 'c6', name: 'Pesquisa de Satisfacao NPS', channel: 'sms', status: 'concluida', type: 'broadcast', createdAt: '2026-05-10', scheduledAt: '2026-05-11', sent: 4500, total: 4500, audienceCount: 4500, delivered: 4350, read: 2610, replied: 1740, failed: 150 },
-  { id: 'c7', name: 'Boas-vindas Novos Alunos', channel: 'whatsapp', status: 'em_execucao', type: 'sequencia', createdAt: '2026-05-27', sent: 320, total: 1200, audienceCount: 1200, delivered: 310, read: 248, replied: 93, failed: 10 },
-  { id: 'c8', name: 'Convite Evento Online', channel: 'email', status: 'cancelada', type: 'broadcast', createdAt: '2026-05-05', sent: 1500, total: 7800, audienceCount: 7800, delivered: 1420, read: 710, replied: 142, failed: 80 },
-]
-
-const initialTemplates: Template[] = [
-  { id: 't1', name: 'Boas-vindas WhatsApp', channel: 'whatsapp', category: 'Onboarding', content: 'Ola {{nome}}! Seja bem-vindo(a) a {{empresa}}. Estamos felizes em te-lo conosco!', variables: ['nome', 'empresa'], createdAt: '2026-04-10' },
-  { id: 't2', name: 'Follow-up Pos-Contato', channel: 'whatsapp', category: 'Vendas', content: 'Oi {{nome}}, tudo bem? Gostaria de saber se voce tem alguma duvida sobre {{produto}}.', variables: ['nome', 'produto'], createdAt: '2026-04-15' },
-  { id: 't3', name: 'Newsletter Mensal', channel: 'email', category: 'Marketing', content: 'Ola {{nome}}, confira as novidades deste mes...', variables: ['nome'], createdAt: '2026-03-20' },
-  { id: 't4', name: 'Confirmacao SMS', channel: 'sms', category: 'Transacional', content: '{{nome}}, sua matricula foi confirmada! Codigo: {{codigo}}', variables: ['nome', 'codigo'], createdAt: '2026-05-01' },
-  { id: 't5', name: 'Lembrete de Pagamento', channel: 'email', category: 'Financeiro', content: 'Ola {{nome}}, seu boleto com vencimento em {{data}} esta disponivel.', variables: ['nome', 'data'], createdAt: '2026-05-10' },
-]
-
-const initialAudiencias: Audiencia[] = [
-  { id: 'a1', name: 'Leads Quentes - Ultimo 7 dias', type: 'comportamento', rules: ['Temperatura = Quente', 'Ultimo contato < 7 dias'], count: 1840, createdAt: '2026-05-20' },
-  { id: 'a2', name: 'Alunos Ativos 2026', type: 'lista', rules: ['Lista: Alunos Matriculados', 'Status = Ativo'], count: 6200, createdAt: '2026-03-15' },
-  { id: 'a3', name: 'Interessados Vestibular', type: 'tag', rules: ['Tag: vestibular-2026', 'Tag: interesse-graduacao'], count: 3450, createdAt: '2026-04-01' },
-  { id: 'a4', name: 'Inativos 30+ dias', type: 'comportamento', rules: ['Ultimo contato > 30 dias', 'Nao respondeu ultimas 2 campanhas'], count: 2100, createdAt: '2026-05-10' },
-]
-
-const initialAutomacoes: AutomacaoRule[] = [
-  { id: 'au1', name: 'Respondeu → Mover para Qualificado', trigger: 'respondeu', action: 'mover_etapa', triggerLabel: 'Quando respondeu mensagem', actionLabel: 'Mover para etapa "Qualificado"', active: true },
-  { id: 'au2', name: 'Nao respondeu 48h → Follow-up', trigger: 'nao_respondeu', action: 'enviar_followup', triggerLabel: 'Nao respondeu em 48h', actionLabel: 'Enviar follow-up automatico', active: true },
-  { id: 'au3', name: 'Clicou link → Adicionar tag', trigger: 'clicou', action: 'adicionar_tag', triggerLabel: 'Clicou no link da campanha', actionLabel: 'Adicionar tag "engajado"', active: false },
-  { id: 'au4', name: 'Comprou → Remover de campanhas', trigger: 'comprou', action: 'remover_campanha', triggerLabel: 'Realizou compra/matricula', actionLabel: 'Remover de todas as campanhas ativas', active: true },
-  { id: 'au5', name: 'Respondeu negativo → Criar tarefa', trigger: 'respondeu', action: 'criar_tarefa', triggerLabel: 'Respondeu com sentimento negativo', actionLabel: 'Criar tarefa para vendedor', active: true },
-]
-
-// Initial demo data — replace with API when backend ready
-const initialLogs: LogEntry[] = [
-  { id: 'l1', timestamp: '2026-05-30 14:32:05', campaign: 'Vestibular 2026', message: '+5511999887766', status: 'enviado' },
-  { id: 'l2', timestamp: '2026-05-30 14:32:03', campaign: 'Vestibular 2026', message: '+5511998776655', status: 'entregue' },
-  { id: 'l3', timestamp: '2026-05-30 14:31:58', campaign: 'Vestibular 2026', message: '+5511997665544', status: 'falha', error: 'Numero invalido' },
-  { id: 'l4', timestamp: '2026-05-30 14:31:55', campaign: 'Boas-vindas Novos Alunos', message: '+5521988776655', status: 'lido' },
-  { id: 'l5', timestamp: '2026-05-30 14:31:50', campaign: 'Vestibular 2026', message: '+5531987654321', status: 'respondido' },
-  { id: 'l6', timestamp: '2026-05-30 14:31:45', campaign: 'Boas-vindas Novos Alunos', message: '+5511976543210', status: 'enviado' },
-  { id: 'l7', timestamp: '2026-05-30 14:31:40', campaign: 'Vestibular 2026', message: '+5541965432109', status: 'entregue' },
-  { id: 'l8', timestamp: '2026-05-30 14:31:35', campaign: 'Vestibular 2026', message: '+5551954321098', status: 'falha', error: 'WhatsApp nao registrado' },
-]
-
-// Initial demo data — replace with API when backend ready
-const initialConsent: ConsentEntry[] = [
-  { id: 'co1', contact: 'Maria Silva', phone: '+5511999001122', type: 'opt_in', date: '2026-05-20' },
-  { id: 'co2', contact: 'Joao Santos', phone: '+5511998002233', type: 'opt_out', date: '2026-05-22', reason: 'Solicitou remocao via WhatsApp' },
-  { id: 'co3', contact: 'Ana Oliveira', phone: '+5511997003344', type: 'bloqueado', date: '2026-05-18', reason: 'Reportou spam' },
-  { id: 'co4', contact: 'Pedro Costa', phone: '+5521988004455', type: 'opt_out', date: '2026-05-25', reason: 'Link de descadastro no email' },
-  { id: 'co5', contact: 'Lucia Ferreira', phone: '+5531987005566', type: 'opt_in', date: '2026-05-26' },
-  { id: 'co6', contact: 'Carlos Mendes', phone: '+5541976006677', type: 'bloqueado', date: '2026-05-15', reason: 'Numero invalido recorrente' },
-]
+// TODO: Connect to /api/disparos when backend is ready
+const initialCampaigns: Campanha[] = []
+const initialTemplates: Template[] = []
+const initialAudiencias: Audiencia[] = []
+const initialAutomacoes: AutomacaoRule[] = []
+const initialLogs: LogEntry[] = []
+const initialConsent: ConsentEntry[] = []
 
 // ── Wizard Step Types ────────────────────────────────────────────────────────
 

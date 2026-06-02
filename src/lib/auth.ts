@@ -16,21 +16,25 @@ const loginSchema = z.object({
   password: z.string().min(6),
 })
 
-const FALLBACK_USERS = [
-  { id: 'user-admin', name: 'AIFLUENT Admin', email: 'admin@aifluent.com', password: 'Admin@2026', role: 'admin' as UserRole },
-  { id: 'user-gestor', name: 'Gestor AIFLUENT', email: 'gestor@aifluent.com', password: 'Gestor@2026', role: 'gestor' as UserRole },
-  { id: 'user-operador', name: 'Operador AIFLUENT', email: 'operador@aifluent.com', password: 'Operador@2026', role: 'operador' as UserRole },
+// Seed users for first-time setup. These plaintext passwords are ONLY used once
+// during initial DB seeding — they are immediately hashed with bcrypt and the
+// plaintext is never stored. After first login, users should change their passwords.
+const SEED_USERS = [
+  { name: 'AIFLUENT Admin', email: 'admin@aifluent.com', password: 'Admin@2026', role: 'admin' as UserRole },
+  { name: 'Gestor AIFLUENT', email: 'gestor@aifluent.com', password: 'Gestor@2026', role: 'gestor' as UserRole },
+  { name: 'Operador AIFLUENT', email: 'operador@aifluent.com', password: 'Operador@2026', role: 'operador' as UserRole },
 ]
 
 async function authenticateWithDB(email: string, password: string) {
   try {
     const { prisma } = await import('@/lib/prisma')
 
+    // First-time setup: seed default users if DB is empty
     const count = await prisma.user.count()
     if (count === 0) {
       let org = await prisma.organization.findFirst()
       if (!org) org = await prisma.organization.create({ data: { name: 'AIFLUENT', slug: 'aifluent' } })
-      for (const u of FALLBACK_USERS) {
+      for (const u of SEED_USERS) {
         await prisma.user.create({
           data: { name: u.name, email: u.email, passwordHash: await bcrypt.hash(u.password, 10), role: u.role, organizationId: org.id },
         })
@@ -45,20 +49,14 @@ async function authenticateWithDB(email: string, password: string) {
 
     try { await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }) } catch {}
 
-    return { id: user.id, name: user.name, email: user.email, role: user.role as UserRole }
+    return { id: user.id, name: user.name, email: user.email, role: user.role as UserRole, organizationId: user.organizationId }
   } catch {
     return null
   }
 }
 
-function authenticateWithFallback(email: string, password: string) {
-  const user = FALLBACK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase())
-  if (!user || user.password !== password) return null
-  return { id: user.id, name: user.name, email: user.email, role: user.role }
-}
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET || 'k9$mP2xR7vL4nQ8wJ5tY1zA3bF6cH0dG',
+  secret: process.env.AUTH_SECRET,
   trustHost: true,
   providers: [
     Credentials({
@@ -73,10 +71,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { email, password } = parsed.data
 
-        const dbUser = await authenticateWithDB(email, password)
-        if (dbUser) return dbUser
-
-        return authenticateWithFallback(email, password)
+        return authenticateWithDB(email, password)
       },
     }),
   ],
@@ -92,6 +87,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.role = (user as unknown as { role: string }).role
         token.id = (user as unknown as { id: string }).id
+        token.organizationId = (user as unknown as { organizationId: string }).organizationId
       }
       return token
     },
@@ -100,6 +96,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const u = session.user as unknown as Record<string, unknown>
         u.role = token.role
         u.id = token.id
+        u.organizationId = token.organizationId
       }
       return session
     },

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Handshake,
@@ -51,27 +51,35 @@ const stageConfig: Record<DealStage, { label: string; color: string; bg: string 
 
 const pipelineStages: DealStage[] = ['prospeccao', 'qualificacao', 'proposta', 'negociacao', 'fechamento']
 
-// Initial demo data — replace with API when backend ready
-
-const initialDeals: Deal[] = [
-  { id: 'd1', title: 'MBA Executivo - Turma 2026', value: 89000, company: 'Tech Solutions Ltda', leadName: 'Carlos Eduardo', stage: 'negociacao', probability: 75, expectedClose: '2026-06-15', assignedTo: 'Maria Consultora', createdAt: '2026-04-10' },
-  { id: 'd2', title: 'Pós-graduação em Data Science', value: 45000, company: 'Inovare Digital', leadName: 'Ana Paula', stage: 'proposta', probability: 50, expectedClose: '2026-06-20', assignedTo: 'Carlos Vendedor', createdAt: '2026-04-22' },
-  { id: 'd3', title: 'Curso Intensivo de Inglês', value: 12000, company: 'Startup Brasil', leadName: 'Pedro Henrique', stage: 'qualificacao', probability: 30, expectedClose: '2026-07-01', assignedTo: 'Ana Especialista', createdAt: '2026-05-01' },
-  { id: 'd4', title: 'Graduação em Administração', value: 156000, company: 'Grupo Empresarial XYZ', leadName: 'Fernanda Costa', stage: 'fechamento', probability: 90, expectedClose: '2026-06-05', assignedTo: 'Pedro Closer', createdAt: '2026-03-15' },
-  { id: 'd5', title: 'Certificação PMP', value: 8500, company: 'Consultoria ABC', leadName: 'Roberto Lima', stage: 'ganho', probability: 100, expectedClose: '2026-05-20', assignedTo: 'Maria Consultora', createdAt: '2026-04-01' },
-  { id: 'd6', title: 'Extensão em Marketing Digital', value: 18000, company: 'Agência Criativa', leadName: 'Juliana Martins', stage: 'prospeccao', probability: 15, expectedClose: '2026-07-15', assignedTo: 'Carlos Vendedor', createdAt: '2026-05-15' },
-  { id: 'd7', title: 'MBA em Finanças', value: 95000, company: 'Banco Nacional S.A.', leadName: 'Ricardo Alves', stage: 'negociacao', probability: 65, expectedClose: '2026-06-30', assignedTo: 'Pedro Closer', createdAt: '2026-04-05' },
-  { id: 'd8', title: 'Curso de Espanhol Corporativo', value: 24000, company: 'Importadora Latina', leadName: 'Mariana Souza', stage: 'ganho', probability: 100, expectedClose: '2026-05-10', assignedTo: 'Ana Especialista', createdAt: '2026-03-20' },
-  { id: 'd9', title: 'Pós em Gestão de Projetos', value: 35000, company: 'Engenharia Total', leadName: 'Lucas Ferreira', stage: 'proposta', probability: 45, expectedClose: '2026-07-10', assignedTo: 'Maria Consultora', createdAt: '2026-05-05' },
-  { id: 'd10', title: 'Graduação em TI', value: 120000, company: 'LogTech Soluções', leadName: 'Beatriz Oliveira', stage: 'perdido', probability: 0, expectedClose: '2026-05-25', assignedTo: 'Carlos Vendedor', createdAt: '2026-02-10' },
-  { id: 'd11', title: 'Curso de Liderança', value: 15000, company: 'Varejo Express', leadName: 'Diego Santos', stage: 'qualificacao', probability: 25, expectedClose: '2026-07-20', assignedTo: 'Pedro Closer', createdAt: '2026-05-18' },
-  { id: 'd12', title: 'MBA em Tecnologia', value: 78000, company: 'CloudNet Brasil', leadName: 'Camila Rocha', stage: 'prospeccao', probability: 10, expectedClose: '2026-08-01', assignedTo: 'Ana Especialista', createdAt: '2026-05-22' },
-]
+// Deals fetched from /api/deals — starts empty, loads from DB
 
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function DealsPage() {
-  const [deals, setDeals] = useState<Deal[]>(initialDeals)
+  const [deals, setDeals] = useState<Deal[]>([])
+
+  useEffect(() => {
+    // TODO: Connect to /api/deals when backend is ready
+    fetch('/api/deals')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.deals && data.deals.length > 0) {
+          setDeals(data.deals.map((d: Record<string, unknown>) => ({
+            id: d.id as string,
+            title: d.title as string,
+            value: (d.value as number) || 0,
+            company: ((d.lead as Record<string, unknown>)?.company as string) || 'Sem empresa',
+            leadName: `${(d.lead as Record<string, unknown>)?.firstName || ''} ${(d.lead as Record<string, unknown>)?.lastName || ''}`.trim() || 'Sem contato',
+            stage: 'prospeccao' as DealStage,
+            probability: (d.probability as number) || 50,
+            expectedClose: d.expectedCloseAt ? new Date(d.expectedCloseAt as string).toISOString().split('T')[0] : '',
+            assignedTo: 'AIFLUENT',
+            createdAt: d.createdAt ? new Date(d.createdAt as string).toISOString().split('T')[0] : '',
+          })))
+        }
+      })
+      .catch(() => { /* keep empty array */ })
+  }, [])
   const [viewMode, setViewMode] = useState<'table' | 'pipeline'>('table')
   const [stageFilter, setStageFilter] = useState<'all' | 'open' | 'ganho' | 'perdido'>('all')
   const [showNewDeal, setShowNewDeal] = useState(false)

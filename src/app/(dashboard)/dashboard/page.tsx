@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CalendarDays, Sparkles, TrendingUp, Bot, Flame, Target,
@@ -15,56 +15,19 @@ import { ActivityTimeline } from '@/components/dashboard/activity-timeline'
 import { cn } from '@/lib/utils'
 import type { DashboardStats } from '@/types'
 
-// Initial demo data — replace with API when backend ready
-const initialStats: DashboardStats = {
-  totalLeads: 4892,
-  newLeadsToday: 47,
-  conversionRate: 18.4,
-  activeDeals: 234,
-  totalRevenue: 948500,
-  campaignsSent: 156,
-  responseRate: 72.3,
-  avgResponseTime: 4,
+const emptyStats: DashboardStats = {
+  totalLeads: 0,
+  newLeadsToday: 0,
+  conversionRate: 0,
+  activeDeals: 0,
+  totalRevenue: 0,
+  campaignsSent: 0,
+  responseRate: 0,
+  avgResponseTime: 0,
 }
 
-const kpiBreakdowns: Record<string, { items: { label: string; value: string }[]; link: string }> = {
-  'Forecast Mensal': {
-    items: [
-      { label: 'Negócios em Fechamento', value: 'R$ 68.400' },
-      { label: 'Negócios em Negociação', value: 'R$ 42.300' },
-      { label: 'Propostas Enviadas', value: 'R$ 24.500' },
-      { label: 'Qualificações Ativas', value: 'R$ 10.000' },
-    ],
-    link: '/deals',
-  },
-  'ROI Meta Ads': {
-    items: [
-      { label: 'Campanha Business English', value: '5.1x' },
-      { label: 'Campanha MBA Executivo', value: '4.8x' },
-      { label: 'Campanha Vestibular 2026', value: '3.9x' },
-      { label: 'Campanha Pós-Graduação', value: '3.2x' },
-    ],
-    link: '/campaigns',
-  },
-  'Leads Quentes': {
-    items: [
-      { label: 'Maria Silva (Score 92)', value: 'Administração' },
-      { label: 'Lucas Almeida (Score 95)', value: 'Arquitetura' },
-      { label: 'Fernanda Costa (Score 88)', value: 'Direito' },
-      { label: 'Gabriela Nunes (Score 84)', value: 'Computação' },
-    ],
-    link: '/leads',
-  },
-  'Chamadas Hoje': {
-    items: [
-      { label: 'Maria Consultora', value: '8 chamadas' },
-      { label: 'Carlos Vendedor', value: '7 chamadas' },
-      { label: 'Pedro Closer', value: '6 chamadas' },
-      { label: 'Ana Especialista', value: '7 chamadas' },
-    ],
-    link: '/team',
-  },
-}
+// TODO: Connect KPI breakdowns to real APIs when backend is ready
+const kpiBreakdowns: Record<string, { items: { label: string; value: string }[]; link: string }> = {}
 
 function getGreeting(): string {
   const hour = new Date().getHours()
@@ -83,8 +46,15 @@ function getFormattedDate(): string {
 }
 
 export default function DashboardPage() {
-  const [stats] = useState<DashboardStats>(initialStats)
+  const [stats, setStats] = useState<DashboardStats>(emptyStats)
   const [kpiModal, setKpiModal] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then((res) => res.json())
+      .then((data) => setStats(data))
+      .catch(() => setStats(emptyStats))
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -123,8 +93,8 @@ export default function DashboardPage() {
           <Bot className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-900 font-medium">Insight IA: 12 leads quentes precisam de contato hoje</p>
-          <p className="text-xs text-gray-500 mt-0.5">A campanha &ldquo;Business English&rdquo; gerou 23% mais leads esta semana. Sugestao: aumentar budget em 20%.</p>
+          <p className="text-sm text-gray-900 font-medium">Insight IA: Nenhum insight disponivel</p>
+          <p className="text-xs text-gray-500 mt-0.5">Adicione leads e campanhas para receber insights automaticos da IA.</p>
         </div>
         <button className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 text-xs font-medium rounded-lg transition-colors shrink-0">
           Ver detalhes <ArrowRight className="w-3 h-3" />
@@ -135,12 +105,13 @@ export default function DashboardPage() {
       <StatsGrid stats={stats} />
 
       {/* Executive KPIs Row */}
+      {/* TODO: Connect to real APIs when backend is ready */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Forecast Mensal', value: 'R$145.200', subtext: 'Baseado no pipeline atual', icon: TrendingUp, color: 'from-emerald-500/10 to-cyan-500/10 border-emerald-500/20', iconColor: 'text-emerald-400' },
-          { label: 'ROI Meta Ads', value: '4.2x', subtext: 'ROAS medio das campanhas', icon: Target, color: 'from-purple-500/10 to-pink-500/10 border-purple-500/20', iconColor: 'text-purple-400' },
-          { label: 'Leads Quentes', value: '34', subtext: 'Score IA acima de 80', icon: Flame, color: 'from-rose-500/10 to-orange-500/10 border-rose-500/20', iconColor: 'text-rose-400' },
-          { label: 'Chamadas Hoje', value: '28', subtext: '18 atendidas · 4.3 min media', icon: Phone, color: 'from-blue-500/10 to-indigo-500/10 border-blue-500/20', iconColor: 'text-blue-400' },
+          { label: 'Forecast Mensal', value: 'R$ 0', subtext: 'Baseado no pipeline atual', icon: TrendingUp, color: 'from-emerald-500/10 to-cyan-500/10 border-emerald-500/20', iconColor: 'text-emerald-400' },
+          { label: 'ROI Meta Ads', value: '0x', subtext: 'ROAS medio das campanhas', icon: Target, color: 'from-purple-500/10 to-pink-500/10 border-purple-500/20', iconColor: 'text-purple-400' },
+          { label: 'Leads Quentes', value: '0', subtext: 'Score IA acima de 80', icon: Flame, color: 'from-rose-500/10 to-orange-500/10 border-rose-500/20', iconColor: 'text-rose-400' },
+          { label: 'Chamadas Hoje', value: '0', subtext: 'Nenhuma chamada registrada', icon: Phone, color: 'from-blue-500/10 to-indigo-500/10 border-blue-500/20', iconColor: 'text-blue-400' },
         ].map((kpi, i) => (
           <motion.div
             key={kpi.label}
@@ -210,10 +181,10 @@ export default function DashboardPage() {
                 {/* Current Value */}
                 <div className="text-center mb-6">
                   <p className="text-3xl font-bold text-gray-900">
-                    {kpiModal === 'Forecast Mensal' && 'R$ 145.200'}
-                    {kpiModal === 'ROI Meta Ads' && '4.2x'}
-                    {kpiModal === 'Leads Quentes' && '34'}
-                    {kpiModal === 'Chamadas Hoje' && '28'}
+                    {kpiModal === 'Forecast Mensal' && 'R$ 0'}
+                    {kpiModal === 'ROI Meta Ads' && '0x'}
+                    {kpiModal === 'Leads Quentes' && '0'}
+                    {kpiModal === 'Chamadas Hoje' && '0'}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">Valor atual</p>
                 </div>
@@ -221,12 +192,14 @@ export default function DashboardPage() {
                 {/* Breakdown */}
                 <div className="space-y-3">
                   <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Detalhamento</p>
-                  {kpiBreakdowns[kpiModal].items.map((item) => (
+                  {kpiBreakdowns[kpiModal]?.items?.map((item) => (
                     <div key={item.label} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                       <span className="text-sm text-gray-700">{item.label}</span>
                       <span className="text-sm font-semibold text-gray-900">{item.value}</span>
                     </div>
-                  ))}
+                  )) || (
+                    <p className="text-sm text-gray-400 text-center py-4">Nenhum dado encontrado</p>
+                  )}
                 </div>
               </div>
 

@@ -43,18 +43,19 @@ type Integration = {
   category: 'messaging' | 'ads' | 'payment' | 'automation' | 'ai' | 'productivity'
 }
 
-// Initial demo data — replace with API when backend ready
+// TODO: Connect to /api/integrations when backend is ready
+// All integrations start disconnected until user configures them
 
 const initialIntegrations: Integration[] = [
   {
     id: 'whatsapp',
     name: 'WhatsApp Business API',
-    description: 'Envie e receba mensagens WhatsApp em escala com automação',
+    description: 'Envie e receba mensagens WhatsApp em escala com automacao',
     icon: MessageSquare,
     iconColor: 'text-emerald-400',
     iconBg: 'bg-emerald-500/10',
-    status: 'connected',
-    lastSync: '2026-05-28T10:32:00',
+    status: 'disconnected',
+    lastSync: null,
     category: 'messaging',
   },
   {
@@ -64,8 +65,8 @@ const initialIntegrations: Integration[] = [
     icon: MessagesSquare,
     iconColor: 'text-blue-400',
     iconBg: 'bg-blue-500/10',
-    status: 'connected',
-    lastSync: '2026-05-28T09:45:00',
+    status: 'disconnected',
+    lastSync: null,
     category: 'ads',
   },
   {
@@ -86,8 +87,8 @@ const initialIntegrations: Integration[] = [
     icon: CreditCard,
     iconColor: 'text-violet-400',
     iconBg: 'bg-violet-500/10',
-    status: 'connected',
-    lastSync: '2026-05-28T08:15:00',
+    status: 'disconnected',
+    lastSync: null,
     category: 'payment',
   },
   {
@@ -108,8 +109,8 @@ const initialIntegrations: Integration[] = [
     icon: RefreshCw,
     iconColor: 'text-cyan-400',
     iconBg: 'bg-cyan-500/10',
-    status: 'connected',
-    lastSync: '2026-05-27T22:00:00',
+    status: 'disconnected',
+    lastSync: null,
     category: 'automation',
   },
   {
@@ -119,8 +120,8 @@ const initialIntegrations: Integration[] = [
     icon: Bot,
     iconColor: 'text-emerald-400',
     iconBg: 'bg-emerald-500/10',
-    status: 'connected',
-    lastSync: '2026-05-28T10:30:00',
+    status: 'disconnected',
+    lastSync: null,
     category: 'ai',
   },
   {
@@ -130,8 +131,8 @@ const initialIntegrations: Integration[] = [
     icon: Bot,
     iconColor: 'text-amber-400',
     iconBg: 'bg-amber-500/10',
-    status: 'connected',
-    lastSync: '2026-05-28T10:28:00',
+    status: 'disconnected',
+    lastSync: null,
     category: 'ai',
   },
   {
@@ -152,8 +153,8 @@ const initialIntegrations: Integration[] = [
     icon: Calendar,
     iconColor: 'text-blue-400',
     iconBg: 'bg-blue-500/10',
-    status: 'connected',
-    lastSync: '2026-05-28T07:00:00',
+    status: 'disconnected',
+    lastSync: null,
     category: 'productivity',
   },
   {

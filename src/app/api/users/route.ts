@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
-import { requireAuth, checkRateLimit } from '@/lib/api-auth'
+import { requireAuth, checkRateLimit, getOrgId } from '@/lib/api-auth'
+import { logger } from '@/lib/logger'
 
 async function getPrisma() {
   try {
@@ -33,8 +34,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Banco de dados indisponivel' }, { status: 503 })
   }
 
+  const orgId = getOrgId(session)
+
   try {
     const users = await prisma.user.findMany({
+      where: orgId ? { organizationId: orgId } : {},
       select: {
         id: true,
         name: true,
@@ -51,7 +55,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ users, total: users.length, requestedBy: session?.user?.email })
   } catch (err) {
-    console.error('GET /api/users error:', err)
+    logger.error('GET /api/users error', err)
     return NextResponse.json({ error: 'Erro ao buscar usuarios' }, { status: 500 })
   }
 }
@@ -60,9 +64,10 @@ export async function POST(request: NextRequest) {
   const rateLimited = checkRateLimit(request)
   if (rateLimited) return rateLimited
 
-  const { error: authError } = await requireAuth('admin')
+  const { error: authError, session: postSession } = await requireAuth('admin')
   if (authError) return authError
 
+  const postOrgId = getOrgId(postSession)
   const prisma = await getPrisma()
   if (!prisma) {
     return NextResponse.json({ error: 'Banco de dados indisponivel' }, { status: 503 })
@@ -94,17 +99,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email ja cadastrado' }, { status: 409 })
     }
 
-    // Find or create default organization
-    let orgId = data.organizationId
-    if (!orgId) {
+    // Use org from session, fallback to body, then default
+    let userOrgId = postOrgId || data.organizationId
+    if (!userOrgId) {
       const org = await prisma.organization.findFirst()
       if (org) {
-        orgId = org.id
+        userOrgId = org.id
       } else {
         const newOrg = await prisma.organization.create({
           data: { name: 'AIFLUENT', slug: 'aifluent' },
         })
-        orgId = newOrg.id
+        userOrgId = newOrg.id
       }
     }
 
@@ -117,7 +122,7 @@ export async function POST(request: NextRequest) {
         passwordHash,
         role: data.role,
         phone: data.phone,
-        organizationId: orgId,
+        organizationId: userOrgId,
       },
       select: {
         id: true,
@@ -132,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(user, { status: 201 })
   } catch (err) {
-    console.error('POST /api/users error:', err)
+    logger.error('POST /api/users error', err)
     return NextResponse.json({ error: 'Erro ao criar usuario' }, { status: 500 })
   }
 }

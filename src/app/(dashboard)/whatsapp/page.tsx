@@ -44,37 +44,10 @@ type QuickReply = {
   text: string
 }
 
-// Initial demo data — replace with API when backend ready
+// TODO: Connect to /api/conversations when backend is ready
+const initialConversations: Conversation[] = []
 
-const initialConversations: Conversation[] = [
-  { id: 'c1', name: 'Maria Silva', phone: '(11) 99876-5432', avatar: 'MS', lastMessage: 'Ola, gostaria de saber mais sobre o MBA...', lastMessageTime: '10:32', unreadCount: 3, status: 'online', tags: ['quente', 'MBA'] },
-  { id: 'c2', name: 'Carlos Eduardo', phone: '(21) 98765-4321', avatar: 'CE', lastMessage: 'Voces tem bolsa de estudo?', lastMessageTime: '09:45', unreadCount: 1, status: 'online', tags: ['bolsa'] },
-  { id: 'c3', name: 'Ana Paula Ferreira', phone: '(31) 97654-3210', avatar: 'AF', lastMessage: 'Perfeito, vou pensar e te retorno!', lastMessageTime: '09:12', unreadCount: 0, status: 'offline', tags: ['pos-graduacao'] },
-  { id: 'c4', name: 'Roberto Lima', phone: '(41) 96543-2109', avatar: 'RL', lastMessage: 'Qual o valor da mensalidade?', lastMessageTime: 'Ontem', unreadCount: 0, status: 'offline', tags: ['graduacao'] },
-  { id: 'c5', name: 'Juliana Martins', phone: '(51) 95432-1098', avatar: 'JM', lastMessage: 'Obrigada pela informacao!', lastMessageTime: 'Ontem', unreadCount: 0, status: 'offline', tags: ['ingles'] },
-  { id: 'c6', name: 'Pedro Henrique', phone: '(61) 94321-0987', avatar: 'PH', lastMessage: 'Quando comeca a proxima turma?', lastMessageTime: 'Ontem', unreadCount: 2, status: 'online', tags: ['quente', 'data science'] },
-  { id: 'c7', name: 'Fernanda Costa', phone: '(71) 93210-9876', avatar: 'FC', lastMessage: 'Enviei os documentos por email', lastMessageTime: '25/05', unreadCount: 0, status: 'offline', tags: ['matricula'] },
-  { id: 'c8', name: 'Diego Santos', phone: '(81) 92109-8765', avatar: 'DS', lastMessage: 'Bom dia! Vi o anuncio no Instagram', lastMessageTime: '24/05', unreadCount: 0, status: 'offline', tags: ['instagram'] },
-]
-
-// Initial demo data — replace with API when backend ready
-const initialMessages: Record<string, ChatMessage[]> = {
-  c1: [
-    { id: 'm1', direction: 'outbound', content: 'Ola Maria! Bem-vinda ao AIFLUENT. Como posso te ajudar?', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:00' },
-    { id: 'm2', direction: 'inbound', content: 'Oi! Vi o anuncio de voces no Instagram sobre o MBA em Gestao.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:15' },
-    { id: 'm3', direction: 'outbound', content: 'Que legal! O MBA em Gestao Empresarial e um dos nossos cursos mais procurados. Ele tem duracao de 18 meses, com aulas aos sabados.', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:18' },
-    { id: 'm4', direction: 'inbound', content: 'Qual o valor do investimento?', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:25' },
-    { id: 'm5', direction: 'outbound', content: 'O valor e de 24x de R$ 890,00 ou a vista com 15% de desconto. Temos tambem condicoes especiais para empresas parceiras!', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:28' },
-    { id: 'm6', direction: 'inbound', content: 'Ola, gostaria de saber mais sobre o MBA...', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:32' },
-    { id: 'm7', direction: 'inbound', content: 'Voces tem alguma turma iniciando em julho?', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:32' },
-    { id: 'm8', direction: 'inbound', content: 'Sim, temos! A proxima turma esta prevista para 15 de julho. Posso reservar sua vaga?', type: 'text', status: 'read', aiGenerated: false, createdAt: '10:33' },
-  ],
-  c2: [
-    { id: 'm1', direction: 'outbound', content: 'Boa tarde, Carlos! Tudo bem?', type: 'text', status: 'read', aiGenerated: false, createdAt: '09:30' },
-    { id: 'm2', direction: 'inbound', content: 'Tudo otimo! Estou interessado em fazer uma pos-graduacao.', type: 'text', status: 'read', aiGenerated: false, createdAt: '09:35' },
-    { id: 'm3', direction: 'inbound', content: 'Voces tem bolsa de estudo?', type: 'text', status: 'read', aiGenerated: false, createdAt: '09:45' },
-  ],
-}
+const initialMessages: Record<string, ChatMessage[]> = {}
 
 const quickReplies: QuickReply[] = [
   { id: 'qr1', label: 'Boas-vindas', text: 'Ola! Bem-vindo(a) ao AIFLUENT. Em que posso ajudar?' },
@@ -207,9 +180,9 @@ export default function WhatsAppPage() {
 
         <div className="flex items-center gap-4">
           {[
-            { label: 'Mensagens hoje', value: '128' },
-            { label: 'Taxa de resposta', value: '94%' },
-            { label: 'Tempo medio', value: '3min' },
+            { label: 'Mensagens hoje', value: '0' },
+            { label: 'Taxa de resposta', value: '0%' },
+            { label: 'Tempo medio', value: '0min' },
             { label: 'Nao lidas', value: String(totalUnread) },
           ].map((stat) => (
             <div key={stat.label} className="text-center">

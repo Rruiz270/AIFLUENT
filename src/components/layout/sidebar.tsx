@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
+import { useRBAC } from '@/hooks/use-rbac'
+import { PERMISSIONS, type Permission } from '@/lib/rbac'
 
 interface NavItem { label: string; href: string; icon: React.ElementType; badge?: string }
 interface NavSection { title: string; items: NavItem[] }
@@ -72,11 +74,22 @@ const navigation: NavSection[] = [
 
 function SidebarContent({ collapsed, onLinkClick }: { collapsed: boolean; onLinkClick?: () => void }) {
   const pathname = usePathname()
+  const { can } = useRBAC()
+
+  const filteredNavigation = navigation.map(section => ({
+    ...section,
+    items: section.items.filter(item => {
+      const permKey = `page:${item.href.slice(1)}` as Permission
+      // If the permission is not defined in RBAC, allow access by default
+      if (!(permKey in PERMISSIONS)) return true
+      return can(permKey)
+    }),
+  })).filter(section => section.items.length > 0)
 
   return (
     <>
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-        {navigation.map((section) => (
+        {filteredNavigation.map((section) => (
           <div key={section.title}>
             <AnimatePresence>
               {!collapsed && (

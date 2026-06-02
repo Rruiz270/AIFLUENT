@@ -19,13 +19,8 @@ type TeamMember = {
   stats: { leads: number; conversions: number; rate: number; messages: number }
 }
 
-const initialMembers: TeamMember[] = [
-  { id: '1', name: 'AIFLUENT', email: 'admin@aifluent.com', phone: '+55 11 99999-9999', role: 'admin', isActive: true, stats: { leads: 0, conversions: 0, rate: 0, messages: 0 } },
-  { id: '2', name: 'Maria Consultora', email: 'maria.consultora@aifluent.com', phone: '+55 11 98888-8888', role: 'agent', isActive: true, stats: { leads: 85, conversions: 12, rate: 14.1, messages: 342 } },
-  { id: '3', name: 'Carlos Vendedor', email: 'carlos.vendedor@aifluent.com', phone: '+55 11 97777-7777', role: 'agent', isActive: true, stats: { leads: 72, conversions: 9, rate: 12.5, messages: 289 } },
-  { id: '4', name: 'Ana Especialista', email: 'ana.especialista@aifluent.com', phone: '+55 11 96666-6666', role: 'manager', isActive: true, stats: { leads: 68, conversions: 11, rate: 16.2, messages: 456 } },
-  { id: '5', name: 'Pedro Closer', email: 'pedro.closer@aifluent.com', phone: '+55 11 95555-5555', role: 'agent', isActive: true, stats: { leads: 55, conversions: 8, rate: 14.5, messages: 198 } },
-]
+// TODO: Connect to /api/users when backend is ready
+const initialMembers: TeamMember[] = []
 
 const roleConfig = {
   admin: { label: 'Admin', icon: ShieldCheck, color: 'text-rose-400', bg: 'bg-rose-400/10' },

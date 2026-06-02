@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth, checkRateLimit } from '@/lib/api-auth'
+import { requireAuth, checkRateLimit, getOrgId } from '@/lib/api-auth'
+import { logger } from '@/lib/logger'
 
 const memoryLeads: Record<string, unknown>[] = []
 
@@ -54,9 +55,10 @@ export async function GET(request: NextRequest) {
   const rateLimited = checkRateLimit(request)
   if (rateLimited) return rateLimited
 
-  const { error } = await requireAuth()
+  const { error, session } = await requireAuth()
   if (error) return error
 
+  const orgId = getOrgId(session)
   const prisma = await getPrisma()
 
   if (prisma) {
@@ -73,6 +75,7 @@ export async function GET(request: NextRequest) {
       const limit = parseInt(searchParams.get('limit') || '50')
 
       const where: Record<string, unknown> = {}
+      if (orgId) where.organizationId = orgId
       if (search) {
         where.OR = [
           { firstName: { contains: search } },
@@ -105,7 +108,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ leads, total, page, limit, totalPages: Math.ceil(total / limit) })
     } catch (error) {
-      console.error('GET /api/leads DB error:', error)
+      logger.error('GET /api/leads DB error', error)
     }
   }
 
@@ -122,8 +125,10 @@ export async function POST(request: NextRequest) {
   const rateLimited = checkRateLimit(request)
   if (rateLimited) return rateLimited
 
-  const { error: authError } = await requireAuth('gestor')
+  const { error: authError, session } = await requireAuth('gestor')
   if (authError) return authError
+
+  const orgId = getOrgId(session)
 
   let body: unknown
   try {
@@ -145,7 +150,7 @@ export async function POST(request: NextRequest) {
   try {
     const prisma = await getPrisma()
     if (prisma) {
-      const orgId = data.organizationId || await ensureDefaultOrg(prisma)
+      const resolvedOrgId = orgId || data.organizationId || await ensureDefaultOrg(prisma)
       const lead = await prisma.lead.create({
         data: {
           firstName: data.firstName,
@@ -164,7 +169,7 @@ export async function POST(request: NextRequest) {
           state: data.state,
           stageId: data.stageId,
           consultantId: data.consultantId,
-          organizationId: orgId,
+          organizationId: resolvedOrgId,
           createdById: data.createdById,
         },
         include: {
@@ -177,11 +182,11 @@ export async function POST(request: NextRequest) {
       if (data.tags && data.tags.length > 0) {
         for (const tagName of data.tags) {
           let tag = await prisma.tag.findFirst({
-            where: { name: tagName, organizationId: orgId },
+            where: { name: tagName, organizationId: resolvedOrgId },
           })
           if (!tag) {
             tag = await prisma.tag.create({
-              data: { name: tagName, organizationId: orgId },
+              data: { name: tagName, organizationId: resolvedOrgId },
             })
           }
           await prisma.leadTag.create({
@@ -198,7 +203,7 @@ export async function POST(request: NextRequest) {
             entity: 'Lead',
             entityId: lead.id,
             details: JSON.stringify({ firstName: lead.firstName, source: lead.source }),
-            organizationId: orgId,
+            organizationId: resolvedOrgId,
           },
         })
       } catch {} // Don't fail if audit fails
@@ -206,7 +211,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(lead, { status: 201 })
     }
   } catch (error) {
-    console.error('POST /api/leads DB error:', error)
+    logger.error('POST /api/leads DB error', error)
   }
 
   const fakeLead = {
