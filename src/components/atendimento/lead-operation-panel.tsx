@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  User, Phone, Mail, MapPin, Building, ChevronDown, DollarSign, Loader2, RefreshCw,
+  User, Phone, Mail, MapPin, Building, ChevronDown, DollarSign, Loader2, RefreshCw, X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils'
@@ -65,9 +65,10 @@ interface LeadData {
 interface LeadOperationPanelProps {
   leadId: string | null
   className?: string
+  onClose?: () => void
 }
 
-export function LeadOperationPanel({ leadId, className }: LeadOperationPanelProps) {
+export function LeadOperationPanel({ leadId, className, onClose }: LeadOperationPanelProps) {
   const [lead, setLead] = useState<LeadData | null>(null)
   const [loading, setLoading] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
@@ -142,14 +143,25 @@ export function LeadOperationPanel({ leadId, className }: LeadOperationPanelProp
               {lead.company && <p className="text-[10px] text-gray-500 truncate">{lead.company}</p>}
             </div>
           </div>
-          <button
-            onClick={fetchLead}
-            disabled={loading}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-            title="Atualizar"
-          >
-            <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={fetchLead}
+              disabled={loading}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              title="Atualizar"
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
+            </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                title="Fechar"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Quick actions */}

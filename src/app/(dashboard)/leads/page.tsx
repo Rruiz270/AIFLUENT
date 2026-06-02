@@ -20,7 +20,7 @@ import { useLeadsStore } from '@/stores/leads-store'
 import { LeadFilters } from '@/components/leads/lead-filters'
 import { LeadsTable } from '@/components/leads/leads-table'
 import { LeadsGrid } from '@/components/leads/leads-grid'
-import { LeadDetailModal } from '@/components/leads/lead-detail-modal'
+import { LeadOperationPanel } from '@/components/atendimento/lead-operation-panel'
 import { ImportLeadsModal } from '@/components/leads/import-leads-modal'
 import { NewLeadModal } from '@/components/leads/new-lead-modal'
 import type { KanbanCard, ViewMode } from '@/types'
@@ -74,8 +74,7 @@ export default function LeadsPage() {
   const [page, setPage] = React.useState(1)
   const [totalPages, setTotalPages] = React.useState(1)
   const [filtersOpen, setFiltersOpen] = React.useState(false)
-  const [selectedLead, setSelectedLead] = React.useState<KanbanCard | null>(null)
-  const [detailOpen, setDetailOpen] = React.useState(false)
+  const [selectedLeadId, setSelectedLeadId] = React.useState<string | null>(null)
   const [importOpen, setImportOpen] = React.useState(false)
   const [newLeadOpen, setNewLeadOpen] = React.useState(false)
 
@@ -152,8 +151,7 @@ export default function LeadsPage() {
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleView = (lead: KanbanCard) => {
-    setSelectedLead(lead)
-    setDetailOpen(true)
+    setSelectedLeadId(lead.id)
   }
 
   const handleDelete = async (lead: KanbanCard) => {
@@ -342,16 +340,32 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {/* Modals */}
-      <LeadDetailModal
-        lead={selectedLead}
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        onEdit={() => {
-          setDetailOpen(false)
-          // Could open an edit modal
-        }}
-      />
+      {/* Slide-over: Painel de operacoes do lead */}
+      <AnimatePresence>
+        {selectedLeadId && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/20"
+              onClick={() => setSelectedLeadId(null)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="fixed right-0 top-0 z-50 h-full w-[380px] bg-white border-l border-gray-200 shadow-xl overflow-y-auto"
+            >
+              <LeadOperationPanel
+                leadId={selectedLeadId}
+                onClose={() => setSelectedLeadId(null)}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <ImportLeadsModal
         open={importOpen}

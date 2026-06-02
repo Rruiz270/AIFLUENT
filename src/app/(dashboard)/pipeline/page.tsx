@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/utils'
 import { usePipelineStore, type PipelineStage } from '@/stores/pipeline-store'
 import { KanbanBoard } from '@/components/pipeline/kanban-board'
+import { LeadOperationPanel } from '@/components/atendimento/lead-operation-panel'
 import type { KanbanCard, LeadSource, LeadTemperature } from '@/types'
 
 const STAGES = [
@@ -62,6 +63,7 @@ export default function PipelinePage() {
   const [filterTag, setFilterTag] = useState<string>('')
   const [filterOwner, setFilterOwner] = useState<string>('')
   const [filterStatus, setFilterStatus] = useState<string>('')
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
   const filterRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -308,7 +310,7 @@ export default function PipelinePage() {
                 filteredStages={filteredStages}
                 onMoveLead={handleMoveLead}
                 onAddLead={() => { /* TODO: open add-lead modal */ }}
-                onCardClick={() => { /* TODO: open lead detail */ }}
+                onCardClick={(card) => setSelectedLeadId(card.id)}
                 onAddStage={handleAddStage}
                 onRenameStage={handleRenameStage}
                 onUpdateStageColor={handleUpdateStageColor}
@@ -318,6 +320,33 @@ export default function PipelinePage() {
           )}
         </div>
       </div>
+
+      {/* Slide-over: Painel de operacoes do lead */}
+      <AnimatePresence>
+        {selectedLeadId && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/20"
+              onClick={() => setSelectedLeadId(null)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="fixed right-0 top-0 z-50 h-full w-[380px] bg-white border-l border-gray-200 shadow-xl overflow-y-auto"
+            >
+              <LeadOperationPanel
+                leadId={selectedLeadId}
+                onClose={() => setSelectedLeadId(null)}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
