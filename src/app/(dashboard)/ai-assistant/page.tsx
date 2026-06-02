@@ -80,7 +80,7 @@ export default function AIAssistantPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  function handleSend() {
+  async function handleSend() {
     if (!input.trim()) return
     const userMsg: ChatMessage = {
       id: String(Date.now()),
@@ -88,20 +88,52 @@ export default function AIAssistantPage() {
       content: input,
       timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     }
+    const currentInput = input
     setMessages((prev) => [...prev, userMsg])
     setInput('')
     setIsTyping(true)
 
-    setTimeout(() => {
+    try {
+      const history = messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .slice(-10)
+        .map((m) => ({ role: m.role, content: m.content }))
+
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: currentInput, history }),
+      })
+
+      let content = ''
+      if (res.ok) {
+        const data = await res.json()
+        content = data.response || data.error || 'Sem resposta.'
+      } else if (res.status === 401) {
+        content = 'Voce precisa estar logado para usar o assistente IA.'
+      } else if (res.status === 429) {
+        content = 'Limite de requisicoes atingido. Aguarde um momento e tente novamente.'
+      } else {
+        content = 'Erro ao processar sua mensagem. Tente novamente.'
+      }
+
       const aiMsg: ChatMessage = {
         id: String(Date.now() + 1),
         role: 'assistant',
-        content: 'Estou analisando os dados... Com base na sua solicitacao, aqui esta o que encontrei. Posso detalhar qualquer ponto especifico.',
+        content,
         timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       }
       setMessages((prev) => [...prev, aiMsg])
+    } catch {
+      setMessages((prev) => [...prev, {
+        id: String(Date.now() + 1),
+        role: 'assistant',
+        content: 'Erro de conexao. Verifique sua rede e tente novamente.',
+        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      }])
+    } finally {
       setIsTyping(false)
-    }, 1500)
+    }
   }
 
   return (
