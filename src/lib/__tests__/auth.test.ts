@@ -16,6 +16,6 @@ describe('Auth Validation', () => {
   })
 
   it('accepts valid credentials format', () => {
-    expect(loginSchema.safeParse({ email: 'admin@aifluent.com', password: 'Admin@2026' }).success).toBe(true)
+    expect(loginSchema.safeParse({ email: 'admin@aifluent.com', password: 'TestPass123' }).success).toBe(true)
   })
 })

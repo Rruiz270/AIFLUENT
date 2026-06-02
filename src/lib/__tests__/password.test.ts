@@ -3,9 +3,9 @@ import bcrypt from 'bcryptjs'
 
 describe('Password Hashing', () => {
   it('hashes password correctly', async () => {
-    const hash = await bcrypt.hash('Admin@2026', 10)
+    const hash = await bcrypt.hash('TestPass123', 10)
     expect(hash).toBeTruthy()
-    expect(hash).not.toBe('Admin@2026')
+    expect(hash).not.toBe('TestPass123')
     expect(hash.startsWith('$2')).toBe(true)
   })
 

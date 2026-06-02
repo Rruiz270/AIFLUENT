@@ -16,14 +16,17 @@ const loginSchema = z.object({
   password: z.string().min(6),
 })
 
-// Seed users for first-time setup. These plaintext passwords are ONLY used once
-// during initial DB seeding — they are immediately hashed with bcrypt and the
-// plaintext is never stored. After first login, users should change their passwords.
-const SEED_USERS = [
-  { name: 'AIFLUENT Admin', email: 'admin@aifluent.com', password: 'Admin@2026', role: 'admin' as UserRole },
-  { name: 'Gestor AIFLUENT', email: 'gestor@aifluent.com', password: 'Gestor@2026', role: 'gestor' as UserRole },
-  { name: 'Operador AIFLUENT', email: 'operador@aifluent.com', password: 'Operador@2026', role: 'operador' as UserRole },
-]
+// Seed users loaded from environment variables.
+// Set SEED_ADMIN_PASSWORD, SEED_GESTOR_PASSWORD, SEED_OPERADOR_PASSWORD in .env
+// These are used ONLY on first-time DB setup (when User table is empty)
+// and are immediately hashed with bcrypt — plaintext is never stored.
+function getSeedUsers() {
+  return [
+    { name: 'AIFLUENT Admin', email: 'admin@aifluent.com', password: process.env.SEED_ADMIN_PASSWORD || '', role: 'admin' as UserRole },
+    { name: 'Gestor AIFLUENT', email: 'gestor@aifluent.com', password: process.env.SEED_GESTOR_PASSWORD || '', role: 'gestor' as UserRole },
+    { name: 'Operador AIFLUENT', email: 'operador@aifluent.com', password: process.env.SEED_OPERADOR_PASSWORD || '', role: 'operador' as UserRole },
+  ].filter(u => u.password.length >= 6)
+}
 
 async function authenticateWithDB(email: string, password: string) {
   try {
@@ -34,7 +37,7 @@ async function authenticateWithDB(email: string, password: string) {
     if (count === 0) {
       let org = await prisma.organization.findFirst()
       if (!org) org = await prisma.organization.create({ data: { name: 'AIFLUENT', slug: 'aifluent' } })
-      for (const u of SEED_USERS) {
+      for (const u of getSeedUsers()) {
         await prisma.user.create({
           data: { name: u.name, email: u.email, passwordHash: await bcrypt.hash(u.password, 10), role: u.role, organizationId: org.id },
         })
