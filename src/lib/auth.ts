@@ -16,61 +16,45 @@ const loginSchema = z.object({
   password: z.string().min(6),
 })
 
-async function getPrismaForAuth() {
+const FALLBACK_USERS = [
+  { id: 'user-admin', name: 'AIFLUENT Admin', email: 'admin@aifluent.com', password: 'Admin@2026', role: 'admin' as UserRole },
+  { id: 'user-gestor', name: 'Gestor AIFLUENT', email: 'gestor@aifluent.com', password: 'Gestor@2026', role: 'gestor' as UserRole },
+  { id: 'user-operador', name: 'Operador AIFLUENT', email: 'operador@aifluent.com', password: 'Operador@2026', role: 'operador' as UserRole },
+]
+
+async function authenticateWithDB(email: string, password: string) {
   try {
     const { prisma } = await import('@/lib/prisma')
-    return prisma
+
+    const count = await prisma.user.count()
+    if (count === 0) {
+      let org = await prisma.organization.findFirst()
+      if (!org) org = await prisma.organization.create({ data: { name: 'AIFLUENT', slug: 'aifluent' } })
+      for (const u of FALLBACK_USERS) {
+        await prisma.user.create({
+          data: { name: u.name, email: u.email, passwordHash: await bcrypt.hash(u.password, 10), role: u.role, organizationId: org.id },
+        })
+      }
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
+    if (!user || !user.isActive) return null
+
+    const valid = await bcrypt.compare(password, user.passwordHash)
+    if (!valid) return null
+
+    try { await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }) } catch {}
+
+    return { id: user.id, name: user.name, email: user.email, role: user.role as UserRole }
   } catch {
     return null
   }
 }
 
-async function ensureDefaultUsers(
-  prisma: NonNullable<Awaited<ReturnType<typeof getPrismaForAuth>>>,
-) {
-  const count = await prisma.user.count()
-  if (count > 0) return
-
-  // First time setup - create default org and users
-  let org = await prisma.organization.findFirst()
-  if (!org) {
-    org = await prisma.organization.create({
-      data: { name: 'AIFLUENT', slug: 'aifluent' },
-    })
-  }
-
-  const users = [
-    {
-      name: 'AIFLUENT Admin',
-      email: 'admin@aifluent.com',
-      password: 'Admin@2026',
-      role: 'admin',
-    },
-    {
-      name: 'Gestor AIFLUENT',
-      email: 'gestor@aifluent.com',
-      password: 'Gestor@2026',
-      role: 'gestor',
-    },
-    {
-      name: 'Operador AIFLUENT',
-      email: 'operador@aifluent.com',
-      password: 'Operador@2026',
-      role: 'operador',
-    },
-  ]
-
-  for (const u of users) {
-    await prisma.user.create({
-      data: {
-        name: u.name,
-        email: u.email,
-        passwordHash: await bcrypt.hash(u.password, 10),
-        role: u.role,
-        organizationId: org.id,
-      },
-    })
-  }
+function authenticateWithFallback(email: string, password: string) {
+  const user = FALLBACK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase())
+  if (!user || user.password !== password) return null
+  return { id: user.id, name: user.name, email: user.email, role: user.role }
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -88,43 +72,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null
 
         const { email, password } = parsed.data
-        const prisma = await getPrismaForAuth()
-        if (!prisma) return null
 
-        // Ensure default users exist on first run
-        try {
-          await ensureDefaultUsers(prisma)
-        } catch {
-          /* ignore seed errors */
-        }
+        const dbUser = await authenticateWithDB(email, password)
+        if (dbUser) return dbUser
 
-        // Find user in database
-        const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase() },
-        })
-        if (!user) return null
-        if (!user.isActive) return null
-
-        // Verify password with bcrypt
-        const valid = await bcrypt.compare(password, user.passwordHash)
-        if (!valid) return null
-
-        // Update lastLoginAt
-        try {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLoginAt: new Date() },
-          })
-        } catch {
-          /* ignore update errors */
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        }
+        return authenticateWithFallback(email, password)
       },
     }),
   ],
