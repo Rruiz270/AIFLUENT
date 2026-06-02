@@ -12,10 +12,9 @@ import { CommandPalette } from './command-palette'
 
 const routeTitles: Record<string, string> = {
   '/dashboard': 'Dashboard', '/leads': 'Leads', '/pipeline': 'Pipeline', '/deals': 'Negocios',
-  '/inbox': 'Inbox', '/whatsapp': 'WhatsApp', '/phone': 'Telefonia', '/campaigns': 'Campanhas',
-  '/disparos': 'Disparos', '/templates': 'Templates', '/meta-ads': 'Meta Ads', '/automations': 'Automacoes',
-  '/tasks': 'Tarefas', '/productivity': 'Produtividade', '/team': 'Equipe', '/reports': 'Relatorios',
-  '/ai-assistant': 'Assistente IA', '/integrations': 'Integracoes', '/security': 'Seguranca', '/settings': 'Configuracoes',
+  '/whatsapp': 'WhatsApp', '/campaigns': 'Campanhas',
+  '/tasks': 'Tarefas', '/team': 'Equipe',
+  '/ai-assistant': 'Assistente IA',
 }
 
 export function Header({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void }) {

@@ -6,9 +6,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, Users, Kanban, Handshake, Inbox, MessageCircle,
-  Megaphone, FileText, Phone, Send, Bot, Workflow, Target, CheckSquare,
-  Trophy, UsersRound, BarChart3, Plug, Settings, Shield,
+  LayoutDashboard, Users, Kanban, Handshake, MessageCircle,
+  Megaphone, Bot, CheckSquare, UsersRound,
   ChevronLeft, ChevronRight, LogOut, X, Menu,
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
@@ -32,42 +31,21 @@ const navigation: NavSection[] = [
   {
     title: 'COMUNICACAO',
     items: [
-      { label: 'Inbox', href: '/inbox', icon: Inbox, badge: '12' },
       { label: 'WhatsApp', href: '/whatsapp', icon: MessageCircle },
-      { label: 'Telefonia', href: '/phone', icon: Phone },
       { label: 'Campanhas', href: '/campaigns', icon: Megaphone },
-      { label: 'Disparos', href: '/disparos', icon: Send },
-      { label: 'Templates', href: '/templates', icon: FileText },
-    ],
-  },
-  {
-    title: 'MARKETING',
-    items: [
-      { label: 'Meta Ads', href: '/meta-ads', icon: Target },
-      { label: 'Automacoes', href: '/automations', icon: Workflow },
     ],
   },
   {
     title: 'GESTAO',
     items: [
       { label: 'Tarefas', href: '/tasks', icon: CheckSquare },
-      { label: 'Produtividade', href: '/productivity', icon: Trophy },
       { label: 'Equipe', href: '/team', icon: UsersRound },
-      { label: 'Relatorios', href: '/reports', icon: BarChart3 },
     ],
   },
   {
     title: 'INTELIGENCIA',
     items: [
       { label: 'Assistente IA', href: '/ai-assistant', icon: Bot },
-    ],
-  },
-  {
-    title: 'CONFIGURACOES',
-    items: [
-      { label: 'Integracoes', href: '/integrations', icon: Plug },
-      { label: 'Seguranca', href: '/security', icon: Shield },
-      { label: 'Configuracoes', href: '/settings', icon: Settings },
     ],
   },
 ]
