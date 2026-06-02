@@ -119,7 +119,11 @@ export async function POST(request: NextRequest) {
     const { prisma } = await import('@/lib/prisma')
     const lead = await prisma.lead.findUnique({
       where: { id: context?.leadId as string },
-      include: { stage: true, deals: true, activities: { take: 5, orderBy: { createdAt: 'desc' } } },
+      include: {
+        stage: true,
+        deals: true,
+        activities: { take: 10, orderBy: { createdAt: 'desc' } },
+      },
     })
     if (!lead) return NextResponse.json({ suggestion: 'Lead nao encontrado' })
 
@@ -127,15 +131,28 @@ export async function POST(request: NextRequest) {
       ? Math.floor((Date.now() - new Date(lead.lastContactAt).getTime()) / 86400000)
       : 999
     const hasDeals = lead.deals.length > 0
+    const dealValue = lead.deals.reduce((sum, d) => sum + (d.value || 0), 0)
+    const recentNotes = lead.activities.filter(a => a.type === 'note').length
+    const hasOpenDeal = lead.deals.some(d => d.status === 'open')
 
     let suggestion = ''
     let nextAction = ''
 
     if (lead.temperature === 'hot' && (lead.aiScore ?? 0) > 70) {
-      suggestion = `${lead.firstName} tem score ${lead.aiScore}% e temperatura quente. Recomendo mover para a proxima etapa e enviar proposta comercial.`
+      suggestion = `${lead.firstName} tem score ${lead.aiScore}% e temperatura quente.`
+      if (hasOpenDeal && dealValue > 0) {
+        suggestion += ` Negocio aberto de R$${dealValue.toLocaleString('pt-BR')}. Recomendo enviar proposta comercial agora.`
+      } else {
+        suggestion += ` Recomendo mover para a proxima etapa e enviar proposta comercial.`
+      }
       nextAction = 'move_stage'
     } else if (daysSinceContact > 3 && lead.temperature !== 'cold') {
-      suggestion = `${lead.firstName} esta sem contato ha ${daysSinceContact} dias. Recomendo criar um follow-up urgente.`
+      suggestion = `${lead.firstName} esta sem contato ha ${daysSinceContact} dias.`
+      if (recentNotes > 0) {
+        suggestion += ` Ha ${recentNotes} notas recentes. Recomendo retomar o contato com base nas anotacoes.`
+      } else {
+        suggestion += ` Recomendo criar um follow-up urgente.`
+      }
       nextAction = 'create_followup'
     } else if (lead.temperature === 'cold' && daysSinceContact > 7) {
       suggestion = `${lead.firstName} esta frio e sem contato ha ${daysSinceContact} dias. Considere uma campanha de reativacao ou remover do pipeline.`
@@ -144,14 +161,19 @@ export async function POST(request: NextRequest) {
       suggestion = `${lead.firstName} ainda nao tem negocio vinculado. Recomendo criar um negocio para acompanhar o valor.`
       nextAction = 'create_deal'
     } else {
-      suggestion = `${lead.firstName} esta no estagio ${lead.stage?.name || 'indefinido'}. Acompanhe normalmente.`
+      suggestion = `${lead.firstName} esta no estagio ${lead.stage?.name || 'indefinido'}.`
+      if (hasOpenDeal) {
+        suggestion += ` Negocio em andamento (R$${dealValue.toLocaleString('pt-BR')}). Acompanhe normalmente.`
+      } else {
+        suggestion += ` Acompanhe normalmente.`
+      }
       nextAction = 'monitor'
     }
 
     return NextResponse.json({
       suggestion,
       action: nextAction,
-      leadData: { score: lead.aiScore, temperature: lead.temperature, daysSinceContact, stage: lead.stage?.name },
+      leadData: { score: lead.aiScore, temperature: lead.temperature, daysSinceContact, stage: lead.stage?.name, dealValue, recentNotes },
     })
   }
 
@@ -159,24 +181,32 @@ export async function POST(request: NextRequest) {
     const { prisma } = await import('@/lib/prisma')
     const lead = await prisma.lead.findUnique({
       where: { id: context?.leadId as string },
-      include: { stage: true, activities: { take: 10, orderBy: { createdAt: 'desc' } } },
+      include: {
+        stage: true,
+        activities: { take: 10, orderBy: { createdAt: 'desc' } },
+        deals: true,
+      },
     })
-    if (!lead) return NextResponse.json({ summary: 'Lead nao encontrado' })
+    if (!lead) return NextResponse.json({ summary: 'Sem dados disponiveis' })
 
     const noteCount = lead.activities.filter(a => a.type === 'note').length
+    const stageChanges = lead.activities.filter(a => a.type === 'stage_change').length
     const callCount = lead.activities.filter(a => a.type === 'call').length
+    const lastNote = lead.activities.find(a => a.type === 'note')
+    const dealValue = lead.deals.reduce((sum, d) => sum + (d.value || 0), 0)
     const totalActivities = lead.activities.length
 
-    let summary = `${lead.firstName}`
-    if (lead.stage) summary += ` esta em ${lead.stage.name}`
-    summary += `, temp. ${lead.temperature || 'indefinida'}`
-    if (lead.aiScore) summary += `, score ${lead.aiScore}%`
-    summary += `. ${totalActivities} atividades recentes`
-    if (noteCount > 0) summary += ` (${noteCount} notas)`
-    if (callCount > 0) summary += ` (${callCount} ligacoes)`
-    summary += '.'
+    let summary = `${lead.firstName} ${lead.lastName || ''} — ${lead.temperature === 'hot' ? 'Lead quente' : lead.temperature === 'warm' ? 'Lead morno' : 'Lead frio'}`
+    summary += `, estagio ${lead.stage?.name || 'inicial'}`
+    if (dealValue > 0) summary += `, valor total R$${dealValue.toLocaleString('pt-BR')}`
+    summary += `. ${noteCount} notas, ${stageChanges} mudancas de estagio.`
+    if (callCount > 0) summary += ` ${callCount} ligacoes.`
+    if (lastNote?.description) summary += ` Ultima nota: "${lastNote.description.substring(0, 80)}${lastNote.description.length > 80 ? '...' : ''}"`
 
-    return NextResponse.json({ summary, details: { noteCount, callCount, totalActivities, stage: lead.stage?.name, temperature: lead.temperature } })
+    return NextResponse.json({
+      summary,
+      details: { noteCount, callCount, stageChanges, totalActivities, stage: lead.stage?.name, temperature: lead.temperature, dealValue },
+    })
   }
 
   if (action === 'estimate-probability') {
@@ -225,7 +255,7 @@ export async function POST(request: NextRequest) {
     const { prisma } = await import('@/lib/prisma')
     const lead = await prisma.lead.findUnique({
       where: { id: context?.leadId as string },
-      include: { stage: true, deals: true, activities: { take: 5, orderBy: { createdAt: 'desc' } } },
+      include: { stage: true, deals: true, activities: { take: 10, orderBy: { createdAt: 'desc' } } },
     })
     if (!lead) return NextResponse.json({ risks: [], level: 'unknown' })
 
@@ -250,23 +280,33 @@ export async function POST(request: NextRequest) {
     const { prisma } = await import('@/lib/prisma')
     const lead = await prisma.lead.findUnique({
       where: { id: context?.leadId as string },
-      include: { stage: true },
+      include: {
+        activities: { take: 5, orderBy: { createdAt: 'desc' } },
+        deals: true,
+        stage: true,
+      },
     })
-    if (!lead) return NextResponse.json({ response: 'Lead nao encontrado' })
+    if (!lead) return NextResponse.json({ response: 'Ola! Como posso ajudar?' })
 
-    const name = lead.firstName
+    const firstName = lead.firstName
     const course = lead.courseInterest || 'nossos cursos'
-    let response = ''
+    const stage = lead.stage?.name || 'inicial'
 
-    if (lead.temperature === 'hot') {
-      response = `Oi ${name}! Tudo bem? Vi que voce tem bastante interesse em ${course}. Que tal agendarmos uma conversa para eu te apresentar as melhores opcoes? Tenho horarios disponiveis essa semana!`
-    } else if (lead.temperature === 'warm') {
-      response = `Ola ${name}! Espero que esteja bem. Queria te contar sobre as novidades em ${course}. Temos condicoes especiais esse mes. Posso te enviar mais detalhes?`
+    let response = ''
+    if (stage === 'Base' || stage === 'Prospeccao') {
+      response = `Ola ${firstName}! Tudo bem? Vi que voce demonstrou interesse em ${course}. Posso te contar mais sobre o programa?`
+    } else if (stage === 'Conexao' || stage === 'Proposta') {
+      response = `${firstName}, preparei uma proposta especial para voce! Quando podemos conversar sobre os detalhes?`
+    } else if (stage === 'Negociacao') {
+      response = `${firstName}, estamos quase la! Posso ajudar com alguma duvida sobre a proposta?`
     } else {
-      response = `Oi ${name}! Ha quanto tempo! Passando pra te contar que temos novidades incriveis em ${course}. Se ainda tiver interesse, adoraria bater um papo rapido. O que acha?`
+      response = `Ola ${firstName}! Como posso te ajudar hoje?`
     }
 
-    return NextResponse.json({ response, context: { temperature: lead.temperature, course, stage: lead.stage?.name } })
+    return NextResponse.json({
+      response,
+      context: { stage, course: lead.courseInterest, temperature: lead.temperature, score: lead.aiScore },
+    })
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

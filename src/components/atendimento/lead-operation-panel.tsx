@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  User, Phone, Mail, MapPin, Building, ChevronDown, DollarSign, Loader2, RefreshCw, X,
+  User, Phone, Mail, MapPin, Building, ChevronDown, DollarSign, Loader2, RefreshCw, X, Plus,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils'
 import { AICopilot } from './ai-copilot'
@@ -72,6 +73,11 @@ export function LeadOperationPanel({ leadId, className, onClose }: LeadOperation
   const [lead, setLead] = useState<LeadData | null>(null)
   const [loading, setLoading] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
+  const [activeDealIdx, setActiveDealIdx] = useState(0)
+  const [newDealOpen, setNewDealOpen] = useState(false)
+  const [newDealTitle, setNewDealTitle] = useState('')
+  const [newDealValue, setNewDealValue] = useState('')
+  const [creatingDeal, setCreatingDeal] = useState(false)
 
   const fetchLead = useCallback(async () => {
     if (!leadId) { setLead(null); return }
@@ -125,7 +131,39 @@ export function LeadOperationPanel({ leadId, className, onClose }: LeadOperation
   const activities = lead.activities || []
   const tasks = lead.tasks || []
   const deals = lead.deals || []
-  const primaryDeal = deals[0]
+  const activeDeal = deals[activeDealIdx] || deals[0] || null
+
+  async function handleCreateDeal() {
+    if (!lead || !newDealTitle.trim() || !lead.stageId) return
+    const currentLead = lead
+    setCreatingDeal(true)
+    try {
+      const res = await fetch('/api/deals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newDealTitle.trim(),
+          value: newDealValue ? parseFloat(newDealValue) : undefined,
+          leadId: currentLead.id,
+          stageId: currentLead.stageId,
+        }),
+      })
+      if (res.ok) {
+        toast.success('Negocio criado!')
+        setNewDealTitle('')
+        setNewDealValue('')
+        setNewDealOpen(false)
+        await fetchLead()
+        setActiveDealIdx(deals.length) // select the newly created deal
+      } else {
+        toast.error('Erro ao criar negocio')
+      }
+    } catch {
+      toast.error('Erro de conexao')
+    } finally {
+      setCreatingDeal(false)
+    }
+  }
 
   return (
     <div className={cn('flex flex-col h-full overflow-y-auto', className)}>
@@ -185,7 +223,9 @@ export function LeadOperationPanel({ leadId, className, onClose }: LeadOperation
         {/* Deal Management */}
         <div className="rounded-xl border border-gray-200 bg-white p-3 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Negocio</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Negocios {deals.length > 0 && `(${deals.length})`}
+            </p>
             <StageSelector
               currentStageId={lead.stageId || null}
               leadId={lead.id}
@@ -193,30 +233,51 @@ export function LeadOperationPanel({ leadId, className, onClose }: LeadOperation
             />
           </div>
 
-          {primaryDeal ? (
+          {/* Deal tabs when multiple deals */}
+          {deals.length > 1 && (
+            <div className="flex flex-wrap gap-1">
+              {deals.map((deal, idx) => (
+                <button
+                  key={deal.id}
+                  onClick={() => setActiveDealIdx(idx)}
+                  className={cn(
+                    'rounded-lg px-2 py-1 text-[11px] font-medium transition-colors truncate max-w-[120px]',
+                    idx === activeDealIdx
+                      ? 'bg-sky-100 text-sky-700 border border-sky-200'
+                      : 'bg-gray-50 text-gray-500 border border-gray-100 hover:bg-gray-100'
+                  )}
+                  title={deal.title}
+                >
+                  {deal.title.length > 15 ? deal.title.slice(0, 15) + '...' : deal.title}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {activeDeal ? (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">{primaryDeal.title}</span>
-                {primaryDeal.value != null && (
+                <span className="text-sm text-gray-700">{activeDeal.title}</span>
+                {activeDeal.value != null && (
                   <span className="text-sm font-semibold text-gray-900">
-                    {formatCurrency(primaryDeal.value)}
+                    {formatCurrency(activeDeal.value)}
                   </span>
                 )}
               </div>
-              {primaryDeal.probability != null && (
+              {activeDeal.probability != null && (
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 rounded-full bg-gray-100">
                     <div
                       className="h-full rounded-full bg-sky-500 transition-all"
-                      style={{ width: `${primaryDeal.probability}%` }}
+                      style={{ width: `${activeDeal.probability}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-gray-500">{primaryDeal.probability}%</span>
+                  <span className="text-[10px] text-gray-500">{activeDeal.probability}%</span>
                 </div>
               )}
               <DealStatusButtons
-                dealId={primaryDeal.id}
-                currentStatus={primaryDeal.status}
+                dealId={activeDeal.id}
+                currentStatus={activeDeal.status}
                 onStatusChange={fetchLead}
               />
             </div>
@@ -225,6 +286,60 @@ export function LeadOperationPanel({ leadId, className, onClose }: LeadOperation
               <DollarSign className="h-3.5 w-3.5" />
               Nenhum negocio vinculado
             </div>
+          )}
+
+          {/* New deal form */}
+          <AnimatePresence>
+            {newDealOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 space-y-2">
+                  <input
+                    value={newDealTitle}
+                    onChange={(e) => setNewDealTitle(e.target.value)}
+                    placeholder="Titulo do negocio"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-sky-400 focus:outline-none"
+                  />
+                  <input
+                    value={newDealValue}
+                    onChange={(e) => setNewDealValue(e.target.value)}
+                    placeholder="Valor (R$)"
+                    type="number"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 placeholder-gray-400 focus:border-sky-400 focus:outline-none"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCreateDeal}
+                      disabled={creatingDeal || !newDealTitle.trim()}
+                      className="flex items-center gap-1.5 rounded-lg bg-sky-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-sky-600 disabled:opacity-50"
+                    >
+                      {creatingDeal ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                      Criar
+                    </button>
+                    <button
+                      onClick={() => { setNewDealOpen(false); setNewDealTitle(''); setNewDealValue('') }}
+                      className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {!newDealOpen && (
+            <button
+              onClick={() => setNewDealOpen(true)}
+              className="flex items-center gap-1.5 text-xs text-sky-600 hover:text-sky-700 transition-colors font-medium"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Novo Negocio
+            </button>
           )}
 
           {/* Consultant */}

@@ -6,6 +6,7 @@ import {
   Search, ArrowLeft, MessageCircle, Phone, Hash, Filter,
   Wifi, WifiOff, X,
 } from 'lucide-react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { cn } from '@/lib/utils'
 import { ChatMessageBubble } from '@/components/chat/chat-message-bubble'
 import { ChatInput } from '@/components/chat/chat-input'
@@ -61,6 +62,7 @@ export default function AtendimentoPage() {
   const [allMessages, setAllMessages] = useState<Record<string, ChatMessage[]>>({})
   const [showPanel, setShowPanel] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const conversationListRef = useRef<HTMLDivElement>(null)
 
   const selectedConv = conversations.find((c) => c.id === selectedId)
   const currentMessages = selectedId
@@ -197,6 +199,13 @@ export default function AtendimentoPage() {
 
   const totalUnread = conversations.reduce((s, c) => s + c.unreadCount, 0)
 
+  const conversationVirtualizer = useVirtualizer({
+    count: filteredConversations.length,
+    getScrollElement: () => conversationListRef.current,
+    estimateSize: () => 80,
+    overscan: 5,
+  })
+
   // Time formatting for conversation list
   function formatTime(iso: string) {
     const d = new Date(iso)
@@ -260,8 +269,8 @@ export default function AtendimentoPage() {
             </div>
           </div>
 
-          {/* Conversation list */}
-          <div className="flex-1 overflow-y-auto">
+          {/* Conversation list (virtualized) */}
+          <div ref={conversationListRef} className="flex-1 overflow-y-auto">
             {loading && (
               <div className="flex items-center justify-center py-12">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-sky-500" />
@@ -283,46 +292,65 @@ export default function AtendimentoPage() {
                 <p className="text-sm text-gray-500">Nenhuma conversa encontrada</p>
               </div>
             )}
-            {filteredConversations.map((conv) => {
-              const ChannelIcon = channelIcons[conv.channel]
-              return (
-                <button
-                  key={conv.id}
-                  onClick={() => setSelectedId(conv.id)}
-                  className={cn(
-                    'w-full flex items-start gap-3 p-3 text-left transition-colors border-b border-gray-50',
-                    selectedId === conv.id ? 'bg-sky-50' : 'hover:bg-gray-50'
-                  )}
-                >
-                  {/* Avatar */}
-                  <div className="relative shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
-                      <span className="text-xs font-bold text-white">{conv.avatar}</span>
-                    </div>
-                    <div className={cn('absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-white flex items-center justify-center', conv.channel === 'whatsapp' ? 'bg-emerald-500' : conv.channel === 'instagram' ? 'bg-pink-500' : 'bg-blue-500')}>
-                      <ChannelIcon className="h-2.5 w-2.5 text-white" />
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium text-gray-900 truncate">{conv.name}</p>
-                      <span className="text-[10px] text-gray-400 shrink-0">{formatTime(conv.lastMessageAt)}</span>
-                    </div>
-                    <p className="text-xs text-gray-500 truncate mt-0.5">{conv.lastMessage}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <SLATimer lastMessageAt={conv.lastMessageAt} />
-                      {conv.unreadCount > 0 && (
-                        <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-sky-500 px-1 text-[10px] font-bold text-white">
-                          {conv.unreadCount}
-                        </span>
+            {!loading && filteredConversations.length > 0 && (
+              <div
+                style={{
+                  height: `${conversationVirtualizer.getTotalSize()}px`,
+                  width: '100%',
+                  position: 'relative',
+                }}
+              >
+                {conversationVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const conv = filteredConversations[virtualRow.index]
+                  const ChannelIcon = channelIcons[conv.channel]
+                  return (
+                    <button
+                      key={conv.id}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: `${virtualRow.size}px`,
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                      onClick={() => setSelectedId(conv.id)}
+                      className={cn(
+                        'flex items-start gap-3 p-3 text-left transition-colors border-b border-gray-50',
+                        selectedId === conv.id ? 'bg-sky-50' : 'hover:bg-gray-50'
                       )}
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
+                    >
+                      {/* Avatar */}
+                      <div className="relative shrink-0">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center">
+                          <span className="text-xs font-bold text-white">{conv.avatar}</span>
+                        </div>
+                        <div className={cn('absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-white flex items-center justify-center', conv.channel === 'whatsapp' ? 'bg-emerald-500' : conv.channel === 'instagram' ? 'bg-pink-500' : 'bg-blue-500')}>
+                          <ChannelIcon className="h-2.5 w-2.5 text-white" />
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-gray-900 truncate">{conv.name}</p>
+                          <span className="text-[10px] text-gray-400 shrink-0">{formatTime(conv.lastMessageAt)}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 truncate mt-0.5">{conv.lastMessage}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <SLATimer lastMessageAt={conv.lastMessageAt} />
+                          {conv.unreadCount > 0 && (
+                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-sky-500 px-1 text-[10px] font-bold text-white">
+                              {conv.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* Connection status */}

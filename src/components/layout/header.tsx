@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -9,6 +8,7 @@ import {
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import { CommandPalette } from './command-palette'
+import { QuickCreateLead } from '@/components/leads/quick-create-lead'
 
 const routeTitles: Record<string, string> = {
   '/dashboard': 'Dashboard', '/leads': 'Leads', '/pipeline': 'Pipeline', '/deals': 'Negocios',
@@ -22,6 +22,7 @@ export function Header({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
   const [commandOpen, setCommandOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false)
 
   const pageTitle = routeTitles[pathname ?? ''] ?? Object.entries(routeTitles).find(([path]) => pathname?.startsWith(path))?.[1] ?? 'Dashboard'
 
@@ -48,10 +49,10 @@ export function Header({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
               <Command className="mr-0.5 h-2.5 w-2.5" />K
             </kbd>
           </button>
-          <Link href="/leads?new=1" className="flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white shadow-sm shadow-indigo-500/20 transition-colors hover:bg-indigo-500">
+          <button onClick={() => setQuickCreateOpen(true)} className="flex h-9 items-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-medium text-white shadow-sm shadow-indigo-500/20 transition-colors hover:bg-indigo-500">
             <UserPlus className="h-4 w-4" />
             <span className="hidden sm:inline">Novo Lead</span>
-          </Link>
+          </button>
           <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600">
             <Sparkles className="h-4 w-4" />
           </button>
@@ -116,6 +117,7 @@ export function Header({ onMobileMenuToggle }: { onMobileMenuToggle?: () => void
         </div>
       </header>
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
+      <QuickCreateLead open={quickCreateOpen} onOpenChange={setQuickCreateOpen} />
     </>
   )
 }

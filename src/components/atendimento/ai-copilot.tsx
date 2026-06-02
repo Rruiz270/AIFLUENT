@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bot, Sparkles, ArrowRight, Clock, Snowflake, Flame, Zap, Loader2, AlertTriangle } from 'lucide-react'
+import { Bot, Sparkles, ArrowRight, Clock, Snowflake, Flame, Zap, Loader2, AlertTriangle, MessageSquare, FileText, Copy, Check } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 interface AICopilotProps {
@@ -95,6 +96,11 @@ export function AICopilot({ temperature, score, stageName, lastContactAt, leadId
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [apiLoading, setApiLoading] = useState(false)
+  const [generatedResponse, setGeneratedResponse] = useState<string | null>(null)
+  const [responseLoading, setResponseLoading] = useState(false)
+  const [summary, setSummary] = useState<string | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const fetchAISuggestions = useCallback(async () => {
     setApiLoading(true)
@@ -181,9 +187,63 @@ export function AICopilot({ temperature, score, stageName, lastContactAt, leadId
     }
   }, [leadId, temperature, score, lastContactAt])
 
+  const handleGenerateResponse = useCallback(async () => {
+    setResponseLoading(true)
+    setGeneratedResponse(null)
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate-response', context: { leadId } }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setGeneratedResponse(data.response || null)
+      }
+    } catch {
+      toast.error('Erro ao gerar resposta')
+    } finally {
+      setResponseLoading(false)
+    }
+  }, [leadId])
+
+  const handleSummarize = useCallback(async () => {
+    setSummaryLoading(true)
+    setSummary(null)
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'summarize-conversation', context: { leadId } }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSummary(data.summary || null)
+      }
+    } catch {
+      toast.error('Erro ao resumir conversa')
+    } finally {
+      setSummaryLoading(false)
+    }
+  }, [leadId])
+
+  async function handleCopyResponse() {
+    if (!generatedResponse) return
+    try {
+      await navigator.clipboard.writeText(generatedResponse)
+      setCopied(true)
+      toast.success('Resposta copiada!')
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error('Erro ao copiar')
+    }
+  }
+
   useEffect(() => {
     // Show local fallback immediately, then fetch from API
     setSuggestions(buildLocalFallback(temperature, score, lastContactAt))
+    setGeneratedResponse(null)
+    setSummary(null)
     if (leadId) {
       fetchAISuggestions()
     }
@@ -266,6 +326,75 @@ export function AICopilot({ temperature, score, stageName, lastContactAt, leadId
             </div>
           </motion.div>
         ))}
+      </AnimatePresence>
+
+      {/* AI Action Buttons */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleGenerateResponse}
+          disabled={responseLoading}
+          className="flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-50"
+        >
+          {responseLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <MessageSquare className="h-3 w-3" />}
+          Gerar resposta
+        </button>
+        <button
+          onClick={handleSummarize}
+          disabled={summaryLoading}
+          className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+        >
+          {summaryLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+          Resumir
+        </button>
+      </div>
+
+      {/* Generated Response */}
+      <AnimatePresence>
+        {generatedResponse && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 text-violet-500" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-violet-500">Resposta sugerida</span>
+                </div>
+                <button
+                  onClick={handleCopyResponse}
+                  className="flex items-center gap-1 rounded-md bg-white/80 border border-violet-200 px-2 py-0.5 text-[10px] font-medium text-violet-600 transition-colors hover:bg-white"
+                >
+                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  {copied ? 'Copiado' : 'Copiar'}
+                </button>
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed">{generatedResponse}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Summary */}
+      <AnimatePresence>
+        {summary && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-1">
+              <div className="flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-gray-500" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Resumo</span>
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed">{summary}</p>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   )
