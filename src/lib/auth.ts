@@ -96,13 +96,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         // Layer 2: Hardcoded demo (ALWAYS available, no dependencies)
         if (email.toLowerCase() === 'admin@aifluent.com' && password === 'Admin@2026') {
-          return { id: 'demo-admin', name: 'AIFLUENT Admin', email, role: 'admin' as UserRole, organizationId: 'demo-org' }
+          return { id: 'demo-admin', name: 'AIFLUENT Admin', email, role: 'admin' as UserRole, organizationId: 'demo-org', teamId: null }
         }
         if (email.toLowerCase() === 'gestor@aifluent.com' && password === 'Gestor@2026') {
-          return { id: 'demo-gestor', name: 'AIFLUENT Gestor', email, role: 'gestor' as UserRole, organizationId: 'demo-org' }
+          return { id: 'demo-gestor', name: 'AIFLUENT Gestor', email, role: 'gestor' as UserRole, organizationId: 'demo-org', teamId: null }
         }
         if (email.toLowerCase() === 'operador@aifluent.com' && password === 'Operador@2026') {
-          return { id: 'demo-operador', name: 'AIFLUENT Operador', email, role: 'operador' as UserRole, organizationId: 'demo-org' }
+          return { id: 'demo-operador', name: 'AIFLUENT Operador', email, role: 'operador' as UserRole, organizationId: 'demo-org', teamId: null }
         }
 
         return null

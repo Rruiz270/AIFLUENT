@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   const rateLimited = checkRateLimit(request)
   if (rateLimited) return rateLimited
 
-  const { error, session } = await requireAuth('admin')
+  const { error, session } = await requireAuth('gestor')
   if (error) return error
 
   const prisma = await getPrisma()
@@ -64,8 +64,11 @@ export async function POST(request: NextRequest) {
   const rateLimited = checkRateLimit(request)
   if (rateLimited) return rateLimited
 
-  const { error: authError, session: postSession } = await requireAuth('admin')
+  const { error: authError, session: postSession } = await requireAuth('gestor')
   if (authError) return authError
+
+  // Gestor can only create operador/supervisor. Admin can create any role.
+  const creatorRole = (postSession!.user as Record<string, unknown>).role as string
 
   const postOrgId = getOrgId(postSession)
   const prisma = await getPrisma()
@@ -89,6 +92,11 @@ export async function POST(request: NextRequest) {
   }
 
   const data = parsed.data
+
+  // Role restriction: gestor can only create operador/supervisor
+  if (creatorRole === 'gestor' && data.role && !['operador', 'supervisor'].includes(data.role)) {
+    return NextResponse.json({ error: 'Gestores podem criar apenas operadores e supervisores' }, { status: 403 })
+  }
 
   try {
     // Check if email already exists
