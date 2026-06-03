@@ -9,9 +9,13 @@ export async function GET(request: Request) {
   const { error, session } = await requireAuth(); if (error) return error
   const orgId = getOrgId(session)
   try {
+    const url = new URL(request.url)
+    const teamId = url.searchParams.get('teamId') || ''
     const { prisma } = await import('@/lib/prisma')
+    const where: Record<string, unknown> = orgId ? { organizationId: orgId } : {}
+    if (teamId) where.teamId = teamId
     const conversations = await prisma.conversation.findMany({
-      where: orgId ? { organizationId: orgId } : {},
+      where,
       orderBy: { lastMessageAt: 'desc' },
       take: 50,
       include: {

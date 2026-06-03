@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, Kanban, Handshake, MessageCircle,
   Megaphone, Bot, CheckSquare, UsersRound, BarChart3,
-  ChevronLeft, ChevronRight, LogOut, X, Menu, Settings,
+  ChevronLeft, ChevronRight, LogOut, X, Menu, Settings, Building2,
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
@@ -52,6 +52,7 @@ const navigation: NavSection[] = [
   {
     title: 'ADMIN',
     items: [
+      { label: 'Departamentos', href: '/departamentos', icon: Building2 },
       { label: 'Configuracoes', href: '/configuracoes', icon: Settings },
     ],
   },

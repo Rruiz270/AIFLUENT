@@ -1,11 +1,11 @@
-export type UserRole = 'admin' | 'gestor' | 'operador'
+export type UserRole = 'admin' | 'gestor' | 'supervisor' | 'operador'
 
 export const PERMISSIONS = {
   // Pages
-  'page:dashboard': ['admin', 'gestor', 'operador'],
-  'page:leads': ['admin', 'gestor', 'operador'],
-  'page:pipeline': ['admin', 'gestor', 'operador'],
-  'page:deals': ['admin', 'gestor', 'operador'],
+  'page:dashboard': ['admin', 'gestor', 'supervisor', 'operador'],
+  'page:leads': ['admin', 'gestor', 'supervisor', 'operador'],
+  'page:pipeline': ['admin', 'gestor', 'supervisor', 'operador'],
+  'page:deals': ['admin', 'gestor', 'supervisor', 'operador'],
   'page:inbox': ['admin', 'gestor', 'operador'],
   'page:whatsapp': ['admin', 'gestor', 'operador'],
   'page:campaigns': ['admin', 'gestor'],
@@ -13,24 +13,27 @@ export const PERMISSIONS = {
   'page:templates': ['admin', 'gestor'],
   'page:meta-ads': ['admin', 'gestor'],
   'page:automations': ['admin', 'gestor'],
-  'page:tasks': ['admin', 'gestor', 'operador'],
-  'page:productivity': ['admin', 'gestor', 'operador'],
+  'page:tasks': ['admin', 'gestor', 'supervisor', 'operador'],
+  'page:productivity': ['admin', 'gestor', 'supervisor', 'operador'],
   'page:team': ['admin'],
-  'page:reports': ['admin', 'gestor'],
-  'page:relatorios': ['admin', 'gestor'],
+  'page:reports': ['admin', 'gestor', 'supervisor'],
+  'page:relatorios': ['admin', 'gestor', 'supervisor'],
   'page:settings': ['admin'],
   'page:configuracoes': ['admin'],
+  'page:departamentos': ['admin'],
   'page:security': ['admin'],
   'page:integrations': ['admin'],
   'page:ai-assistant': ['admin', 'gestor'],
+  'page:atendimento': ['admin', 'gestor', 'supervisor', 'operador'],
   // Actions
-  'action:create-lead': ['admin', 'gestor', 'operador'],
+  'action:create-lead': ['admin', 'gestor', 'supervisor', 'operador'],
   'action:delete-lead': ['admin', 'gestor'],
   'action:create-campaign': ['admin', 'gestor'],
   'action:manage-team': ['admin'],
   'action:manage-settings': ['admin'],
   'action:export-data': ['admin', 'gestor'],
   'action:seed-data': ['admin'],
+  'action:transfer': ['admin', 'gestor'],
 } as const
 
 export type Permission = keyof typeof PERMISSIONS

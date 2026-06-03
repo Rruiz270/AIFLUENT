@@ -16,6 +16,7 @@ const routeTitles: Record<string, string> = {
   '/tasks': 'Tarefas', '/team': 'Equipe',
   '/ai-assistant': 'Assistente IA',
   '/relatorios': 'Relatorios',
+  '/departamentos': 'Departamentos',
   '/configuracoes': 'Configuracoes',
 }
 

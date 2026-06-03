@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, ArrowLeft, MessageCircle, Phone, Hash, Filter,
-  Wifi, WifiOff, X,
+  Wifi, WifiOff, X, ArrowRightLeft,
 } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { cn } from '@/lib/utils'
@@ -13,6 +13,7 @@ import { ChatInput } from '@/components/chat/chat-input'
 import { useChat, type ChatMessage } from '@/hooks/use-chat'
 import { SLATimer } from '@/components/atendimento/sla-timer'
 import { LeadOperationPanel } from '@/components/atendimento/lead-operation-panel'
+import { ConversationTransferButton } from '@/components/atendimento/conversation-transfer-button'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -413,6 +414,9 @@ export default function AtendimentoPage() {
                   <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
                     <Phone className="h-4 w-4" />
                   </button>
+                  <ConversationTransferButton
+                    conversationId={selectedConv.id}
+                  />
                   <button
                     onClick={() => setShowPanel((p) => !p)}
                     className={cn(

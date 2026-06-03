@@ -18,6 +18,7 @@ const updateLeadSchema = z.object({
   courseInterest: z.string().optional(),
   nextFollowUpAt: z.string().optional(),
   lostReason: z.string().optional(),
+  teamId: z.string().optional(),
 })
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

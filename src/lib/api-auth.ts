@@ -54,7 +54,7 @@ export async function requireAuth(requiredRole?: UserRole) {
 
   if (requiredRole) {
     const userRole = (session.user as Record<string, unknown>).role as UserRole | undefined
-    const hierarchy: Record<string, number> = { admin: 3, gestor: 2, operador: 1 }
+    const hierarchy: Record<string, number> = { admin: 4, gestor: 3, supervisor: 2, operador: 1 }
     if ((hierarchy[userRole || ''] || 0) < (hierarchy[requiredRole] || 0)) {
       return {
         error: NextResponse.json({ error: 'Permissao negada' }, { status: 403 }),

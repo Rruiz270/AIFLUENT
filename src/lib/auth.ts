@@ -3,9 +3,9 @@ import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
-export type UserRole = 'admin' | 'gestor' | 'operador'
+export type UserRole = 'admin' | 'gestor' | 'supervisor' | 'operador'
 
-const roleHierarchy: Record<UserRole, number> = { admin: 3, gestor: 2, operador: 1 }
+const roleHierarchy: Record<UserRole, number> = { admin: 4, gestor: 3, supervisor: 2, operador: 1 }
 
 export function canAccess(userRole: UserRole, requiredRole: UserRole): boolean {
   return roleHierarchy[userRole] >= roleHierarchy[requiredRole]
@@ -51,7 +51,7 @@ async function authenticateWithDB(email: string, password: string) {
 
     try { await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }) } catch {}
 
-    return { id: user.id, name: user.name, email: user.email, role: user.role as UserRole, organizationId: user.organizationId }
+    return { id: user.id, name: user.name, email: user.email, role: user.role as UserRole, organizationId: user.organizationId, teamId: user.teamId }
   } catch {
     return null
   }
@@ -122,6 +122,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.role = (user as unknown as { role: string }).role
         token.id = (user as unknown as { id: string }).id
         token.organizationId = (user as unknown as { organizationId: string }).organizationId
+        token.teamId = (user as unknown as { teamId?: string }).teamId
       }
       return token
     },
@@ -131,6 +132,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         u.role = token.role
         u.id = token.id
         u.organizationId = token.organizationId
+        u.teamId = token.teamId
       }
       return session
     },

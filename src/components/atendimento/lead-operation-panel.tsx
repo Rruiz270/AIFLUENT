@@ -15,6 +15,7 @@ import { NotesSection } from './notes-section'
 import { HistorySection } from './history-section'
 import { TasksSection } from './tasks-section'
 import { QuickActionsBar } from './quick-actions-bar'
+import { TransferButton } from './transfer-button'
 
 interface LeadData {
   id: string
@@ -352,6 +353,15 @@ export function LeadOperationPanel({ leadId, className, onClose }: LeadOperation
               <span className="text-xs text-gray-600">Responsavel: {lead.consultant.name}</span>
             </div>
           )}
+
+          {/* Transfer */}
+          <div className="pt-1 border-t border-gray-100">
+            <TransferButton
+              entityType="lead"
+              entityId={lead.id}
+              onTransferred={fetchLead}
+            />
+          </div>
         </div>
 
         {/* Contact info accordion */}

@@ -49,6 +49,7 @@ const createLeadSchema = z.object({
   stageId: z.string().optional(),
   consultantId: z.string().optional(),
   createdById: z.string().optional(),
+  teamId: z.string().optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -92,10 +93,12 @@ export async function GET(request: NextRequest) {
           { whatsapp: { contains: search } },
         ]
       }
+      const teamId = searchParams.get('teamId') || ''
       if (source) where.source = source
       if (temperature) where.temperature = temperature
       if (status) where.status = status
       if (stageId) where.stageId = stageId
+      if (teamId) where.teamId = teamId
 
       const [leads, total] = await Promise.all([
         prisma.lead.findMany({
@@ -178,6 +181,7 @@ export async function POST(request: NextRequest) {
           consultantId: data.consultantId,
           organizationId: resolvedOrgId,
           createdById: data.createdById,
+          teamId: data.teamId,
         },
         include: {
           consultant: { select: { id: true, name: true, avatar: true } },

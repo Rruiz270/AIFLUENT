@@ -36,6 +36,7 @@ model Organization {
   auditLogs      AuditLog[]
   achievements   Achievement[]
   userGoals      UserGoal[]
+  transfers      Transfer[]
 }
 
 // ── User ────────────────────────────────────────────────────────────────────
@@ -81,13 +82,24 @@ model Team {
   id          String   @id @default(cuid())
   name        String
   description String?
+  type        String   @default("commercial")
+  color       String?
+  isDefault   Boolean  @default(false)
+  autoDistribute Boolean @default(true)
+  distributeMode String @default("round_robin")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
 
-  members User[]
+  members        User[]
+  leads          Lead[]         @relation("LeadTeam")
+  conversations  Conversation[] @relation("ConversationTeam")
+  transfersFrom  Transfer[]     @relation("TransferFrom")
+  transfersTo    Transfer[]     @relation("TransferTo")
+
+  @@index([organizationId])
 }
 
 // ── Lead ────────────────────────────────────────────────────────────────────
@@ -138,6 +150,8 @@ model Lead {
   stage          PipelineStage? @relation(fields: [stageId], references: [id])
   listId         String?
   list           LeadList?    @relation(fields: [listId], references: [id])
+  teamId         String?
+  team           Team?    @relation("LeadTeam", fields: [teamId], references: [id])
 
   activities    Activity[]
   tags          LeadTag[]
@@ -155,6 +169,7 @@ model Lead {
   @@index([temperature])
   @@index([status])
   @@index([createdAt])
+  @@index([teamId])
 }
 
 // ── LeadList ────────────────────────────────────────────────────────────────
@@ -402,6 +417,8 @@ model Conversation {
   lead           Lead @relation(fields: [leadId], references: [id])
   assigneeId     String?
   assignee       User?  @relation("ConversationAssignee", fields: [assigneeId], references: [id])
+  teamId         String?
+  team           Team?    @relation("ConversationTeam", fields: [teamId], references: [id])
 
   messages ConversationMessage[]
 
@@ -625,6 +642,28 @@ model Task {
 
   @@index([organizationId])
   @@index([assigneeId])
+}
+
+// ── Transfer ────────────────────────────────────────────────────────────────
+
+model Transfer {
+  id            String   @id @default(cuid())
+  entityType    String
+  entityId      String
+  fromTeamId    String?
+  fromTeam      Team?    @relation("TransferFrom", fields: [fromTeamId], references: [id])
+  toTeamId      String
+  toTeam        Team     @relation("TransferTo", fields: [toTeamId], references: [id])
+  fromUserId    String?
+  toUserId      String?
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([organizationId])
 }
 
 // ── Integration ─────────────────────────────────────────────────────────────

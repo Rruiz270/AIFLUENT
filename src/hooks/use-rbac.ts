@@ -12,5 +12,5 @@ export function useRBAC() {
     return hasPermission(role, permission)
   }
 
-  return { role, can, isAdmin: role === 'admin', isGestor: role === 'gestor', isOperador: role === 'operador' }
+  return { role, can, isAdmin: role === 'admin', isGestor: role === 'gestor', isSupervisor: role === 'supervisor', isOperador: role === 'operador' }
 }

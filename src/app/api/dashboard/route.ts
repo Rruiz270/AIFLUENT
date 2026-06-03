@@ -10,6 +10,8 @@ export async function GET(request: Request) {
   if (error) return error
 
   try {
+    const url = new URL(request.url)
+    const teamIdFilter = url.searchParams.get('teamId') || ''
     const { prisma } = await import('@/lib/prisma')
     const orgId = (session!.user as Record<string, unknown>).organizationId as string | undefined
     const userRole = (session!.user as Record<string, unknown>).role as string
@@ -17,6 +19,7 @@ export async function GET(request: Request) {
 
     // Base org filter
     const leadWhere: Record<string, unknown> = orgId ? { organizationId: orgId } : {}
+    if (teamIdFilter) leadWhere.teamId = teamIdFilter
     const dealWhere: Record<string, unknown> = { status: 'open', ...(orgId ? { lead: { organizationId: orgId } } : {}) }
     const wonDealWhere: Record<string, unknown> = { status: 'won', ...(orgId ? { lead: { organizationId: orgId } } : {}) }
     const campaignWhere: Record<string, unknown> = orgId ? { organizationId: orgId } : {}
