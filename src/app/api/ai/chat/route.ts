@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, checkRateLimit } from '@/lib/api-auth'
+import { requireAuth, checkRateLimit, requireOrgId } from '@/lib/api-auth'
 import { aiLimiter } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
@@ -32,8 +32,10 @@ Regras:
 export async function POST(request: NextRequest) {
   const rl = checkRateLimit(request, aiLimiter)
   if (rl) return rl
-  const { error } = await requireAuth()
+  const { error, session } = await requireAuth()
   if (error) return error
+  const { orgId, error: orgError } = requireOrgId(session)
+  if (orgError) return orgError
 
   try {
     const body = await request.json()
@@ -67,9 +69,9 @@ export async function POST(request: NextRequest) {
         try {
           const { prisma } = await import('@/lib/prisma')
           const [leadCount, dealCount, taskCount] = await Promise.all([
-            prisma.lead.count(),
-            prisma.deal.count(),
-            prisma.task.count({ where: { status: 'pending' } }),
+            prisma.lead.count({ where: { organizationId: orgId } }),
+            prisma.deal.count({ where: { lead: { organizationId: orgId } } }),
+            prisma.task.count({ where: { status: 'pending', organizationId: orgId } }),
           ])
           systemContext += `\n\nDados atuais do sistema:\n- Total de leads: ${leadCount}\n- Total de negocios: ${dealCount}\n- Tarefas pendentes: ${taskCount}`
         } catch {}
@@ -102,8 +104,8 @@ export async function POST(request: NextRequest) {
     } else if (lowerMsg.includes('lead') && (lowerMsg.includes('quente') || lowerMsg.includes('hot'))) {
       try {
         const { prisma } = await import('@/lib/prisma')
-        const hotLeads = await prisma.lead.count({ where: { temperature: 'hot' } })
-        const totalLeads = await prisma.lead.count()
+        const hotLeads = await prisma.lead.count({ where: { temperature: 'hot', organizationId: orgId } })
+        const totalLeads = await prisma.lead.count({ where: { organizationId: orgId } })
         response = `Voce tem **${hotLeads} leads quentes** de um total de ${totalLeads} leads. ${hotLeads > 0 ? 'Recomendo priorizar o atendimento desses leads — eles tem maior probabilidade de conversao.' : 'Nenhum lead quente no momento. Considere reaquecer leads mornos com follow-up.'}`
       } catch {
         response = 'Nao consegui acessar o banco de dados para verificar os leads. Verifique se o DATABASE_URL esta configurado.'
@@ -111,10 +113,10 @@ export async function POST(request: NextRequest) {
     } else if (lowerMsg.includes('lead') && (lowerMsg.includes('quantos') || lowerMsg.includes('total'))) {
       try {
         const { prisma } = await import('@/lib/prisma')
-        const total = await prisma.lead.count()
-        const hot = await prisma.lead.count({ where: { temperature: 'hot' } })
-        const warm = await prisma.lead.count({ where: { temperature: 'warm' } })
-        const cold = await prisma.lead.count({ where: { temperature: 'cold' } })
+        const total = await prisma.lead.count({ where: { organizationId: orgId } })
+        const hot = await prisma.lead.count({ where: { temperature: 'hot', organizationId: orgId } })
+        const warm = await prisma.lead.count({ where: { temperature: 'warm', organizationId: orgId } })
+        const cold = await prisma.lead.count({ where: { temperature: 'cold', organizationId: orgId } })
         response = `Voce tem **${total} leads** no sistema:\n\n🔴 Quentes: ${hot}\n🟡 Mornos: ${warm}\n🔵 Frios: ${cold}`
       } catch {
         response = 'Nao consegui acessar os dados. Verifique a conexao com o banco.'
@@ -122,7 +124,7 @@ export async function POST(request: NextRequest) {
     } else if (lowerMsg.includes('forecast') || lowerMsg.includes('previsao') || lowerMsg.includes('receita')) {
       try {
         const { prisma } = await import('@/lib/prisma')
-        const deals = await prisma.deal.findMany({ where: { status: 'open' } })
+        const deals = await prisma.deal.findMany({ where: { status: 'open', lead: { organizationId: orgId } } })
         const total = deals.reduce((s, d) => s + (d.value || 0) * (d.probability / 100), 0)
         response = `**Forecast atual:** R$${Math.round(total).toLocaleString('pt-BR')} (receita ponderada por probabilidade)\n\nBaseado em ${deals.length} negocios abertos. Acesse a pagina de Relatorios para ver o detalhamento por estagio.`
       } catch {
@@ -131,7 +133,7 @@ export async function POST(request: NextRequest) {
     } else if (lowerMsg.includes('tarefa') || lowerMsg.includes('task') || lowerMsg.includes('pendente')) {
       try {
         const { prisma } = await import('@/lib/prisma')
-        const pending = await prisma.task.count({ where: { status: 'pending' } })
+        const pending = await prisma.task.count({ where: { status: 'pending', organizationId: orgId } })
         response = `Voce tem **${pending} tarefas pendentes**. ${pending > 5 ? 'Recomendo priorizar as de alta urgencia primeiro.' : pending > 0 ? 'Mantenha o ritmo!' : 'Nenhuma tarefa pendente. Otimo trabalho!'}`
       } catch {
         response = 'Nao consegui acessar as tarefas.'

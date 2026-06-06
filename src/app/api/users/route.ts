@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
-import { requireAuth, checkRateLimit, getOrgId } from '@/lib/api-auth'
+import { requireAuth, checkRateLimit, requireOrgId } from '@/lib/api-auth'
 import { logger } from '@/lib/logger'
 
 async function getPrisma() {
@@ -19,7 +19,8 @@ const createUserSchema = z.object({
   password: z.string().min(6, 'Senha deve ter no minimo 6 caracteres'),
   role: z.enum(['admin', 'gestor', 'operador']).default('operador'),
   phone: z.string().optional(),
-  organizationId: z.string().optional(),
+  // SECURITY: organizationId is NOT accepted from the client — the tenant is
+  // always derived from the authenticated session.
 })
 
 export async function GET(request: NextRequest) {
@@ -34,11 +35,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Banco de dados indisponivel' }, { status: 503 })
   }
 
-  const orgId = getOrgId(session)
+  const { orgId, error: orgError } = requireOrgId(session)
+  if (orgError) return orgError
 
   try {
     const users = await prisma.user.findMany({
-      where: orgId ? { organizationId: orgId } : {},
+      where: { organizationId: orgId },
       select: {
         id: true,
         name: true,
@@ -70,7 +72,8 @@ export async function POST(request: NextRequest) {
   // Gestor can only create operador/supervisor. Admin can create any role.
   const creatorRole = (postSession!.user as Record<string, unknown>).role as string
 
-  const postOrgId = getOrgId(postSession)
+  const { orgId: postOrgId, error: postOrgError } = requireOrgId(postSession)
+  if (postOrgError) return postOrgError
   const prisma = await getPrisma()
   if (!prisma) {
     return NextResponse.json({ error: 'Banco de dados indisponivel' }, { status: 503 })
@@ -107,19 +110,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email ja cadastrado' }, { status: 409 })
     }
 
-    // Use org from session, fallback to body, then default
-    let userOrgId = postOrgId || data.organizationId
-    if (!userOrgId) {
-      const org = await prisma.organization.findFirst()
-      if (org) {
-        userOrgId = org.id
-      } else {
-        const newOrg = await prisma.organization.create({
-          data: { name: 'AIFLUENT', slug: 'aifluent' },
-        })
-        userOrgId = newOrg.id
-      }
-    }
+    // Tenant is always the session's organization (never from the request body)
+    const userOrgId = postOrgId
 
     const passwordHash = await bcrypt.hash(data.password, 10)
 
