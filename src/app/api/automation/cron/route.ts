@@ -4,11 +4,17 @@ import { logger } from '@/lib/logger'
 // This endpoint can be called by Vercel Cron or external scheduler
 // Auth is via a secret token instead of session (cron jobs don't have sessions)
 export async function GET(request: NextRequest) {
-  // Verify cron secret
+  // Verify cron secret — FAIL CLOSED. The secret MUST be configured and MUST
+  // match. If CRON_SECRET is absent, the endpoint is unavailable (it never runs
+  // unauthenticated) because it mutates data across every organization.
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret) {
+    logger.error('CRON_SECRET nao configurado — endpoint de cron desabilitado')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

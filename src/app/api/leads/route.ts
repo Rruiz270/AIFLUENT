@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth, checkRateLimit, getOrgId } from '@/lib/api-auth'
+import { requireAuth, checkRateLimit, requireOrgId } from '@/lib/api-auth'
 import { logger } from '@/lib/logger'
 
 const memoryLeads: Record<string, unknown>[] = []
@@ -12,21 +12,6 @@ async function getPrisma() {
   } catch {
     return null
   }
-}
-
-const DEFAULT_ORG_ID = 'default-org'
-
-async function ensureDefaultOrg(prisma: Awaited<ReturnType<typeof getPrisma>>) {
-  if (!prisma) return DEFAULT_ORG_ID
-  try {
-    const existing = await prisma.organization.findUnique({ where: { id: DEFAULT_ORG_ID } })
-    if (!existing) {
-      await prisma.organization.create({
-        data: { id: DEFAULT_ORG_ID, name: 'AIFLUENT', slug: 'aifluent' },
-      })
-    }
-  } catch { /* ignore */ }
-  return DEFAULT_ORG_ID
 }
 
 const createLeadSchema = z.object({
@@ -45,11 +30,10 @@ const createLeadSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  organizationId: z.string().optional(),
   stageId: z.string().optional(),
-  consultantId: z.string().optional(),
-  createdById: z.string().optional(),
-  teamId: z.string().optional(),
+  // SECURITY: organizationId/consultantId/teamId/createdById are intentionally
+  // NOT accepted from the client. The tenant and creator are always derived
+  // from the authenticated session to prevent cross-tenant assignment.
 })
 
 export async function GET(request: NextRequest) {
@@ -59,7 +43,8 @@ export async function GET(request: NextRequest) {
   const { error, session } = await requireAuth()
   if (error) return error
 
-  const orgId = getOrgId(session)
+  const { orgId, error: orgError } = requireOrgId(session)
+  if (orgError) return orgError
   const userRole = (session!.user as Record<string, unknown>).role as string
   const userId = (session!.user as Record<string, unknown>).id as string
   const prisma = await getPrisma()
@@ -77,8 +62,7 @@ export async function GET(request: NextRequest) {
       const page = parseInt(searchParams.get('page') || '1')
       const limit = parseInt(searchParams.get('limit') || '50')
 
-      const where: Record<string, unknown> = {}
-      if (orgId) where.organizationId = orgId
+      const where: Record<string, unknown> = { organizationId: orgId }
 
       // Role-based data isolation: operador sees only their assigned leads
       if (userRole === 'operador' && userId) {
@@ -138,7 +122,9 @@ export async function POST(request: NextRequest) {
   const { error: authError, session } = await requireAuth('gestor')
   if (authError) return authError
 
-  const orgId = getOrgId(session)
+  const { orgId, error: orgError } = requireOrgId(session)
+  if (orgError) return orgError
+  const createdById = (session!.user as Record<string, unknown>).id as string
 
   let body: unknown
   try {
@@ -160,7 +146,7 @@ export async function POST(request: NextRequest) {
   try {
     const prisma = await getPrisma()
     if (prisma) {
-      const resolvedOrgId = orgId || data.organizationId || await ensureDefaultOrg(prisma)
+      const resolvedOrgId = orgId
       const lead = await prisma.lead.create({
         data: {
           firstName: data.firstName,
@@ -178,10 +164,8 @@ export async function POST(request: NextRequest) {
           city: data.city,
           state: data.state,
           stageId: data.stageId,
-          consultantId: data.consultantId,
           organizationId: resolvedOrgId,
-          createdById: data.createdById,
-          teamId: data.teamId,
+          createdById,
         },
         include: {
           consultant: { select: { id: true, name: true, avatar: true } },

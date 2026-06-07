@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth, checkRateLimit, getOrgId } from '@/lib/api-auth'
+import { requireAuth, checkRateLimit, requireOrgId } from '@/lib/api-auth'
 import { apiLimiter } from '@/lib/rate-limit'
 import { z } from 'zod'
 import { logger } from '@/lib/logger'
@@ -7,12 +7,13 @@ import { logger } from '@/lib/logger'
 export async function GET(request: Request) {
   const rl = checkRateLimit(request, apiLimiter); if (rl) return rl
   const { error, session } = await requireAuth(); if (error) return error
-  const orgId = getOrgId(session)
+  const { orgId, error: orgError } = requireOrgId(session)
+  if (orgError) return orgError
   try {
     const url = new URL(request.url)
     const teamId = url.searchParams.get('teamId') || ''
     const { prisma } = await import('@/lib/prisma')
-    const where: Record<string, unknown> = orgId ? { organizationId: orgId } : {}
+    const where: Record<string, unknown> = { organizationId: orgId }
     if (teamId) where.teamId = teamId
     const conversations = await prisma.conversation.findMany({
       where,
@@ -39,6 +40,8 @@ const sendMessageSchema = z.object({
 export async function POST(request: NextRequest) {
   const rl = checkRateLimit(request, apiLimiter); if (rl) return rl
   const { error, session } = await requireAuth(); if (error) return error
+  const { orgId, error: orgError } = requireOrgId(session)
+  if (orgError) return orgError
   try {
     const body = await request.json()
     const parsed = sendMessageSchema.safeParse(body)
@@ -51,6 +54,17 @@ export async function POST(request: NextRequest) {
 
     const { prisma } = await import('@/lib/prisma')
     const userId = (session!.user as Record<string, unknown>).id as string
+
+    // SECURITY: verify the conversation belongs to the caller's organization
+    // before writing — otherwise any authenticated user could post into any
+    // tenant's conversation (cross-tenant IDOR).
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: parsed.data.conversationId },
+      select: { organizationId: true },
+    })
+    if (!conversation || conversation.organizationId !== orgId) {
+      return NextResponse.json({ error: 'Conversa nao encontrada' }, { status: 404 })
+    }
 
     const message = await prisma.conversationMessage.create({
       data: {

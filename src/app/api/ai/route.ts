@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth, checkRateLimit } from '@/lib/api-auth'
+import { requireAuth, checkRateLimit, requireOrgId } from '@/lib/api-auth'
 import { aiLimiter } from '@/lib/rate-limit'
 
 const aiRequestSchema = z.object({
@@ -35,8 +35,10 @@ export async function POST(request: NextRequest) {
   const rateLimited = checkRateLimit(request, aiLimiter)
   if (rateLimited) return rateLimited
 
-  const { error: authError } = await requireAuth()
+  const { error: authError, session } = await requireAuth()
   if (authError) return authError
+  const { orgId, error: orgError } = requireOrgId(session)
+  if (orgError) return orgError
 
   let body: unknown
   try {
@@ -113,12 +115,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ suggestions })
   }
 
-  // ── Contextual AI actions (rule-based, using real lead data) ──────────────
+  // ── Contextual AI actions (rule-based, using real lead data) ──────────
 
   if (action === 'suggest-next-step') {
     const { prisma } = await import('@/lib/prisma')
-    const lead = await prisma.lead.findUnique({
-      where: { id: context?.leadId as string },
+    const lead = await prisma.lead.findFirst({
+      where: { id: context?.leadId as string, organizationId: orgId },
       include: {
         stage: true,
         deals: true,
@@ -179,8 +181,8 @@ export async function POST(request: NextRequest) {
 
   if (action === 'summarize-conversation') {
     const { prisma } = await import('@/lib/prisma')
-    const lead = await prisma.lead.findUnique({
-      where: { id: context?.leadId as string },
+    const lead = await prisma.lead.findFirst({
+      where: { id: context?.leadId as string, organizationId: orgId },
       include: {
         stage: true,
         activities: { take: 10, orderBy: { createdAt: 'desc' } },
@@ -211,8 +213,8 @@ export async function POST(request: NextRequest) {
 
   if (action === 'estimate-probability') {
     const { prisma } = await import('@/lib/prisma')
-    const lead = await prisma.lead.findUnique({
-      where: { id: context?.leadId as string },
+    const lead = await prisma.lead.findFirst({
+      where: { id: context?.leadId as string, organizationId: orgId },
       include: { stage: true, deals: true, activities: { take: 20, orderBy: { createdAt: 'desc' } } },
     })
     if (!lead) return NextResponse.json({ probability: 0, factors: {} })
@@ -253,8 +255,8 @@ export async function POST(request: NextRequest) {
 
   if (action === 'detect-risk') {
     const { prisma } = await import('@/lib/prisma')
-    const lead = await prisma.lead.findUnique({
-      where: { id: context?.leadId as string },
+    const lead = await prisma.lead.findFirst({
+      where: { id: context?.leadId as string, organizationId: orgId },
       include: { stage: true, deals: true, activities: { take: 10, orderBy: { createdAt: 'desc' } } },
     })
     if (!lead) return NextResponse.json({ risks: [], level: 'unknown' })
@@ -280,8 +282,8 @@ export async function POST(request: NextRequest) {
     const { prisma } = await import('@/lib/prisma')
     const { getAIInsights } = await import('@/lib/ai-service')
 
-    const lead = await prisma.lead.findUnique({
-      where: { id: context?.leadId as string },
+    const lead = await prisma.lead.findFirst({
+      where: { id: context?.leadId as string, organizationId: orgId },
       include: { stage: true, deals: true, activities: { take: 10, orderBy: { createdAt: 'desc' } } },
     })
     if (!lead) return NextResponse.json({ error: 'Lead nao encontrado' }, { status: 404 })
@@ -308,8 +310,8 @@ export async function POST(request: NextRequest) {
 
   if (action === 'generate-response') {
     const { prisma } = await import('@/lib/prisma')
-    const lead = await prisma.lead.findUnique({
-      where: { id: context?.leadId as string },
+    const lead = await prisma.lead.findFirst({
+      where: { id: context?.leadId as string, organizationId: orgId },
       include: {
         activities: { take: 5, orderBy: { createdAt: 'desc' } },
         deals: true,
