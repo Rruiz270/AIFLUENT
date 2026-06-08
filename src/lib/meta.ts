@@ -236,3 +236,23 @@ export function leadDataToContact(fieldData: Record<string, string>): {
     whatsapp: phone,
   };
 }
+
+// Inscreve a Página no webhook de leadgen do app (requer pages_manage_metadata).
+export async function subscribePageToLeadgen(
+  pageId: string,
+  pageToken: string,
+): Promise<void> {
+  const p = new URLSearchParams({
+    access_token: pageToken,
+    appsecret_proof: proof(pageToken),
+    subscribed_fields: 'leadgen',
+  })
+  const res = await fetch(`${GRAPH}/${pageId}/subscribed_apps`, {
+    method: 'POST',
+    body: p,
+  })
+  const data = await res.json()
+  if (!res.ok || data.error) {
+    throw new Error(data.error?.message || 'Falha ao inscrever pagina no webhook')
+  }
+}
