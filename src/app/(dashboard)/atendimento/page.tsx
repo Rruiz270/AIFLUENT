@@ -114,14 +114,7 @@ export default function AtendimentoPage() {
     ? (allMessages[selectedId] ?? selectedConv?.messages ?? [])
     : [];
 
-  const {
-    input,
-    setInput,
-    recording,
-    showEmoji,
-    setShowEmoji,
-    handleAudioToggle,
-  } = useChat([]);
+  const { input, setInput, showEmoji, setShowEmoji } = useChat([]);
 
   // Fetch conversations from API on mount
   useEffect(() => {
@@ -171,6 +164,9 @@ export default function AtendimentoPage() {
       }
     }
     fetchConversations();
+    // Atualiza a lista a cada 6s (novas conversas/mensagens aparecem ao vivo)
+    const t = setInterval(fetchConversations, 6000);
+    return () => clearInterval(t);
   }, []);
 
   // Carrega o histórico real da conversa selecionada (+ polling 5s)
@@ -293,20 +289,40 @@ export default function AtendimentoPage() {
     [selectedId, addMessage],
   );
 
-  const handleAudioToggleLocal = useCallback(() => {
-    if (recording) {
+  // Envia o áudio gravado (Blob) como mídia real pelo WhatsApp
+  const handleAudioRecorded = useCallback(
+    async (blob: Blob) => {
+      if (!selectedId) return;
       addMessage({
-        id: `msg-${Date.now()}`,
+        id: `tmp-${Date.now()}`,
         direction: "outbound",
-        content: "[Audio enviado]",
+        content: "[Áudio]",
         type: "audio",
         status: "sent",
         aiGenerated: false,
         createdAt: now(),
       });
-    }
-    handleAudioToggle();
-  }, [recording, addMessage, handleAudioToggle]);
+      try {
+        const fd = new FormData();
+        fd.append("file", blob, "audio.ogg");
+        await fetch(`/api/conversations/${selectedId}/media`, {
+          method: "POST",
+          body: fd,
+        });
+        const res = await fetch(`/api/conversations/${selectedId}`);
+        if (res.ok) {
+          const { conversation } = await res.json();
+          const msgs: ChatMessage[] = (conversation.messages || []).map(
+            mapApiMessage,
+          );
+          setAllMessages((prev) => ({ ...prev, [selectedId]: msgs }));
+        }
+      } catch {
+        /* otimista já exibido */
+      }
+    },
+    [selectedId, addMessage],
+  );
 
   // Filter conversations
   const filteredConversations = conversations.filter((c) => {
@@ -642,8 +658,7 @@ export default function AtendimentoPage() {
                 onChange={setInput}
                 onSend={handleSend}
                 onFileUpload={handleFileUpload}
-                onAudioToggle={handleAudioToggleLocal}
-                isRecording={recording}
+                onAudioRecorded={handleAudioRecorded}
                 showEmoji={showEmoji}
                 onToggleEmoji={() => setShowEmoji(!showEmoji)}
               />

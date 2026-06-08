@@ -1,29 +1,23 @@
-'use client'
+"use client";
 
-import { useRef } from 'react'
-import { AnimatePresence } from 'framer-motion'
-import {
-  Send,
-  Paperclip,
-  Smile,
-  Mic,
-  Image,
-  Bot,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { EmojiPanel } from './emoji-panel'
+import { useRef, useState, useCallback } from "react";
+import { AnimatePresence } from "framer-motion";
+import { Send, Paperclip, Smile, Mic, Image, Bot } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { EmojiPanel } from "./emoji-panel";
 
 interface ChatInputProps {
-  value: string
-  onChange: (value: string) => void
-  onSend: () => void
-  onFileUpload?: (file: File, type: 'document' | 'image') => void
-  onAudioToggle?: () => void
-  onAiGenerate?: () => void
-  isRecording?: boolean
-  showEmoji: boolean
-  onToggleEmoji: () => void
-  placeholder?: string
+  value: string;
+  onChange: (value: string) => void;
+  onSend: () => void;
+  onFileUpload?: (file: File, type: "document" | "image") => void;
+  onAudioToggle?: () => void;
+  onAudioRecorded?: (blob: Blob) => void;
+  onAiGenerate?: () => void;
+  isRecording?: boolean;
+  showEmoji: boolean;
+  onToggleEmoji: () => void;
+  placeholder?: string;
 }
 
 export function ChatInput({
@@ -32,34 +26,86 @@ export function ChatInput({
   onSend,
   onFileUpload,
   onAudioToggle,
+  onAudioRecorded,
   onAiGenerate,
   isRecording = false,
   showEmoji,
   onToggleEmoji,
-  placeholder = 'Digite sua mensagem...',
+  placeholder = "Digite sua mensagem...",
 }: ChatInputProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const imageInputRef = useRef<HTMLInputElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [recording, setRecording] = useState(false);
+
+  // Gravação real de áudio via MediaRecorder (quando onAudioRecorded é fornecido)
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      mr.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/ogg" });
+        stream.getTracks().forEach((t) => t.stop());
+        if (blob.size > 0) onAudioRecorded?.(blob);
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+      setRecording(true);
+    } catch {
+      alert("Não foi possível acessar o microfone. Verifique a permissão.");
+    }
+  }, [onAudioRecorded]);
+
+  const stopRecording = useCallback(() => {
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current = null;
+    setRecording(false);
+  }, []);
+
+  const handleMicClick = useCallback(() => {
+    if (onAudioRecorded) {
+      if (recording) stopRecording();
+      else startRecording();
+    } else {
+      onAudioToggle?.();
+    }
+  }, [
+    onAudioRecorded,
+    recording,
+    startRecording,
+    stopRecording,
+    onAudioToggle,
+  ]);
+
+  const isRec = onAudioRecorded ? recording : isRecording;
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      onSend()
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSend();
     }
-  }
+  };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'document' | 'image') => {
-    const file = e.target.files?.[0]
-    if (!file || !onFileUpload) return
-    onFileUpload(file, type)
-    e.target.value = ''
-  }
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "document" | "image",
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file || !onFileUpload) return;
+    onFileUpload(file, type);
+    e.target.value = "";
+  };
 
   const handleEmojiSelect = (emoji: string) => {
-    onChange(value + emoji)
-    textareaRef.current?.focus()
-  }
+    onChange(value + emoji);
+    textareaRef.current?.focus();
+  };
 
   return (
     <>
@@ -68,14 +114,14 @@ export function ChatInput({
         ref={fileInputRef}
         type="file"
         className="hidden"
-        onChange={(e) => handleFileChange(e, 'document')}
+        onChange={(e) => handleFileChange(e, "document")}
       />
       <input
         ref={imageInputRef}
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(e) => handleFileChange(e, 'image')}
+        onChange={(e) => handleFileChange(e, "image")}
       />
 
       {/* Emoji Panel */}
@@ -86,13 +132,15 @@ export function ChatInput({
       </AnimatePresence>
 
       {/* Recording indicator */}
-      {isRecording && (
+      {isRec && (
         <div className="px-4 sm:px-6 pb-2">
           <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2">
             <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            <span className="text-sm text-rose-700 font-medium">Gravando...</span>
+            <span className="text-sm text-rose-700 font-medium">
+              Gravando...
+            </span>
             <button
-              onClick={onAudioToggle}
+              onClick={handleMicClick}
               className="ml-auto text-xs text-rose-600 hover:text-rose-800 font-medium"
             >
               Parar e enviar
@@ -123,16 +171,16 @@ export function ChatInput({
                 </button>
               </>
             )}
-            {onAudioToggle && (
+            {(onAudioToggle || onAudioRecorded) && (
               <button
-                onClick={onAudioToggle}
+                onClick={handleMicClick}
                 className={cn(
-                  'p-2 rounded-lg transition-colors',
-                  isRecording
-                    ? 'text-rose-500 bg-rose-50 hover:bg-rose-100'
-                    : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'
+                  "p-2 rounded-lg transition-colors",
+                  isRec
+                    ? "text-rose-500 bg-rose-50 hover:bg-rose-100"
+                    : "text-gray-400 hover:text-gray-900 hover:bg-gray-50",
                 )}
-                title={isRecording ? 'Parar gravacao' : 'Gravar audio'}
+                title={isRec ? "Parar gravacao" : "Gravar audio"}
               >
                 <Mic className="w-5 h-5" />
               </button>
@@ -152,17 +200,17 @@ export function ChatInput({
           <button
             onClick={onToggleEmoji}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              "p-2 rounded-lg transition-colors",
               showEmoji
-                ? 'text-sky-500 bg-sky-50'
-                : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'
+                ? "text-emerald-600 bg-emerald-50"
+                : "text-gray-400 hover:text-gray-900 hover:bg-gray-50",
             )}
           >
             <Smile className="w-5 h-5" />
           </button>
           <button
             onClick={onSend}
-            className="p-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white transition-colors"
+            className="p-2.5 rounded-xl bg-[#25d366] hover:bg-[#20bd5a] text-white transition-colors"
           >
             <Send className="w-5 h-5" />
           </button>
@@ -178,5 +226,5 @@ export function ChatInput({
         </div>
       </div>
     </>
-  )
+  );
 }
