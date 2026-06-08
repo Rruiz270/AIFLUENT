@@ -11,8 +11,7 @@ import {
   Filter,
   Wifi,
   WifiOff,
-  X,
-  ArrowRightLeft,
+  Upload,
 } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
@@ -93,6 +92,11 @@ function mapApiMessage(m: any): ChatMessage {
   };
 }
 
+// ── Validação de anexos ──────────────────────────────────────────────────────
+const MAX_FILE_MB = 16; // limite seguro do WhatsApp (mídia/áudio/vídeo)
+const ALLOWED_MIME =
+  /^(image\/(jpeg|jpg|png|webp|gif)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.(wordprocessingml\.document|spreadsheetml\.sheet)|application\/vnd\.ms-excel|text\/plain|audio\/.+|video\/(mp4|3gpp))$/;
+
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function AtendimentoPage() {
@@ -106,6 +110,7 @@ export default function AtendimentoPage() {
     {},
   );
   const [showPanel, setShowPanel] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const conversationListRef = useRef<HTMLDivElement>(null);
 
@@ -254,15 +259,41 @@ export default function AtendimentoPage() {
     }
   }, [input, selectedId, addMessage, setInput, setShowEmoji]);
 
-  const handleFileUpload = useCallback(
-    async (file: File, type: "document" | "image") => {
+  // Envio unificado de arquivo (botão de anexo, imagem, áudio gravado e drag&drop).
+  // Valida tipo e tamanho, exibe otimista, envia pela mesma rota e recarrega.
+  const uploadFile = useCallback(
+    async (file: File) => {
       if (!selectedId) return;
-      // Exibe otimista
+      const mime = file.type || "";
+      if (!ALLOWED_MIME.test(mime)) {
+        alert(
+          `Tipo de arquivo não suportado: ${mime || "desconhecido"}. Aceitos: imagem, PDF, Word, Excel, texto, áudio e vídeo do WhatsApp.`,
+        );
+        return;
+      }
+      if (file.size > MAX_FILE_MB * 1024 * 1024) {
+        alert(
+          `Arquivo muito grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máximo: ${MAX_FILE_MB}MB.`,
+        );
+        return;
+      }
+      const optimisticType: ChatMessage["type"] = mime.startsWith("image/")
+        ? "image"
+        : mime.startsWith("audio/")
+          ? "audio"
+          : "document";
+      const label = mime.startsWith("image/")
+        ? "[Imagem]"
+        : mime.startsWith("audio/")
+          ? "[Áudio]"
+          : mime.startsWith("video/")
+            ? "[Vídeo]"
+            : `[Arquivo] ${file.name}`;
       addMessage({
-        id: `tmp-${Date.now()}`,
+        id: `tmp-${Date.now()}-${file.name}`,
         direction: "outbound",
-        content: type === "image" ? "[Imagem]" : `[Arquivo] ${file.name}`,
-        type: type === "image" ? "image" : "document",
+        content: label,
+        type: optimisticType,
         status: "sent",
         aiGenerated: false,
         createdAt: now(),
@@ -270,10 +301,16 @@ export default function AtendimentoPage() {
       try {
         const fd = new FormData();
         fd.append("file", file);
-        await fetch(`/api/conversations/${selectedId}/media`, {
+        const up = await fetch(`/api/conversations/${selectedId}/media`, {
           method: "POST",
           body: fd,
         });
+        const upData = await up.json().catch(() => ({}));
+        if (!up.ok || upData?.ok === false) {
+          alert(
+            "Não consegui enviar este arquivo pelo WhatsApp. Tente novamente.",
+          );
+        }
         const res = await fetch(`/api/conversations/${selectedId}`);
         if (res.ok) {
           const { conversation } = await res.json();
@@ -289,53 +326,42 @@ export default function AtendimentoPage() {
     [selectedId, addMessage],
   );
 
+  const handleFileUpload = useCallback(
+    (file: File) => {
+      void uploadFile(file);
+    },
+    [uploadFile],
+  );
+
   // Envia o áudio gravado (Blob) como mídia real pelo WhatsApp
   const handleAudioRecorded = useCallback(
-    async (blob: Blob) => {
-      if (!selectedId) return;
-      addMessage({
-        id: `tmp-${Date.now()}`,
-        direction: "outbound",
-        content: "[Áudio]",
-        type: "audio",
-        status: "sent",
-        aiGenerated: false,
-        createdAt: now(),
+    (blob: Blob) => {
+      // Extensão coerente com o mime real gravado (apenas formatos aceitos)
+      const ext = blob.type.includes("ogg")
+        ? "ogg"
+        : blob.type.includes("mp4")
+          ? "m4a"
+          : blob.type.includes("mpeg")
+            ? "mp3"
+            : "ogg";
+      const audioFile = new File([blob], `audio.${ext}`, {
+        type: blob.type || "audio/ogg",
       });
-      try {
-        // Extensão coerente com o mime real gravado
-        const ext = blob.type.includes("ogg")
-          ? "ogg"
-          : blob.type.includes("mp4")
-            ? "m4a"
-            : blob.type.includes("mpeg")
-              ? "mp3"
-              : "webm";
-        const fd = new FormData();
-        fd.append("file", blob, `audio.${ext}`);
-        const up = await fetch(`/api/conversations/${selectedId}/media`, {
-          method: "POST",
-          body: fd,
-        });
-        const upData = await up.json().catch(() => ({}));
-        if (!up.ok || upData?.ok === false) {
-          alert(
-            "Não consegui enviar o áudio pelo WhatsApp (o formato gravado pelo seu navegador pode não ser aceito). Tente pelo Chrome/Firefox atualizado ou envie como arquivo.",
-          );
-        }
-        const res = await fetch(`/api/conversations/${selectedId}`);
-        if (res.ok) {
-          const { conversation } = await res.json();
-          const msgs: ChatMessage[] = (conversation.messages || []).map(
-            mapApiMessage,
-          );
-          setAllMessages((prev) => ({ ...prev, [selectedId]: msgs }));
-        }
-      } catch {
-        /* otimista já exibido */
-      }
+      void uploadFile(audioFile);
     },
-    [selectedId, addMessage],
+    [uploadFile],
+  );
+
+  // ── Drag & drop de arquivos na conversa ──
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      if (!selectedId) return;
+      const files = Array.from(e.dataTransfer.files || []);
+      files.forEach((f) => void uploadFile(f));
+    },
+    [selectedId, uploadFile],
   );
 
   // Filter conversations
@@ -561,10 +587,33 @@ export default function AtendimentoPage() {
         {/* Column 2: Chat Area (flex-1) */}
         <div
           className={cn(
-            "flex-1 flex flex-col min-w-0 bg-white",
+            "flex-1 flex flex-col min-w-0 bg-white relative",
             !selectedId && "hidden sm:flex",
           )}
+          onDragOver={(e) => {
+            if (selectedConv) {
+              e.preventDefault();
+              setIsDragging(true);
+            }
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget === e.target) setIsDragging(false);
+          }}
+          onDrop={handleDrop}
         >
+          {isDragging && selectedConv && (
+            <div className="absolute inset-2 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed border-emerald-400 bg-emerald-50/90 pointer-events-none">
+              <div className="text-center">
+                <Upload className="mx-auto mb-2 h-9 w-9 text-emerald-500" />
+                <p className="text-sm font-semibold text-emerald-700">
+                  Solte os arquivos aqui para enviar
+                </p>
+                <p className="mt-1 text-xs text-emerald-600">
+                  Imagem, PDF, documento, áudio ou vídeo (até {MAX_FILE_MB}MB)
+                </p>
+              </div>
+            </div>
+          )}
           {selectedConv ? (
             <>
               {/* Chat header */}
@@ -616,9 +665,15 @@ export default function AtendimentoPage() {
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                    <Phone className="h-4 w-4" />
-                  </button>
+                  {selectedConv.phone && (
+                    <a
+                      href={`tel:${selectedConv.phone}`}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                      title="Ligar (telefone) — chamada de voz no WhatsApp ainda não disponível"
+                    >
+                      <Phone className="h-4 w-4" />
+                    </a>
+                  )}
                   <ConversationTransferButton
                     conversationId={selectedConv.id}
                   />

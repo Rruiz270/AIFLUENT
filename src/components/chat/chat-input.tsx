@@ -1,6 +1,21 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
+
+// Retorna o 1º formato de áudio SUPORTADO pelo navegador que o WhatsApp ACEITA
+// (ogg/opus, mp4/aac, mpeg). webm NÃO é aceito pelo WhatsApp → retorna null.
+function pickWhatsAppAudioMime(): string | null {
+  if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported)
+    return null;
+  const compatible = [
+    "audio/ogg;codecs=opus",
+    "audio/ogg",
+    "audio/mp4",
+    "audio/mpeg",
+    "audio/aac",
+  ];
+  return compatible.find((c) => MediaRecorder.isTypeSupported(c)) ?? null;
+}
 import { AnimatePresence } from "framer-motion";
 import { Send, Paperclip, Smile, Mic, Image, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,33 +54,25 @@ export function ChatInput({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const [recording, setRecording] = useState(false);
+  // Formato de áudio aceito pelo WhatsApp e suportado por este navegador.
+  // Se null (ex.: Chrome só grava webm), a gravação fica DESABILITADA + avisada.
+  const audioMime = useMemo(() => pickWhatsAppAudioMime(), []);
+  const canRecordAudio = !!audioMime;
 
   // Gravação real de áudio via MediaRecorder (quando onAudioRecorded é fornecido)
   const startRecording = useCallback(async () => {
+    if (!audioMime) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // WhatsApp aceita ogg(opus)/mp4(aac)/mpeg/amr. Escolhe o melhor formato
-      // SUPORTADO pelo navegador, na ordem de compatibilidade com o WhatsApp.
-      const candidates = [
-        "audio/ogg;codecs=opus",
-        "audio/mp4",
-        "audio/mpeg",
-        "audio/webm;codecs=opus",
-        "audio/webm",
-      ];
-      const mimeType =
-        typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported
-          ? candidates.find((c) => MediaRecorder.isTypeSupported(c))
-          : undefined;
-      const mr = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const mr = new MediaRecorder(stream, { mimeType: audioMime });
       chunksRef.current = [];
       mr.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
       mr.onstop = () => {
-        // Usa o mime REAL gravado (não rotula errado)
-        const realType = mr.mimeType || mimeType || "audio/webm";
-        const blob = new Blob(chunksRef.current, { type: realType });
+        const blob = new Blob(chunksRef.current, {
+          type: mr.mimeType || audioMime,
+        });
         stream.getTracks().forEach((t) => t.stop());
         if (blob.size > 0) onAudioRecorded?.(blob);
       };
@@ -75,7 +82,7 @@ export function ChatInput({
     } catch {
       alert("Não foi possível acessar o microfone. Verifique a permissão.");
     }
-  }, [onAudioRecorded]);
+  }, [onAudioRecorded, audioMime]);
 
   const stopRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();
@@ -186,7 +193,7 @@ export function ChatInput({
                 </button>
               </>
             )}
-            {(onAudioToggle || onAudioRecorded) && (
+            {(onAudioToggle || (onAudioRecorded && canRecordAudio)) && (
               <button
                 onClick={handleMicClick}
                 className={cn(
@@ -196,6 +203,15 @@ export function ChatInput({
                     : "text-gray-400 hover:text-gray-900 hover:bg-gray-50",
                 )}
                 title={isRec ? "Parar gravacao" : "Gravar audio"}
+              >
+                <Mic className="w-5 h-5" />
+              </button>
+            )}
+            {onAudioRecorded && !canRecordAudio && (
+              <button
+                disabled
+                className="p-2 rounded-lg text-gray-300 cursor-not-allowed"
+                title="Gravação de áudio indisponível neste navegador (use Firefox). O Chrome grava em formato não aceito pelo WhatsApp."
               >
                 <Mic className="w-5 h-5" />
               </button>
