@@ -1,46 +1,36 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { Toaster } from 'sonner'
-import { ThemeProvider } from '@/components/theme-provider'
-import { SessionProvider } from '@/components/session-provider'
-import './globals.css'
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Toaster } from "sonner";
+import { ThemeProvider } from "@/components/theme-provider";
+import { SessionProvider } from "@/components/session-provider";
+import "./globals.css";
 
 const inter = Inter({
-  variable: '--font-inter',
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
-})
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
 
 export const metadata: Metadata = {
-  title: 'AIFLUENT | CRM Inteligente',
+  title: "AIFLUENT | CRM Inteligente",
   description:
-    'Plataforma CRM inteligente com IA para gestao de leads, pipeline de vendas, campanhas de WhatsApp e automacao comercial.',
-  icons: { icon: '/favicon.ico' },
-}
+    "Plataforma CRM inteligente com IA para gestao de leads, pipeline de vendas, campanhas de WhatsApp e automacao comercial.",
+  icons: { icon: "/favicon.ico" },
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: `
-          (function(){
-            var h=new Date().getHours();
-            if(h>=18||h<5) document.documentElement.classList.add('dark');
-          })();
-        `}} />
-      </head>
       <body className="min-h-dvh bg-background text-foreground antialiased">
         <SessionProvider>
-          <ThemeProvider>
-            {children}
-          </ThemeProvider>
+          <ThemeProvider>{children}</ThemeProvider>
         </SessionProvider>
         <Toaster position="top-right" />
       </body>
     </html>
-  )
+  );
 }
