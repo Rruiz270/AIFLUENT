@@ -1,40 +1,91 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, checkRateLimit } from '@/lib/api-auth'
 import { whatsapp } from '@/lib/whatsapp'
+import { verifySignature, parseWebhook } from '@/lib/whatsapp-webhook'
+import {
+  resolveOrgForPhoneNumber,
+  persistInboundMessage,
+  persistStatusUpdate,
+} from '@/lib/whatsapp-inbound'
 import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
-  // Webhook verification (no auth required - Meta calls this)
-  const { searchParams } = request.nextUrl
-  const mode = searchParams.get('hub.mode') || ''
-  const token = searchParams.get('hub.verify_token') || ''
-  const challenge = searchParams.get('hub.challenge') || ''
+  // Verificacao do webhook (Meta chama isto)
+  const sp = request.nextUrl.searchParams
+  const mode = sp.get('hub.mode') || ''
+  const verifyToken = sp.get('hub.verify_token') || ''
+  const challenge = sp.get('hub.challenge') || ''
 
-  const result = whatsapp.verifyWebhook(mode, token, challenge)
+  const result = whatsapp.verifyWebhook(mode, verifyToken, challenge)
   if (result) return new NextResponse(result, { status: 200 })
   return NextResponse.json({ error: 'Verification failed' }, { status: 403 })
 }
 
 export async function POST(request: NextRequest) {
+  // Le o corpo cru — necessario para validar a assinatura HMAC.
+  const raw = await request.text()
+
   let body: Record<string, unknown>
   try {
-    body = await request.json()
+    body = JSON.parse(raw)
   } catch {
     return NextResponse.json({ error: 'JSON invalido' }, { status: 400 })
   }
 
-  // Case 1: Incoming webhook from Meta (no auth needed)
+  // Case 1: webhook da Meta (inbound + status) — multi-tenant
   if (body.object === 'whatsapp_business_account') {
-    const parsed = whatsapp.processWebhookPayload(body)
-    if (parsed) {
-      // TODO: persist incoming message to database / trigger automation
-      logger.info('[WhatsApp Webhook] Incoming message', { parsed })
+    const appSecret = process.env.WHATSAPP_APP_SECRET || ''
+    if (appSecret) {
+      const sig = request.headers.get('x-hub-signature-256')
+      if (!verifySignature(raw, sig, appSecret)) {
+        logger.warn('[WhatsApp Webhook] assinatura invalida')
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 403 })
+      }
+    } else {
+      logger.warn(
+        '[WhatsApp Webhook] WHATSAPP_APP_SECRET ausente — assinatura nao verificada',
+      )
     }
-    // Meta requires 200 OK response for all webhook deliveries
+
+    try {
+      const parsed = parseWebhook(body)
+      if (parsed.messages.length || parsed.statuses.length) {
+        const { prisma } = await import('@/lib/prisma')
+        const orgId = await resolveOrgForPhoneNumber(prisma, parsed.phoneNumberId)
+        if (!orgId) {
+          logger.warn('[WhatsApp Webhook] organizacao nao resolvida', {
+            phoneNumberId: parsed.phoneNumberId,
+          })
+        } else {
+          for (const m of parsed.messages) {
+            try {
+              await persistInboundMessage(prisma, orgId, m, parsed.contactName)
+            } catch (e) {
+              logger.error('[WhatsApp Webhook] falha ao persistir mensagem', {
+                error: e instanceof Error ? e.message : String(e),
+              })
+            }
+          }
+          for (const s of parsed.statuses) {
+            await persistStatusUpdate(prisma, s)
+          }
+          logger.info('[WhatsApp Webhook] processado', {
+            organizationId: orgId,
+            messages: parsed.messages.length,
+            statuses: parsed.statuses.length,
+          })
+        }
+      }
+    } catch (e) {
+      logger.error('[WhatsApp Webhook] erro', {
+        error: e instanceof Error ? e.message : String(e),
+      })
+    }
+
     return NextResponse.json({ status: 'received' }, { status: 200 })
   }
 
-  // Case 2: Send action from our UI (requires auth + rate limit)
+  // Case 2: acao de envio pela UI (requer auth + rate limit)
   const rateLimited = checkRateLimit(request)
   if (rateLimited) return rateLimited
 
@@ -67,19 +118,34 @@ export async function POST(request: NextRequest) {
 
   switch (action) {
     case 'send_text':
-      if (!message) return NextResponse.json({ error: 'Campo "message" obrigatorio' }, { status: 400 })
+      if (!message)
+        return NextResponse.json(
+          { error: 'Campo "message" obrigatorio' },
+          { status: 400 },
+        )
       return NextResponse.json(await whatsapp.sendTextMessage(to, message))
     case 'send_template':
-      if (!templateName) return NextResponse.json({ error: 'Campo "templateName" obrigatorio' }, { status: 400 })
+      if (!templateName)
+        return NextResponse.json(
+          { error: 'Campo "templateName" obrigatorio' },
+          { status: 400 },
+        )
       return NextResponse.json(
         await whatsapp.sendTemplateMessage(to, templateName, 'pt_BR'),
       )
     case 'send_media':
-      if (!mediaUrl || !mediaType) return NextResponse.json({ error: 'Campos "mediaUrl" e "mediaType" obrigatorios' }, { status: 400 })
+      if (!mediaUrl || !mediaType)
+        return NextResponse.json(
+          { error: 'Campos "mediaUrl" e "mediaType" obrigatorios' },
+          { status: 400 },
+        )
       return NextResponse.json(
         await whatsapp.sendMediaMessage(to, mediaType, mediaUrl, message),
       )
     default:
-      return NextResponse.json({ error: 'Acao invalida. Use: send_text, send_template, send_media' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Acao invalida. Use: send_text, send_template, send_media' },
+        { status: 400 },
+      )
   }
 }

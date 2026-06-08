@@ -149,74 +149,34 @@ export async function POST(request: NextRequest) {
   try {
     const prisma = await getPrisma();
     if (prisma) {
-      const resolvedOrgId = orgId;
-      const lead = await prisma.lead.create({
-        data: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phone: data.phone,
-          whatsapp: data.whatsapp,
-          company: data.company,
-          jobTitle: data.jobTitle,
-          source: data.source,
-          temperature: data.temperature,
-          courseInterest: data.courseInterest,
-          languageLevel: data.languageLevel,
-          notes: data.notes,
-          city: data.city,
-          state: data.state,
-          stageId: data.stageId,
-          organizationId: resolvedOrgId,
-          createdById,
-        },
-        include: {
-          consultant: { select: { id: true, name: true, avatar: true } },
-          stage: { select: { id: true, name: true, color: true } },
-          tags: { include: { tag: true } },
-        },
+      // Funil único: cadastro manual, criação rápida e importação entram por
+      // ingestLead (garante org + tag obrigatória + deduplicação + auditoria +
+      // histórico de origem).
+      const { ingestLead } = await import("@/lib/lead-ingest");
+      const { lead, deduped } = await ingestLead(prisma, {
+        organizationId: orgId,
+        source: data.source,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email || undefined,
+        phone: data.phone,
+        whatsapp: data.whatsapp,
+        company: data.company,
+        jobTitle: data.jobTitle,
+        temperature: data.temperature,
+        courseInterest: data.courseInterest,
+        languageLevel: data.languageLevel,
+        notes: data.notes,
+        city: data.city,
+        state: data.state,
+        stageId: data.stageId,
+        tags: data.tags,
+        createdById,
       });
-
-      // Regra de negocio: TODO lead deve ter ao menos 1 tag. Quando nenhuma tag
-      // e enviada (criacao rapida, importacao, entrada por canal), usamos a
-      // origem (source) como tag padrao para garantir a obrigatoriedade.
-      const effectiveTags =
-        data.tags && data.tags.length > 0
-          ? data.tags
-          : [data.source || "manual"];
-      for (const tagName of effectiveTags) {
-        const name = tagName.trim();
-        if (!name) continue;
-        let tag = await prisma.tag.findFirst({
-          where: { name, organizationId: resolvedOrgId },
-        });
-        if (!tag) {
-          tag = await prisma.tag.create({
-            data: { name, organizationId: resolvedOrgId },
-          });
-        }
-        await prisma.leadTag.create({
-          data: { leadId: lead.id, tagId: tag.id },
-        });
-      }
-
-      // Audit log
-      try {
-        await prisma.auditLog.create({
-          data: {
-            action: "lead_created",
-            entity: "Lead",
-            entityId: lead.id,
-            details: JSON.stringify({
-              firstName: lead.firstName,
-              source: lead.source,
-            }),
-            organizationId: resolvedOrgId,
-          },
-        });
-      } catch {} // Don't fail if audit fails
-
-      return NextResponse.json(lead, { status: 201 });
+      return NextResponse.json(
+        { id: lead.id, deduped },
+        { status: deduped ? 200 : 201 },
+      );
     }
   } catch (error) {
     logger.error("POST /api/leads DB error", error);

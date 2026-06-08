@@ -29,6 +29,13 @@ Regras:
 - Mantenha respostas concisas (max 3 paragrafos)
 - Se nao souber algo sobre o sistema, diga honestamente`
 
+// Limites de producao (custo/latencia) do Assistente IA
+const AI_MODEL = 'claude-sonnet-4-6'
+const AI_MAX_TOKENS = 1000
+const AI_MAX_INPUT_CHARS = 4000
+const AI_TIMEOUT_MS = 20000
+const AI_MAX_RETRIES = 2
+
 export async function POST(request: NextRequest) {
   const rl = checkRateLimit(request, aiLimiter)
   if (rl) return rl
@@ -46,7 +53,12 @@ export async function POST(request: NextRequest) {
 
     const { message, history } = parsed.data
 
-    logger.info('AI Chat request', { message: message.substring(0, 100) })
+    // Controle de custo: limita o tamanho do input
+    if (message.length > AI_MAX_INPUT_CHARS) {
+      return NextResponse.json({ error: 'Mensagem muito longa' }, { status: 413 })
+    }
+
+    logger.info('AI Chat request', { organizationId: orgId, chars: message.length })
 
     // Build conversation messages
     const conversationMessages = [
@@ -62,7 +74,11 @@ export async function POST(request: NextRequest) {
     if (apiKey) {
       try {
         const Anthropic = (await import('@anthropic-ai/sdk')).default
-        const client = new Anthropic({ apiKey })
+        const client = new Anthropic({
+          apiKey,
+          timeout: AI_TIMEOUT_MS,
+          maxRetries: AI_MAX_RETRIES,
+        })
 
         // Fetch system context from DB
         let systemContext = SYSTEM_PROMPT
@@ -76,18 +92,29 @@ export async function POST(request: NextRequest) {
           systemContext += `\n\nDados atuais do sistema:\n- Total de leads: ${leadCount}\n- Total de negocios: ${dealCount}\n- Tarefas pendentes: ${taskCount}`
         } catch {}
 
+        const startedAt = Date.now()
         const response = await client.messages.create({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
+          model: AI_MODEL,
+          max_tokens: AI_MAX_TOKENS,
           system: systemContext,
           messages: conversationMessages,
         })
 
         const text = response.content[0].type === 'text' ? response.content[0].text : ''
-        logger.info('AI Chat response (Claude)', { length: text.length })
+        logger.info('AI Chat response (Claude)', {
+          organizationId: orgId,
+          model: AI_MODEL,
+          latencyMs: Date.now() - startedAt,
+          inputTokens: response.usage?.input_tokens,
+          outputTokens: response.usage?.output_tokens,
+          length: text.length,
+        })
         return NextResponse.json({ response: text, model: 'claude' })
       } catch (err) {
-        logger.error('Claude API error', err)
+        logger.error('Claude API error', {
+          organizationId: orgId,
+          error: err instanceof Error ? err.message : String(err),
+        })
       }
     }
 

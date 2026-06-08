@@ -1,42 +1,47 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
-import bcrypt from 'bcryptjs'
-import { requireAuth, checkRateLimit, requireOrgId } from '@/lib/api-auth'
-import { logger } from '@/lib/logger'
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import bcrypt from "bcryptjs";
+import { requireAuth, checkRateLimit, requireOrgId } from "@/lib/api-auth";
+import { logger } from "@/lib/logger";
 
 async function getPrisma() {
   try {
-    const { prisma } = await import('@/lib/prisma')
-    return prisma
+    const { prisma } = await import("@/lib/prisma");
+    return prisma;
   } catch {
-    return null
+    return null;
   }
 }
 
 const createUserSchema = z.object({
-  name: z.string().min(1, 'Nome obrigatorio'),
-  email: z.string().email('Email invalido'),
-  password: z.string().min(6, 'Senha deve ter no minimo 6 caracteres'),
-  role: z.enum(['admin', 'gestor', 'operador']).default('operador'),
+  name: z.string().min(1, "Nome obrigatorio"),
+  email: z.string().email("Email invalido"),
+  password: z.string().min(6, "Senha deve ter no minimo 6 caracteres"),
+  role: z
+    .enum(["admin", "gestor", "supervisor", "operador"])
+    .default("operador"),
   phone: z.string().optional(),
   // SECURITY: organizationId is NOT accepted from the client — the tenant is
   // always derived from the authenticated session.
-})
+});
 
 export async function GET(request: NextRequest) {
-  const rateLimited = checkRateLimit(request)
-  if (rateLimited) return rateLimited
+  const rateLimited = checkRateLimit(request);
+  if (rateLimited) return rateLimited;
 
-  const { error, session } = await requireAuth('gestor')
-  if (error) return error
+  const { error, session } = await requireAuth("gestor");
+  if (error) return error;
 
-  const prisma = await getPrisma()
+  const prisma = await getPrisma();
   if (!prisma) {
-    return NextResponse.json({ error: 'Banco de dados indisponivel' }, { status: 503 })
+    return NextResponse.json(
+      { error: "Banco de dados indisponivel" },
+      { status: 503 },
+    );
   }
 
-  const { orgId, error: orgError } = requireOrgId(session)
-  if (orgError) return orgError
+  const { orgId, error: orgError } = requireOrgId(session);
+  if (orgError) return orgError;
 
   try {
     const users = await prisma.user.findMany({
@@ -52,68 +57,90 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         organization: { select: { id: true, name: true } },
       },
-      orderBy: { createdAt: 'desc' },
-    })
+      orderBy: { createdAt: "desc" },
+    });
 
-    return NextResponse.json({ users, total: users.length, requestedBy: session?.user?.email })
+    return NextResponse.json({
+      users,
+      total: users.length,
+      requestedBy: session?.user?.email,
+    });
   } catch (err) {
-    logger.error('GET /api/users error', err)
-    return NextResponse.json({ error: 'Erro ao buscar usuarios' }, { status: 500 })
+    logger.error("GET /api/users error", err);
+    return NextResponse.json(
+      { error: "Erro ao buscar usuarios" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
-  const rateLimited = checkRateLimit(request)
-  if (rateLimited) return rateLimited
+  const rateLimited = checkRateLimit(request);
+  if (rateLimited) return rateLimited;
 
-  const { error: authError, session: postSession } = await requireAuth('gestor')
-  if (authError) return authError
+  const { error: authError, session: postSession } =
+    await requireAuth("gestor");
+  if (authError) return authError;
 
   // Gestor can only create operador/supervisor. Admin can create any role.
-  const creatorRole = (postSession!.user as Record<string, unknown>).role as string
+  const creatorRole = (postSession!.user as Record<string, unknown>)
+    .role as string;
 
-  const { orgId: postOrgId, error: postOrgError } = requireOrgId(postSession)
-  if (postOrgError) return postOrgError
-  const prisma = await getPrisma()
+  const { orgId: postOrgId, error: postOrgError } = requireOrgId(postSession);
+  if (postOrgError) return postOrgError;
+  const prisma = await getPrisma();
   if (!prisma) {
-    return NextResponse.json({ error: 'Banco de dados indisponivel' }, { status: 503 })
+    return NextResponse.json(
+      { error: "Banco de dados indisponivel" },
+      { status: 503 },
+    );
   }
 
-  let body: unknown
+  let body: unknown;
   try {
-    body = await request.json()
+    body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'JSON invalido' }, { status: 400 })
+    return NextResponse.json({ error: "JSON invalido" }, { status: 400 });
   }
 
-  const parsed = createUserSchema.safeParse(body)
+  const parsed = createUserSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: 'Dados invalidos', details: parsed.error.flatten().fieldErrors },
+      { error: "Dados invalidos", details: parsed.error.flatten().fieldErrors },
       { status: 400 },
-    )
+    );
   }
 
-  const data = parsed.data
+  const data = parsed.data;
 
   // Role restriction: gestor can only create operador/supervisor
-  if (creatorRole === 'gestor' && data.role && !['operador', 'supervisor'].includes(data.role)) {
-    return NextResponse.json({ error: 'Gestores podem criar apenas operadores e supervisores' }, { status: 403 })
+  if (
+    creatorRole === "gestor" &&
+    data.role &&
+    !["operador", "supervisor"].includes(data.role)
+  ) {
+    return NextResponse.json(
+      { error: "Gestores podem criar apenas operadores e supervisores" },
+      { status: 403 },
+    );
   }
 
   try {
     // Check if email already exists
     const existing = await prisma.user.findUnique({
       where: { email: data.email.toLowerCase() },
-    })
+    });
     if (existing) {
-      return NextResponse.json({ error: 'Email ja cadastrado' }, { status: 409 })
+      return NextResponse.json(
+        { error: "Email ja cadastrado" },
+        { status: 409 },
+      );
     }
 
     // Tenant is always the session's organization (never from the request body)
-    const userOrgId = postOrgId
+    const userOrgId = postOrgId;
 
-    const passwordHash = await bcrypt.hash(data.password, 10)
+    const passwordHash = await bcrypt.hash(data.password, 10);
 
     const user = await prisma.user.create({
       data: {
@@ -133,11 +160,14 @@ export async function POST(request: NextRequest) {
         isActive: true,
         createdAt: true,
       },
-    })
+    });
 
-    return NextResponse.json(user, { status: 201 })
+    return NextResponse.json(user, { status: 201 });
   } catch (err) {
-    logger.error('POST /api/users error', err)
-    return NextResponse.json({ error: 'Erro ao criar usuario' }, { status: 500 })
+    logger.error("POST /api/users error", err);
+    return NextResponse.json(
+      { error: "Erro ao criar usuario" },
+      { status: 500 },
+    );
   }
 }

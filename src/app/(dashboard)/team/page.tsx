@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -65,46 +65,49 @@ export default function TeamPage() {
   const [showAddMember, setShowAddMember] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
 
-  useEffect(() => {
-    async function loadTeam() {
-      try {
-        const res = await fetch("/api/users");
-        if (res.ok) {
-          const data = await res.json();
-          const users = data.users || data;
-          if (Array.isArray(users)) {
-            setMembers(
-              users.map((u: Record<string, unknown>) => ({
-                id: u.id as string,
-                name: u.name as string,
-                email: u.email as string,
-                phone: (u.phone as string) || "",
-                role:
-                  (u.role as string as
-                    | "admin"
-                    | "gestor"
-                    | "supervisor"
-                    | "operador") || "operador",
-                isActive: (u.isActive as boolean) ?? true,
-                stats: { leads: 0, conversions: 0, rate: 0, messages: 0 },
-              })),
-            );
-          }
+  const loadTeam = useCallback(async () => {
+    try {
+      const res = await fetch("/api/users");
+      if (res.ok) {
+        const data = await res.json();
+        const users = data.users || data;
+        if (Array.isArray(users)) {
+          setMembers(
+            users.map((u: Record<string, unknown>) => ({
+              id: u.id as string,
+              name: u.name as string,
+              email: u.email as string,
+              phone: (u.phone as string) || "",
+              role:
+                (u.role as string as
+                  | "admin"
+                  | "gestor"
+                  | "supervisor"
+                  | "operador") || "operador",
+              isActive: (u.isActive as boolean) ?? true,
+              stats: { leads: 0, conversions: 0, rate: 0, messages: 0 },
+            })),
+          );
         }
-      } catch {
-        // API unavailable — keep empty state
-      } finally {
-        setLoading(false);
       }
+    } catch {
+      // API unavailable — keep empty state
+    } finally {
+      setLoading(false);
     }
-    loadTeam();
   }, []);
 
-  const handleAddMember = (member: TeamMember) => {
-    setMembers((prev) => [...prev, member]);
+  /* eslint-disable react-hooks/set-state-in-effect -- loadTeam é assíncrono (setState após await) */
+  useEffect(() => {
+    void loadTeam();
+  }, [loadTeam]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const handleMemberCreated = () => {
     setShowAddMember(false);
     setSuccessMsg(true);
     setTimeout(() => setSuccessMsg(false), 3000);
+    loadTeam();
   };
 
   return (
@@ -303,7 +306,7 @@ export default function TeamPage() {
         {showAddMember && (
           <AddMemberModal
             onClose={() => setShowAddMember(false)}
-            onSave={handleAddMember}
+            onSave={handleMemberCreated}
           />
         )}
       </AnimatePresence>
@@ -318,31 +321,77 @@ function AddMemberModal({
   onSave,
 }: {
   onClose: () => void;
-  onSave: (member: TeamMember) => void;
+  onSave: () => void;
 }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
+    password: "",
     role: "operador" as "admin" | "gestor" | "supervisor" | "operador",
   });
+  const [sendWelcome, setSendWelcome] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (field: string, val: string) => {
     setForm((prev) => ({ ...prev, [field]: val }));
   };
 
-  const handleSubmit = () => {
-    if (!form.name.trim() || !form.email.trim()) return;
-    const member: TeamMember = {
-      id: `m-${Date.now()}`,
-      name: form.name,
-      email: form.email,
-      phone: form.phone || "",
-      role: form.role,
-      isActive: true,
-      stats: { leads: 0, conversions: 0, rate: 0, messages: 0 },
-    };
-    onSave(member);
+  const canSubmit =
+    !!form.name.trim() &&
+    !!form.email.trim() &&
+    form.password.trim().length >= 6 &&
+    !loading;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setLoading(true);
+    setError("");
+    const email = form.email.trim().toLowerCase();
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email,
+          phone: form.phone.trim() || undefined,
+          password: form.password,
+          role: form.role,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          (data as { error?: string }).error || "Falha ao criar usuario",
+        );
+        setLoading(false);
+        return;
+      }
+      // Estrutura de convite: e-mail de boas-vindas (sem expor a senha)
+      if (sendWelcome) {
+        try {
+          const origin =
+            typeof window !== "undefined" ? window.location.origin : "";
+          await fetch("/api/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: email,
+              subject: "Bem-vindo(a) ao AIFLUENT CRM",
+              text: `Ola ${form.name.trim()}, sua conta no AIFLUENT CRM foi criada. Acesse ${origin}/login com o e-mail ${email}.`,
+            }),
+          });
+        } catch {
+          /* convite e best-effort */
+        }
+      }
+      onSave();
+    } catch {
+      setError("Erro de conexao");
+      setLoading(false);
+    }
   };
 
   const inputClass =
@@ -418,6 +467,28 @@ function AddMemberModal({
               <option value="operador">Operador</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm text-gray-500 mb-2">
+              Senha provisoria *
+            </label>
+            <input
+              type="password"
+              value={form.password}
+              onChange={(e) => handleChange("password", e.target.value)}
+              placeholder="Minimo 6 caracteres"
+              className={inputClass}
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={sendWelcome}
+              onChange={(e) => setSendWelcome(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            Enviar e-mail de boas-vindas
+          </label>
+          {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
 
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
@@ -429,15 +500,15 @@ function AddMemberModal({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!form.name.trim() || !form.email.trim()}
+            disabled={!canSubmit}
             className={cn(
               "px-5 py-2.5 text-white text-sm font-medium rounded-xl transition-colors",
-              form.name.trim() && form.email.trim()
+              canSubmit
                 ? "bg-indigo-600 hover:bg-indigo-500"
                 : "bg-gray-300 cursor-not-allowed",
             )}
           >
-            Adicionar
+            {loading ? "Criando..." : "Adicionar"}
           </button>
         </div>
       </motion.div>

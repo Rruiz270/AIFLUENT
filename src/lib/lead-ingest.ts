@@ -1,0 +1,174 @@
+/**
+ * Funil ÚNICO de entrada de leads.
+ *
+ * TODO canal (cadastro manual, importação, WhatsApp, Meta Ads, formulários,
+ * APIs externas) deve passar por `ingestLead`. Ele garante, de forma central:
+ *  - organizationId correto (multi-tenant)
+ *  - tag obrigatória (>= 1, fallback pela origem)
+ *  - deduplicação por telefone/whatsapp/email dentro da empresa
+ *  - auditoria (AuditLog)
+ *  - histórico de origem (Activity type=lead_source a cada entrada)
+ *  - ponto de extensão para regras de distribuição futuras
+ */
+
+export interface IngestLeadInput {
+  organizationId: string;
+  source: string; // canal de origem: manual | import | whatsapp | meta_ads | form | api ...
+  sourceDetail?: string;
+  channel?: string;
+  firstName: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  whatsapp?: string;
+  company?: string;
+  jobTitle?: string;
+  temperature?: string;
+  courseInterest?: string;
+  languageLevel?: string;
+  notes?: string;
+  city?: string;
+  state?: string;
+  stageId?: string;
+  tags?: string[];
+  metaAdId?: string;
+  fbLeadId?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  createdById?: string;
+}
+
+export interface IngestResult {
+  lead: { id: string };
+  deduped: boolean;
+}
+
+function onlyDigits(v?: string | null): string {
+  return (v || "").replace(/\D/g, "");
+}
+
+export async function ingestLead(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prisma: any,
+  input: IngestLeadInput,
+): Promise<IngestResult> {
+  const orgId = input.organizationId;
+  if (!orgId) throw new Error("ingestLead: organizationId obrigatório");
+  const source = (input.source || "manual").trim() || "manual";
+
+  const phoneDigits = onlyDigits(input.phone);
+  const waDigits = onlyDigits(input.whatsapp || input.phone);
+  const email = input.email?.trim().toLowerCase() || undefined;
+
+  // ── Deduplicação dentro da empresa: telefone/whatsapp (8 últimos dígitos) ou email ──
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const orConds: any[] = [];
+  if (waDigits.length >= 8)
+    orConds.push({ whatsapp: { contains: waDigits.slice(-8) } });
+  if (phoneDigits.length >= 8)
+    orConds.push({ phone: { contains: phoneDigits.slice(-8) } });
+  if (email) orConds.push({ email });
+
+  let existing: { id: string } | null = null;
+  if (orConds.length) {
+    existing = await prisma.lead.findFirst({
+      where: { organizationId: orgId, OR: orConds },
+      select: { id: true },
+    });
+  }
+
+  const tagNames = (input.tags && input.tags.length ? input.tags : [source])
+    .map((t) => t.trim())
+    .filter(Boolean);
+  const effectiveTags = tagNames.length ? tagNames : ["manual"];
+
+  let leadId: string;
+  const deduped = !!existing;
+
+  if (existing) {
+    leadId = existing.id;
+    await prisma.activity
+      .create({
+        data: {
+          type: "lead_source",
+          title: `Re-entrada via ${source}`,
+          description: `Lead recebido novamente pelo canal ${input.channel || source}`,
+          leadId,
+        },
+      })
+      .catch(() => {});
+  } else {
+    const lead = await prisma.lead.create({
+      data: {
+        firstName: input.firstName,
+        lastName: input.lastName,
+        email,
+        phone: input.phone,
+        whatsapp: input.whatsapp,
+        company: input.company,
+        jobTitle: input.jobTitle,
+        source,
+        sourceDetail: input.sourceDetail,
+        temperature: input.temperature || "warm",
+        courseInterest: input.courseInterest,
+        languageLevel: input.languageLevel,
+        notes: input.notes,
+        city: input.city,
+        state: input.state,
+        stageId: input.stageId,
+        metaAdId: input.metaAdId,
+        fbLeadId: input.fbLeadId,
+        utmSource: input.utmSource,
+        utmMedium: input.utmMedium,
+        utmCampaign: input.utmCampaign,
+        organizationId: orgId,
+        createdById: input.createdById,
+      },
+      select: { id: true },
+    });
+    leadId = lead.id;
+    await prisma.activity
+      .create({
+        data: {
+          type: "lead_source",
+          title: `Origem: ${source}`,
+          description: `Lead capturado pelo canal ${input.channel || source}`,
+          leadId,
+        },
+      })
+      .catch(() => {});
+  }
+
+  // ── Tag obrigatória: garante >= 1 (sem duplicar a relação) ──
+  for (const name of effectiveTags) {
+    let tag = await prisma.tag.findFirst({
+      where: { name, organizationId: orgId },
+    });
+    if (!tag)
+      tag = await prisma.tag.create({ data: { name, organizationId: orgId } });
+    const rel = await prisma.leadTag.findFirst({
+      where: { leadId, tagId: tag.id },
+    });
+    if (!rel) await prisma.leadTag.create({ data: { leadId, tagId: tag.id } });
+  }
+
+  // ── Auditoria ──
+  await prisma.auditLog
+    .create({
+      data: {
+        action: deduped ? "lead_ingest_dedup" : "lead_ingested",
+        entity: "Lead",
+        entityId: leadId,
+        details: JSON.stringify({ source, channel: input.channel, deduped }),
+        organizationId: orgId,
+        userId: input.createdById,
+      },
+    })
+    .catch(() => {});
+
+  // ── Ponto de extensão: regras de distribuição (round-robin por time, etc.) ──
+  // Aplicar atribuição automática de consultor aqui no futuro.
+
+  return { lead: { id: leadId }, deduped };
+}

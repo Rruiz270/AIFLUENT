@@ -3,6 +3,7 @@ import { requireAuth, checkRateLimit, requireOrgId } from '@/lib/api-auth'
 import { apiLimiter } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { ingestLead } from '@/lib/lead-ingest'
 
 const onboardingSchema = z.object({
   companyName: z.string().min(1),
@@ -19,15 +20,6 @@ const onboardingSchema = z.object({
     )
     .optional(),
 })
-
-// Garante que todo lead criado no onboarding receba ao menos 1 tag (pela origem)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function ensureLeadTag(prisma: any, leadId: string, orgId: string, source: string) {
-  const name = (source || 'manual').trim() || 'manual'
-  let tag = await prisma.tag.findFirst({ where: { name, organizationId: orgId } })
-  if (!tag) tag = await prisma.tag.create({ data: { name, organizationId: orgId } })
-  await prisma.leadTag.create({ data: { leadId, tagId: tag.id } })
-}
 
 export async function POST(request: NextRequest) {
   const rl = checkRateLimit(request, apiLimiter)
@@ -199,21 +191,18 @@ export async function POST(request: NextRequest) {
         // Distribute across non-terminal stages
         const safeStages = stages.filter((s) => !s.isWon && !s.isLost)
         const stageIdx = i % Math.max(safeStages.length, 1)
-        const created = await prisma.lead.create({
-          data: {
-            firstName: lead.firstName,
-            lastName: lead.lastName,
-            phone: lead.phone,
-            email: lead.email,
-            source: lead.source,
-            temperature: lead.temperature,
-            courseInterest: lead.courseInterest,
-            stageId: safeStages[stageIdx]?.id ?? stages[0]?.id,
-            organizationId: orgId,
-            createdById: userId,
-          },
+        await ingestLead(prisma, {
+          organizationId: orgId,
+          source: lead.source,
+          firstName: lead.firstName,
+          lastName: lead.lastName,
+          phone: lead.phone,
+          email: lead.email,
+          temperature: lead.temperature,
+          courseInterest: lead.courseInterest,
+          stageId: safeStages[stageIdx]?.id ?? stages[0]?.id,
+          createdById: userId,
         })
-        await ensureLeadTag(prisma, created.id, orgId, lead.source)
         leadsCreated++
       }
     }
@@ -227,17 +216,14 @@ export async function POST(request: NextRequest) {
       const firstStage = stages[0]
 
       for (const lead of parsed.data.manualLeads) {
-        const created = await prisma.lead.create({
-          data: {
-            firstName: lead.firstName,
-            phone: lead.phone,
-            source: lead.source || 'manual',
-            stageId: firstStage?.id,
-            organizationId: orgId,
-            createdById: userId,
-          },
+        await ingestLead(prisma, {
+          organizationId: orgId,
+          source: lead.source || 'manual',
+          firstName: lead.firstName,
+          phone: lead.phone,
+          stageId: firstStage?.id,
+          createdById: userId,
         })
-        await ensureLeadTag(prisma, created.id, orgId, lead.source || 'manual')
         leadsCreated++
       }
     }

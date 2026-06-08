@@ -14,17 +14,25 @@ vi.mock("@/lib/api-auth", async (importOriginal) => {
 // Shared Prisma mock across all routes under test.
 vi.mock("@/lib/prisma", () => {
   const prisma = {
-    lead: { create: vi.fn(), count: vi.fn().mockResolvedValue(0) },
+    lead: {
+      create: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue(null),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    activity: { create: vi.fn().mockResolvedValue({}) },
     user: { findUnique: vi.fn().mockResolvedValue(null), create: vi.fn() },
     organization: { findFirst: vi.fn(), create: vi.fn() },
     conversation: { findUnique: vi.fn(), update: vi.fn() },
     conversationMessage: { create: vi.fn() },
-    auditLog: { create: vi.fn() },
+    auditLog: { create: vi.fn().mockResolvedValue({}) },
     tag: {
       findFirst: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({ id: "t1" }),
     },
-    leadTag: { create: vi.fn().mockResolvedValue({}) },
+    leadTag: {
+      findFirst: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockResolvedValue({}),
+    },
     deal: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn() },
     task: { count: vi.fn().mockResolvedValue(0) },
   };
