@@ -3,6 +3,11 @@ import { requireAuth, checkRateLimit, requireOrgId } from "@/lib/api-auth";
 import { apiLimiter } from "@/lib/rate-limit";
 import { whatsapp } from "@/lib/whatsapp";
 import { logger } from "@/lib/logger";
+import { needsTranscode, transcodeToOggOpus } from "@/lib/audio-transcode";
+
+// ffmpeg-static + child_process exigem runtime Node.js (não Edge).
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 // Envio de mídia (imagem/áudio/vídeo/documento) numa conversa de WhatsApp.
 // Faz upload do arquivo para o WhatsApp, envia e persiste a mensagem.
@@ -59,12 +64,36 @@ export async function POST(
     let externalId: string | undefined;
     let status = "sent";
     let mediaId: string | undefined;
+    let sendError: string | undefined;
 
     if (conversation.channel === "whatsapp" && whatsapp.isConfigured) {
       const to = conversation.lead?.whatsapp || conversation.lead?.phone;
       if (to) {
-        const bytes = await file.arrayBuffer();
-        const up = await whatsapp.uploadMedia(bytes, mime, file.name);
+        let bytes: ArrayBuffer = await file.arrayBuffer();
+        let uploadMime = mime;
+        let uploadName = file.name;
+
+        // Áudio em formato não aceito pelo WhatsApp (ex.: webm do Chrome) →
+        // transcodifica para OGG/Opus. Erro REAL é propagado (sem máscara).
+        if (type === "audio" && needsTranscode(mime)) {
+          const inExt = (mime.split("/")[1] || "webm").split(";")[0];
+          logger.info("WhatsApp audio transcode start", {
+            from: mime,
+            sizeIn: bytes.byteLength,
+          });
+          const ogg = await transcodeToOggOpus(bytes, inExt);
+          bytes = ogg.buffer.slice(
+            ogg.byteOffset,
+            ogg.byteOffset + ogg.byteLength,
+          ) as ArrayBuffer;
+          uploadMime = "audio/ogg";
+          uploadName = uploadName.replace(/\.[^.]+$/, "") + ".ogg";
+          logger.info("WhatsApp audio transcode done", {
+            sizeOut: bytes.byteLength,
+          });
+        }
+
+        const up = await whatsapp.uploadMedia(bytes, uploadMime, uploadName);
         if ("id" in up) {
           mediaId = up.id;
           const sent = await whatsapp.sendMediaById(
@@ -72,16 +101,18 @@ export async function POST(
             type,
             up.id,
             caption,
-            type === "document" ? file.name : undefined,
+            type === "document" ? uploadName : undefined,
           );
           if ("messageId" in sent) {
             externalId = sent.messageId;
           } else {
             status = "failed";
+            sendError = sent.error;
             logger.error("WhatsApp media send failed", { error: sent.error });
           }
         } else {
           status = "failed";
+          sendError = up.error;
           logger.error("WhatsApp media upload failed", { error: up.error });
         }
       }
@@ -106,11 +137,16 @@ export async function POST(
       data: { lastMessageAt: new Date() },
     });
 
-    return NextResponse.json({ ok: status !== "failed", message });
+    return NextResponse.json({
+      ok: status !== "failed",
+      message,
+      error: sendError,
+    });
   } catch (err) {
+    const detail = err instanceof Error ? err.message : "erro desconhecido";
     logger.error("POST /api/conversations/[id]/media error", err);
     return NextResponse.json(
-      { error: "Falha ao enviar midia" },
+      { error: "Falha ao enviar midia", detail },
       { status: 500 },
     );
   }

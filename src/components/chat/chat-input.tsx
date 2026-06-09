@@ -2,19 +2,22 @@
 
 import { useRef, useState, useCallback, useMemo } from "react";
 
-// Retorna o 1º formato de áudio SUPORTADO pelo navegador que o WhatsApp ACEITA
-// (ogg/opus, mp4/aac, mpeg). webm NÃO é aceito pelo WhatsApp → retorna null.
-function pickWhatsAppAudioMime(): string | null {
+// Melhor formato GRAVÁVEL pelo navegador. Preferimos os já aceitos pelo
+// WhatsApp (ogg/opus, mp4/aac, mpeg); o webm (Chrome) é permitido porque o
+// backend transcodifica para ogg/opus antes de enviar. Retorna null só se o
+// navegador não suportar gravação nenhuma.
+function pickRecordableAudioMime(): string | null {
   if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported)
     return null;
-  const compatible = [
+  const candidates = [
     "audio/ogg;codecs=opus",
     "audio/ogg",
     "audio/mp4",
     "audio/mpeg",
-    "audio/aac",
+    "audio/webm;codecs=opus",
+    "audio/webm",
   ];
-  return compatible.find((c) => MediaRecorder.isTypeSupported(c)) ?? null;
+  return candidates.find((c) => MediaRecorder.isTypeSupported(c)) ?? null;
 }
 import { AnimatePresence } from "framer-motion";
 import { Send, Paperclip, Smile, Mic, Image, Bot } from "lucide-react";
@@ -56,7 +59,7 @@ export function ChatInput({
   const [recording, setRecording] = useState(false);
   // Formato de áudio aceito pelo WhatsApp e suportado por este navegador.
   // Se null (ex.: Chrome só grava webm), a gravação fica DESABILITADA + avisada.
-  const audioMime = useMemo(() => pickWhatsAppAudioMime(), []);
+  const audioMime = useMemo(() => pickRecordableAudioMime(), []);
   const canRecordAudio = !!audioMime;
 
   // Gravação real de áudio via MediaRecorder (quando onAudioRecorded é fornecido)
@@ -203,15 +206,6 @@ export function ChatInput({
                     : "text-gray-400 hover:text-gray-900 hover:bg-gray-50",
                 )}
                 title={isRec ? "Parar gravacao" : "Gravar audio"}
-              >
-                <Mic className="w-5 h-5" />
-              </button>
-            )}
-            {onAudioRecorded && !canRecordAudio && (
-              <button
-                disabled
-                className="p-2 rounded-lg text-gray-300 cursor-not-allowed"
-                title="Gravação de áudio indisponível neste navegador (use Firefox). O Chrome grava em formato não aceito pelo WhatsApp."
               >
                 <Mic className="w-5 h-5" />
               </button>

@@ -207,6 +207,22 @@ export default function AtendimentoPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentMessages]);
 
+  // Rede de segurança: limpa o overlay de drag se o arraste for cancelado
+  // fora da área (ex.: screenshot, soltar fora, sair da janela).
+  useEffect(() => {
+    const clear = () => setIsDragging(false);
+    window.addEventListener("dragend", clear);
+    window.addEventListener("drop", clear);
+    window.addEventListener("mouseup", clear);
+    window.addEventListener("blur", clear);
+    return () => {
+      window.removeEventListener("dragend", clear);
+      window.removeEventListener("drop", clear);
+      window.removeEventListener("mouseup", clear);
+      window.removeEventListener("blur", clear);
+    };
+  }, []);
+
   const now = () => {
     const d = new Date();
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
@@ -591,13 +607,21 @@ export default function AtendimentoPage() {
             !selectedId && "hidden sm:flex",
           )}
           onDragOver={(e) => {
-            if (selectedConv) {
+            // Só ativa para ARQUIVOS sendo arrastados (não texto/screenshot)
+            if (selectedConv && e.dataTransfer.types.includes("Files")) {
               e.preventDefault();
               setIsDragging(true);
             }
           }}
           onDragLeave={(e) => {
-            if (e.currentTarget === e.target) setIsDragging(false);
+            // Reseta ao sair do container (ou se o ponteiro saiu da janela)
+            if (
+              e.currentTarget === e.target ||
+              !e.relatedTarget ||
+              !(e.currentTarget as Node).contains(e.relatedTarget as Node)
+            ) {
+              setIsDragging(false);
+            }
           }}
           onDrop={handleDrop}
         >
