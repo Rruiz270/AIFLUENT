@@ -9,13 +9,15 @@ import { useRef, useState, useCallback, useMemo } from "react";
 function pickRecordableAudioMime(): string | null {
   if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported)
     return null;
+  // Preferimos webm/opus a mp4 no Chrome: o mp4 fragmentado do MediaRecorder
+  // não tem timestamps confiáveis e gera ogg inválido (erro 131053). webm tem.
   const candidates = [
     "audio/ogg;codecs=opus",
     "audio/ogg",
-    "audio/mp4",
-    "audio/mpeg",
     "audio/webm;codecs=opus",
     "audio/webm",
+    "audio/mpeg",
+    "audio/mp4",
   ];
   return candidates.find((c) => MediaRecorder.isTypeSupported(c)) ?? null;
 }

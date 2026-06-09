@@ -57,12 +57,19 @@ export async function transcodeToOggOpus(
         ffmpeg,
         [
           "-y",
+          "-fflags",
+          "+genpts", // regenera timestamps (mp4/webm fragmentado do navegador)
           "-i",
           inPath,
+          "-vn", // sem vídeo
           "-c:a",
           "libopus",
           "-b:a",
           "32k",
+          "-ar",
+          "48000",
+          "-ac",
+          "1",
           "-f",
           "ogg",
           outPath,
@@ -78,7 +85,12 @@ export async function transcodeToOggOpus(
         },
       );
     });
-    return await readFile(outPath);
+    const out = await readFile(outPath);
+    if (out.byteLength < 200)
+      throw new Error(
+        `áudio transcodificado vazio/inválido (${out.byteLength} bytes)`,
+      );
+    return out;
   } finally {
     await unlink(inPath).catch(() => {});
     await unlink(outPath).catch(() => {});
