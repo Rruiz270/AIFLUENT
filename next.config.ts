@@ -26,7 +26,10 @@ const nextConfig: NextConfig = {
   // Garante que o binário do ffmpeg-static seja empacotado na função de mídia
   // (usado para transcodificar áudio webm → ogg/opus antes de enviar ao WhatsApp).
   outputFileTracingIncludes: {
-    "/api/conversations/[id]/media": ["./node_modules/ffmpeg-static/ffmpeg"],
+    "/api/conversations/[id]/media": [
+      "./node_modules/ffmpeg-static/**",
+      "node_modules/ffmpeg-static/ffmpeg",
+    ],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
