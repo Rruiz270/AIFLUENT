@@ -222,7 +222,11 @@ model LeadTag {
 model Pipeline {
   id        String  @id @default(cuid())
   name      String
+  groupName String?   // grupo/área (ex.: IM, B2C, B2B, Remarketing)
   isDefault Boolean @default(false)
+  archived  Boolean @default(false)
+  hidden    Boolean @default(false)
+  order     Int     @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -230,6 +234,8 @@ model Pipeline {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   stages PipelineStage[]
+
+  @@index([organizationId])
 }
 
 model PipelineStage {

@@ -26,9 +26,14 @@ export async function GET(request: NextRequest) {
   const leadFilter =
     userRole === "operador" && userId ? { consultantId: userId } : undefined;
 
+  // Funil específico (?pipelineId=) ou o padrão.
+  const pipelineId = new URL(request.url).searchParams.get("pipelineId");
+
   try {
     const pipeline = await prisma.pipeline.findFirst({
-      where: { isDefault: true, organizationId: orgId },
+      where: pipelineId
+        ? { id: pipelineId, organizationId: orgId }
+        : { isDefault: true, organizationId: orgId },
       include: {
         stages: {
           orderBy: { order: "asc" },
