@@ -58,11 +58,18 @@ export function ChatInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const cancelledRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [recording, setRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   // Formato de áudio aceito pelo WhatsApp e suportado por este navegador.
-  // Se null (ex.: Chrome só grava webm), a gravação fica DESABILITADA + avisada.
   const audioMime = useMemo(() => pickRecordableAudioMime(), []);
   const canRecordAudio = !!audioMime;
+
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+  }, []);
 
   // Gravação real de áudio via MediaRecorder (quando onAudioRecorded é fornecido)
   const startRecording = useCallback(async () => {
@@ -71,29 +78,48 @@ export function ChatInput({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream, { mimeType: audioMime });
       chunksRef.current = [];
+      cancelledRef.current = false;
       mr.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
       mr.onstop = () => {
+        stopTimer();
         const blob = new Blob(chunksRef.current, {
           type: mr.mimeType || audioMime,
         });
         stream.getTracks().forEach((t) => t.stop());
-        if (blob.size > 0) onAudioRecorded?.(blob);
+        // Só envia se NÃO foi cancelado
+        if (!cancelledRef.current && blob.size > 0) onAudioRecorded?.(blob);
       };
       mediaRecorderRef.current = mr;
       mr.start();
       setRecording(true);
+      setRecordingTime(0);
+      timerRef.current = setInterval(
+        () => setRecordingTime((t) => t + 1),
+        1000,
+      );
     } catch {
       alert("Não foi possível acessar o microfone. Verifique a permissão.");
     }
-  }, [onAudioRecorded, audioMime]);
+  }, [onAudioRecorded, audioMime, stopTimer]);
 
+  // Para e ENVIA
   const stopRecording = useCallback(() => {
+    cancelledRef.current = false;
     mediaRecorderRef.current?.stop();
     mediaRecorderRef.current = null;
     setRecording(false);
   }, []);
+
+  // Cancela e DESCARTA (não envia)
+  const cancelRecording = useCallback(() => {
+    cancelledRef.current = true;
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current = null;
+    setRecording(false);
+    stopTimer();
+  }, [stopTimer]);
 
   const handleMicClick = useCallback(() => {
     if (onAudioRecorded) {
@@ -163,15 +189,27 @@ export function ChatInput({
         <div className="px-4 sm:px-6 pb-2">
           <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2">
             <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-            <span className="text-sm text-rose-700 font-medium">
-              Gravando...
+            <span className="text-sm text-rose-700 font-medium">Gravando</span>
+            <span className="text-sm text-rose-700 font-mono tabular-nums">
+              {Math.floor(recordingTime / 60)}:
+              {(recordingTime % 60).toString().padStart(2, "0")}
             </span>
-            <button
-              onClick={handleMicClick}
-              className="ml-auto text-xs text-rose-600 hover:text-rose-800 font-medium"
-            >
-              Parar e enviar
-            </button>
+            <div className="ml-auto flex items-center gap-3">
+              {onAudioRecorded && (
+                <button
+                  onClick={cancelRecording}
+                  className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+                >
+                  Cancelar
+                </button>
+              )}
+              <button
+                onClick={handleMicClick}
+                className="text-xs text-rose-600 hover:text-rose-800 font-medium"
+              >
+                Parar e enviar
+              </button>
+            </div>
           </div>
         </div>
       )}
