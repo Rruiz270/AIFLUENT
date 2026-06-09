@@ -51,6 +51,7 @@ import {
   AnimatedTabTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
+import { TemplateBroadcast } from "@/components/disparos/template-broadcast";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -292,6 +293,7 @@ function mapCampaign(c: any): Campanha {
 
 export default function DisparosPage() {
   const [activeTab, setActiveTab] = useState("campanhas");
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campanha[]>(initialCampaigns);
 
   const loadCampaigns = useCallback(async () => {
@@ -738,6 +740,22 @@ export default function DisparosPage() {
 
         {/* ── Tab: Templates ──────────────────────────────────────────────── */}
         <TabsContent value="templates" className="mt-6 space-y-4">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-emerald-800">
+                  Disparo em massa por template (WhatsApp)
+                </p>
+                <p className="text-xs text-emerald-700">
+                  Use seus modelos aprovados pela Meta para enviar a vários
+                  contatos — inclusive fora da janela de 24h.
+                </p>
+              </div>
+              <Button onClick={() => setBroadcastOpen(true)}>
+                <Send className="h-4 w-4" /> Disparar template em massa
+              </Button>
+            </div>
+          </div>
           <div className="flex items-center justify-between">
             <SearchInput
               placeholder="Buscar templates..."
@@ -2833,6 +2851,11 @@ export default function DisparosPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <TemplateBroadcast
+        open={broadcastOpen}
+        onClose={() => setBroadcastOpen(false)}
+      />
     </div>
   );
 }
