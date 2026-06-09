@@ -166,6 +166,44 @@ export class WhatsAppService {
     }
   }
 
+  // Lista os templates da conta (WABA), incluindo status e componentes.
+  async listTemplates(): Promise<
+    | {
+        templates: Array<{
+          name: string;
+          status: string;
+          category: string;
+          language: string;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          components: any[];
+        }>;
+      }
+    | { error: string }
+  > {
+    if (!this.config.businessAccountId)
+      return { error: "WHATSAPP_BUSINESS_ACCOUNT_ID nao configurado" };
+    try {
+      const res = await this.fetchWithRetry(
+        `${WHATSAPP_API_URL}/${this.config.businessAccountId}/message_templates?fields=name,status,category,language,components&limit=200`,
+        { headers: { Authorization: `Bearer ${this.config.accessToken}` } },
+      );
+      const data = await res.json();
+      if (data.error)
+        return { error: data.error?.message || "Falha ao listar templates" };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const templates = (data.data || []).map((t: any) => ({
+        name: t.name,
+        status: t.status,
+        category: t.category,
+        language: t.language,
+        components: t.components || [],
+      }));
+      return { templates };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : "Erro de conexao" };
+    }
+  }
+
   async sendMediaMessage(
     to: string,
     type: "image" | "document" | "audio" | "video",
@@ -341,9 +379,7 @@ export class WhatsAppService {
     return false;
   }
 
-  processWebhookPayload(
-    body: Record<string, unknown>,
-  ): {
+  processWebhookPayload(body: Record<string, unknown>): {
     from: string;
     message: string;
     messageId: string;
