@@ -358,6 +358,58 @@ export class WhatsAppService {
     }
   }
 
+  // Define a foto do perfil business (resumable upload → handle → profile).
+  async setProfilePicture(
+    bytes: ArrayBuffer,
+    mimeType: string,
+  ): Promise<{ ok: true } | { error: string }> {
+    if (!this.isConfigured) return { error: "WhatsApp nao configurado" };
+    const appId = process.env.META_APP_ID || "";
+    if (!appId) return { error: "META_APP_ID ausente" };
+    try {
+      // 1. inicia sessão de upload resumável
+      const startUrl = `${WHATSAPP_API_URL}/${appId}/uploads?file_length=${bytes.byteLength}&file_type=${encodeURIComponent(mimeType)}&access_token=${this.config.accessToken}`;
+      const start = await fetch(startUrl, { method: "POST" });
+      const startData = await start.json();
+      if (!startData.id)
+        return {
+          error: startData.error?.message || "Falha ao iniciar upload",
+        };
+      // 2. envia os bytes → recebe o handle (h)
+      const up = await fetch(`${WHATSAPP_API_URL}/${startData.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `OAuth ${this.config.accessToken}`,
+          file_offset: "0",
+        },
+        body: Buffer.from(bytes),
+      });
+      const upData = await up.json();
+      if (!upData.h)
+        return { error: upData.error?.message || "Falha no upload do handle" };
+      // 3. define a foto do perfil
+      const res = await fetch(
+        `${WHATSAPP_API_URL}/${this.config.phoneNumberId}/whatsapp_business_profile`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.config.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            profile_picture_handle: upData.h,
+          }),
+        },
+      );
+      const data = await res.json();
+      if (data.success || (res.ok && !data.error)) return { ok: true };
+      return { error: data.error?.message || "Falha ao definir foto" };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : "Erro de conexao" };
+    }
+  }
+
   verifyWebhook(mode: string, token: string, challenge: string): string | null {
     this.log("info", "Webhook verification attempt", { mode });
     if (mode === "subscribe" && token === this.config.webhookVerifyToken) {
