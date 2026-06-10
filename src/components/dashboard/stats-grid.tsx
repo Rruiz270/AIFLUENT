@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   Users,
   UserPlus,
@@ -12,81 +12,90 @@ import {
   Send,
   MessageCircle,
   Clock,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { DashboardStats } from '@/types'
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { DashboardStats } from "@/types";
 
 interface StatCardProps {
-  icon: React.ElementType
-  title: string
-  value: string
-  change: number
-  index: number
-  iconColor: string
-  iconBg: string
-  href?: string
+  icon: React.ElementType;
+  title: string;
+  value: string;
+  index: number;
+  iconColor: string;
+  iconBg: string;
+  href?: string;
 }
 
 function useCountUp(end: number, duration: number = 1200) {
-  const [count, setCount] = useState(0)
-  const startTime = useRef<number | null>(null)
-  const frameRef = useRef<number>(0)
+  const [count, setCount] = useState(0);
+  const startTime = useRef<number | null>(null);
+  const frameRef = useRef<number>(0);
 
   useEffect(() => {
-    startTime.current = null
+    startTime.current = null;
 
     const animate = (timestamp: number) => {
-      if (!startTime.current) startTime.current = timestamp
-      const progress = Math.min((timestamp - startTime.current) / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
-      setCount(Math.floor(eased * end))
+      if (!startTime.current) startTime.current = timestamp;
+      const progress = Math.min((timestamp - startTime.current) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setCount(Math.floor(eased * end));
 
       if (progress < 1) {
-        frameRef.current = requestAnimationFrame(animate)
+        frameRef.current = requestAnimationFrame(animate);
       }
-    }
+    };
 
-    frameRef.current = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(frameRef.current)
-  }, [end, duration])
+    frameRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [end, duration]);
 
-  return count
+  return count;
 }
 
-function StatCard({ icon: Icon, title, value, change, index, iconColor, iconBg, href }: StatCardProps) {
-  const router = useRouter()
+function StatCard({
+  icon: Icon,
+  title,
+  value,
+  index,
+  iconColor,
+  iconBg,
+  href,
+}: StatCardProps) {
+  const router = useRouter();
   // Parse the numeric part for count-up
-  const numericMatch = value.match(/[\d.,]+/)
-  const numericValue = numericMatch ? parseFloat(numericMatch[0].replace(/\./g, '').replace(',', '.')) : 0
-  const animatedNum = useCountUp(numericValue)
+  const numericMatch = value.match(/[\d.,]+/);
+  const numericValue = numericMatch
+    ? parseFloat(numericMatch[0].replace(/\./g, "").replace(",", "."))
+    : 0;
+  const animatedNum = useCountUp(numericValue);
 
   // Rebuild the display string with animated number
   const formatAnimatedValue = () => {
-    if (value.startsWith('R$')) {
-      return `R$ ${animatedNum.toLocaleString('pt-BR')}`
+    if (value.startsWith("R$")) {
+      return `R$ ${animatedNum.toLocaleString("pt-BR")}`;
     }
-    if (value.endsWith('%')) {
-      return `${(animatedNum / 10).toFixed(1)}%`
+    if (value.endsWith("%")) {
+      return `${(animatedNum / 10).toFixed(1)}%`;
     }
-    if (value.endsWith('min')) {
-      return `${animatedNum}min`
+    if (value.endsWith("min")) {
+      return `${animatedNum}min`;
     }
-    return animatedNum.toLocaleString('pt-BR')
-  }
-
-  const isPositive = change >= 0
+    return animatedNum.toLocaleString("pt-BR");
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }}
+      transition={{
+        duration: 0.4,
+        delay: index * 0.06,
+        ease: [0.25, 0.46, 0.45, 0.94],
+      }}
       onClick={() => href && router.push(href)}
       className={cn(
         "group relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 p-5 transition-all duration-300 hover:border-gray-200 hover:bg-gray-100",
-        href && "cursor-pointer"
+        href && "cursor-pointer",
       )}
     >
       {/* Subtle gradient overlay on hover */}
@@ -103,122 +112,95 @@ function StatCard({ icon: Icon, title, value, change, index, iconColor, iconBg, 
         </div>
         <div
           className={cn(
-            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
-            iconBg
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+            iconBg,
           )}
         >
-          <Icon className={cn('h-5 w-5', iconColor)} />
+          <Icon className={cn("h-5 w-5", iconColor)} />
         </div>
       </div>
-
-      <div className="relative mt-3 flex items-center gap-1.5">
-        {isPositive ? (
-          <ArrowUpRight className="h-3.5 w-3.5 text-emerald-400" />
-        ) : (
-          <ArrowDownRight className="h-3.5 w-3.5 text-rose-400" />
-        )}
-        <span
-          className={cn(
-            'text-xs font-semibold',
-            isPositive ? 'text-emerald-400' : 'text-rose-400'
-          )}
-        >
-          {isPositive ? '+' : ''}
-          {change}%
-        </span>
-        <span className="text-xs text-gray-400">vs. mês anterior</span>
-      </div>
     </motion.div>
-  )
+  );
 }
 
 interface StatsGridProps {
-  stats: DashboardStats
+  stats: DashboardStats;
 }
 
 const statConfig = [
   {
-    key: 'totalLeads' as const,
+    key: "totalLeads" as const,
     icon: Users,
-    title: 'Total Leads',
-    iconColor: 'text-indigo-400',
-    iconBg: 'bg-indigo-500/10',
-    format: (v: number) => v.toLocaleString('pt-BR'),
-    change: 12.5,
-    href: '/leads',
+    title: "Total Leads",
+    iconColor: "text-indigo-400",
+    iconBg: "bg-indigo-500/10",
+    format: (v: number) => v.toLocaleString("pt-BR"),
+    href: "/leads",
   },
   {
-    key: 'newLeadsToday' as const,
+    key: "newLeadsToday" as const,
     icon: UserPlus,
-    title: 'Novos Hoje',
-    iconColor: 'text-emerald-400',
-    iconBg: 'bg-emerald-500/10',
-    format: (v: number) => v.toLocaleString('pt-BR'),
-    change: 8.2,
-    href: '/leads',
+    title: "Novos Hoje",
+    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-500/10",
+    format: (v: number) => v.toLocaleString("pt-BR"),
+    href: "/leads",
   },
   {
-    key: 'conversionRate' as const,
+    key: "conversionRate" as const,
     icon: TrendingUp,
-    title: 'Taxa de Conversão',
-    iconColor: 'text-violet-400',
-    iconBg: 'bg-violet-500/10',
+    title: "Taxa de Conversão",
+    iconColor: "text-violet-400",
+    iconBg: "bg-violet-500/10",
     format: (v: number) => `${v}%`,
-    change: 3.1,
-    href: '/reports',
+    href: "/reports",
   },
   {
-    key: 'activeDeals' as const,
+    key: "activeDeals" as const,
     icon: Briefcase,
-    title: 'Negócios Ativos',
-    iconColor: 'text-amber-400',
-    iconBg: 'bg-amber-500/10',
-    format: (v: number) => v.toLocaleString('pt-BR'),
-    change: 5.7,
-    href: '/deals',
+    title: "Negócios Ativos",
+    iconColor: "text-amber-400",
+    iconBg: "bg-amber-500/10",
+    format: (v: number) => v.toLocaleString("pt-BR"),
+    href: "/deals",
   },
   {
-    key: 'totalRevenue' as const,
+    key: "totalRevenue" as const,
     icon: DollarSign,
-    title: 'Receita Total',
-    iconColor: 'text-emerald-400',
-    iconBg: 'bg-emerald-500/10',
-    format: (v: number) =>
-      `R$ ${v.toLocaleString('pt-BR')}`,
-    change: 18.3,
-    href: '/reports',
+    title: "Receita Total",
+    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-500/10",
+    format: (v: number) => `R$ ${v.toLocaleString("pt-BR")}`,
+    href: "/reports",
   },
   {
-    key: 'campaignsSent' as const,
+    key: "campaignsSent" as const,
     icon: Send,
-    title: 'Campanhas Enviadas',
-    iconColor: 'text-blue-400',
-    iconBg: 'bg-blue-500/10',
-    format: (v: number) => v.toLocaleString('pt-BR'),
-    change: -2.4,
-    href: '/campaigns',
+    title: "Campanhas Enviadas",
+    iconColor: "text-blue-400",
+    iconBg: "bg-blue-500/10",
+    format: (v: number) => v.toLocaleString("pt-BR"),
+    href: "/campaigns",
   },
   {
-    key: 'responseRate' as const,
+    key: "responseRate" as const,
     icon: MessageCircle,
-    title: 'Taxa de Resposta',
-    iconColor: 'text-cyan-400',
-    iconBg: 'bg-cyan-500/10',
+    title: "Taxa de Resposta",
+    iconColor: "text-cyan-400",
+    iconBg: "bg-cyan-500/10",
     format: (v: number) => `${v}%`,
-    change: 6.8,
-    href: '/campaigns',
+    href: "/campaigns",
   },
   {
-    key: 'avgResponseTime' as const,
+    key: "avgResponseTime" as const,
     icon: Clock,
-    title: 'Tempo Médio Resposta',
-    iconColor: 'text-orange-400',
-    iconBg: 'bg-orange-500/10',
+    title: "Tempo Médio Resposta",
+    iconColor: "text-orange-400",
+    iconBg: "bg-orange-500/10",
     format: (v: number) => `${v}min`,
-    change: -15.2,
-    href: '/reports',
+    href: "/reports",
   },
-]
+];
 
 export function StatsGrid({ stats }: StatsGridProps) {
   return (
@@ -229,7 +211,6 @@ export function StatsGrid({ stats }: StatsGridProps) {
           icon={config.icon}
           title={config.title}
           value={config.format(stats[config.key])}
-          change={config.change}
           index={index}
           iconColor={config.iconColor}
           iconBg={config.iconBg}
@@ -237,5 +218,5 @@ export function StatsGrid({ stats }: StatsGridProps) {
         />
       ))}
     </div>
-  )
+  );
 }
