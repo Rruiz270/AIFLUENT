@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
           include: {
             leads: {
               where: leadFilter,
-              orderBy: { stageOrder: "asc" },
+              orderBy: { updatedAt: "desc" },
+              take: 200, // paginação: carrega no máx. 200/etapa (funis com 100k não travam)
               include: {
                 consultant: { select: { id: true, name: true, avatar: true } },
                 tags: { include: { tag: true } },
