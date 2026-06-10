@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, X, Loader2 } from "lucide-react";
+import { FileText, X, Loader2, Search } from "lucide-react";
 
 interface TemplateComponent {
   type: string;
@@ -42,6 +42,7 @@ export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
   const [selected, setSelected] = useState<Template | null>(null);
   const [params, setParams] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect -- carregamento assíncrono ao abrir */
   useEffect(() => {
@@ -119,25 +120,43 @@ export function TemplatePicker({ open, onClose, onSend }: TemplatePickerProps) {
                 </p>
               ) : !selected ? (
                 <div className="space-y-2">
-                  {templates.map((t) => (
-                    <button
-                      key={`${t.name}-${t.language}`}
-                      onClick={() => pick(t)}
-                      className="w-full rounded-xl border border-gray-200 p-3 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-900">
-                          {t.name}
-                        </span>
-                        <span className="text-[10px] uppercase text-gray-400">
-                          {t.category} · {t.language}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-xs text-gray-600">
-                        {bodyText(t) || "(sem corpo de texto)"}
-                      </p>
-                    </button>
-                  ))}
+                  <div className="relative mb-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Buscar modelo por nome ou texto..."
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm focus:border-emerald-400 focus:outline-none"
+                    />
+                  </div>
+                  {templates
+                    .filter((t) => {
+                      const q = query.trim().toLowerCase();
+                      if (!q) return true;
+                      return (
+                        t.name.toLowerCase().includes(q) ||
+                        bodyText(t).toLowerCase().includes(q)
+                      );
+                    })
+                    .map((t) => (
+                      <button
+                        key={`${t.name}-${t.language}`}
+                        onClick={() => pick(t)}
+                        className="w-full rounded-xl border border-gray-200 p-3 text-left transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {t.name}
+                          </span>
+                          <span className="text-[10px] uppercase text-gray-400">
+                            {t.category} · {t.language}
+                          </span>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-xs text-gray-600">
+                          {bodyText(t) || "(sem corpo de texto)"}
+                        </p>
+                      </button>
+                    ))}
                 </div>
               ) : (
                 <div className="space-y-3">

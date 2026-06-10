@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, X, Loader2, FileText } from "lucide-react";
+import { Send, X, Loader2, FileText, Search } from "lucide-react";
 
 interface TemplateComponent {
   type: string;
@@ -42,6 +42,7 @@ export function TemplateBroadcast({ open, onClose }: TemplateBroadcastProps) {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect -- carregamento ao abrir */
   useEffect(() => {
@@ -152,30 +153,48 @@ export function TemplateBroadcast({ open, onClose }: TemplateBroadcastProps) {
               ) : !selected ? (
                 <div className="space-y-2">
                   {error && <p className="text-sm text-rose-600">{error}</p>}
+                  <div className="relative mb-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Buscar modelo..."
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm focus:border-emerald-400 focus:outline-none"
+                    />
+                  </div>
                   {templates.length === 0 && !error ? (
                     <p className="text-sm text-gray-500">
                       Nenhum template aprovado.
                     </p>
                   ) : (
-                    templates.map((t) => (
-                      <button
-                        key={`${t.name}-${t.language}`}
-                        onClick={() => pick(t)}
-                        className="w-full rounded-xl border border-gray-200 p-3 text-left hover:border-emerald-300 hover:bg-emerald-50"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {t.name}
-                          </span>
-                          <span className="text-[10px] uppercase text-gray-400">
-                            {t.category} · {t.language}
-                          </span>
-                        </div>
-                        <p className="mt-1 line-clamp-2 text-xs text-gray-600">
-                          {bodyText(t)}
-                        </p>
-                      </button>
-                    ))
+                    templates
+                      .filter((t) => {
+                        const q = query.trim().toLowerCase();
+                        if (!q) return true;
+                        return (
+                          t.name.toLowerCase().includes(q) ||
+                          bodyText(t).toLowerCase().includes(q)
+                        );
+                      })
+                      .map((t) => (
+                        <button
+                          key={`${t.name}-${t.language}`}
+                          onClick={() => pick(t)}
+                          className="w-full rounded-xl border border-gray-200 p-3 text-left hover:border-emerald-300 hover:bg-emerald-50"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-gray-900">
+                              {t.name}
+                            </span>
+                            <span className="text-[10px] uppercase text-gray-400">
+                              {t.category} · {t.language}
+                            </span>
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-xs text-gray-600">
+                            {bodyText(t)}
+                          </p>
+                        </button>
+                      ))
                   )}
                 </div>
               ) : (
