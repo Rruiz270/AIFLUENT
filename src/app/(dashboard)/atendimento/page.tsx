@@ -130,59 +130,92 @@ export default function AtendimentoPage() {
 
   const { input, setInput, showEmoji, setShowEmoji } = useChat([]);
 
-  // Fetch conversations from API on mount
-  useEffect(() => {
-    async function fetchConversations() {
-      try {
-        const res = await fetch("/api/conversations");
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        const items = data.conversations || [];
-        if (Array.isArray(items)) {
-          const mapped: Conversation[] = items.map(
-            (c: Record<string, unknown>) => {
-              const lead = c.lead as Record<string, unknown> | null;
-              const messages = c.messages as
-                | Array<Record<string, unknown>>
-                | undefined;
-              const lastMsg = messages?.[0];
-              return {
-                id: c.id as string,
-                leadId: (lead?.id as string) || "",
-                name:
-                  [lead?.firstName, lead?.lastName].filter(Boolean).join(" ") ||
-                  "Sem nome",
-                avatar:
-                  ((lead?.firstName as string)?.[0] || "?").toUpperCase() +
-                  ((lead?.lastName as string)?.[0] || "").toUpperCase(),
-                phone: (lead?.phone || lead?.whatsapp) as string | undefined,
-                lastMessage: (lastMsg?.content as string) || "",
-                lastMessageAt: (c.lastMessageAt ||
-                  c.updatedAt ||
-                  new Date().toISOString()) as string,
-                lastInboundAt: (c.lastInboundAt as string | null) ?? null,
-                unreadCount: (c.unreadCount as number) || 0,
-                channel: (c.channel as ConversationChannel) || "whatsapp",
-                assignee: (c.assignee as Record<string, unknown>)?.name as
-                  | string
-                  | undefined,
-                messages: [],
-              };
-            },
-          );
-          setConversations(mapped);
-        }
-      } catch {
-        // API unavailable — keep empty state
-      } finally {
-        setLoading(false);
+  // Fetch conversations from API
+  const fetchConversations = useCallback(async () => {
+    try {
+      const res = await fetch("/api/conversations");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const items = data.conversations || [];
+      if (Array.isArray(items)) {
+        const mapped: Conversation[] = items.map(
+          (c: Record<string, unknown>) => {
+            const lead = c.lead as Record<string, unknown> | null;
+            const messages = c.messages as
+              | Array<Record<string, unknown>>
+              | undefined;
+            const lastMsg = messages?.[0];
+            return {
+              id: c.id as string,
+              leadId: (lead?.id as string) || "",
+              name:
+                [lead?.firstName, lead?.lastName].filter(Boolean).join(" ") ||
+                "Sem nome",
+              avatar:
+                ((lead?.firstName as string)?.[0] || "?").toUpperCase() +
+                ((lead?.lastName as string)?.[0] || "").toUpperCase(),
+              phone: (lead?.phone || lead?.whatsapp) as string | undefined,
+              lastMessage: (lastMsg?.content as string) || "",
+              lastMessageAt: (c.lastMessageAt ||
+                c.updatedAt ||
+                new Date().toISOString()) as string,
+              lastInboundAt: (c.lastInboundAt as string | null) ?? null,
+              unreadCount: (c.unreadCount as number) || 0,
+              channel: (c.channel as ConversationChannel) || "whatsapp",
+              assignee: (c.assignee as Record<string, unknown>)?.name as
+                | string
+                | undefined,
+              messages: [],
+            };
+          },
+        );
+        setConversations(mapped);
       }
+    } catch {
+      // API unavailable — keep empty state
+    } finally {
+      setLoading(false);
     }
+  }, []);
+
+  // Carrega a lista no mount + atualiza a cada 6s
+  useEffect(() => {
     fetchConversations();
-    // Atualiza a lista a cada 6s (novas conversas/mensagens aparecem ao vivo)
     const t = setInterval(fetchConversations, 6000);
     return () => clearInterval(t);
-  }, []);
+  }, [fetchConversations]);
+
+  // Abre/cria a conversa do lead vindo do pipeline (?leadId=)
+  const [leadParamDone, setLeadParamDone] = useState(false);
+  /* eslint-disable react-hooks/set-state-in-effect -- abertura assíncrona */
+  useEffect(() => {
+    if (leadParamDone || loading) return;
+    const leadId = new URLSearchParams(window.location.search).get("leadId");
+    if (!leadId) return;
+    setLeadParamDone(true);
+    const existing = conversations.find((c) => c.leadId === leadId);
+    if (existing) {
+      setSelectedId(existing.id);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await fetch("/api/conversations/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId }),
+        });
+        const d = await res.json();
+        if (d.conversationId) {
+          await fetchConversations();
+          setSelectedId(d.conversationId);
+        }
+      } catch {
+        /* silencioso */
+      }
+    })();
+  }, [leadParamDone, loading, conversations, fetchConversations]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Carrega o histórico real da conversa selecionada (+ polling 5s)
   /* eslint-disable react-hooks/set-state-in-effect -- carregamento assíncrono */
@@ -847,14 +880,22 @@ export default function AtendimentoPage() {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50">
                 {currentMessages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
-                    <MessageCircle className="h-10 w-10 text-gray-200 mb-3" />
-                    <p className="text-sm text-gray-400">
-                      Nenhuma mensagem ainda
+                  <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                    <MessageCircle className="h-12 w-12 text-gray-200 mb-3" />
+                    <p className="text-sm font-medium text-gray-500">
+                      Você ainda não iniciou nenhuma conversa com este contato.
                     </p>
-                    <p className="text-xs text-gray-300 mt-1">
-                      Envie a primeira mensagem para iniciar a conversa
+                    <p className="text-xs text-gray-400 mt-1 max-w-xs">
+                      Para iniciar, use o botão de <b>Modelos</b> abaixo (o
+                      primeiro contato no WhatsApp exige um modelo aprovado pela
+                      regra das 24h).
                     </p>
+                    <button
+                      onClick={() => setTemplateOpen(true)}
+                      className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+                    >
+                      Iniciar conversa com modelo
+                    </button>
                   </div>
                 )}
                 {currentMessages.map((msg) => (

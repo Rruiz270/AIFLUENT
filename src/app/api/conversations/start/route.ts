@@ -17,29 +17,44 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const firstName = (body.firstName as string)?.trim();
-    const phoneRaw = (body.phone as string)?.trim();
-    const phone = phoneRaw?.replace(/\D/g, "");
-    if (!firstName || !phone || phone.length < 10) {
-      return NextResponse.json(
-        { error: "Nome e telefone (com DDD/país) são obrigatórios" },
-        { status: 400 },
-      );
-    }
-
     const { prisma } = await import("@/lib/prisma");
 
-    // 1. cria/reutiliza o lead pelo funil (tag + dedup + etapa padrão)
-    const result = await ingestLead(prisma, {
-      organizationId: orgId,
-      firstName,
-      phone,
-      whatsapp: phone,
-      source: "manual",
-      channel: "whatsapp",
-      tags: ["atendimento"],
-    });
-    const leadId = result.lead.id;
+    let leadId: string;
+
+    // Caminho A: lead já existente (ex.: card do pipeline) → abre/cria a conversa dele.
+    if (body.leadId) {
+      const existing = await prisma.lead.findUnique({
+        where: { id: body.leadId as string },
+        select: { id: true, organizationId: true },
+      });
+      if (!existing || existing.organizationId !== orgId) {
+        return NextResponse.json(
+          { error: "Lead não encontrado" },
+          { status: 404 },
+        );
+      }
+      leadId = existing.id;
+    } else {
+      // Caminho B: lead novo pelo nome + telefone (funil + dedup + etapa padrão).
+      const firstName = (body.firstName as string)?.trim();
+      const phone = (body.phone as string)?.trim()?.replace(/\D/g, "");
+      if (!firstName || !phone || phone.length < 10) {
+        return NextResponse.json(
+          { error: "Nome e telefone (com DDD/país) são obrigatórios" },
+          { status: 400 },
+        );
+      }
+      const result = await ingestLead(prisma, {
+        organizationId: orgId,
+        firstName,
+        phone,
+        whatsapp: phone,
+        source: "manual",
+        channel: "whatsapp",
+        tags: ["atendimento"],
+      });
+      leadId = result.lead.id;
+    }
 
     // 2. cria/reutiliza a conversa de WhatsApp
     let conversation = await prisma.conversation.findFirst({

@@ -2,6 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useRouter } from "next/navigation";
 import { MessageCircle, Phone, Mail, Clock } from "lucide-react";
 import { cn, generateColor } from "@/lib/utils";
 import type { KanbanCard as KanbanCardType } from "@/types";
@@ -30,9 +31,10 @@ function getTagColor(tag: string) {
 
 export function KanbanCard({
   card,
-  onClick: _onClick,
+  onClick,
   isDragOverlay = false,
 }: KanbanCardProps) {
+  const router = useRouter();
   const {
     attributes,
     listeners,
@@ -61,9 +63,12 @@ export function KanbanCard({
       style={style}
       {...attributes}
       {...listeners}
+      onClick={() => {
+        if (!isDragging) onClick?.();
+      }}
       className={cn(
         "group relative bg-white rounded-lg border border-gray-200 p-3",
-        "cursor-grab active:cursor-grabbing",
+        "cursor-pointer active:cursor-grabbing",
         "transition-shadow duration-150 hover:shadow-md hover:border-gray-300",
         isDragging && "opacity-30 scale-95 shadow-none",
         isDragOverlay &&
@@ -129,15 +134,12 @@ export function KanbanCard({
       <div className="flex items-center gap-1.5 pt-2 border-t border-gray-100">
         <div className="flex items-center gap-0.5">
           <span
-            className={`p-1 rounded text-emerald-500 transition-colors ${card.whatsapp ? "cursor-pointer hover:bg-emerald-50" : "opacity-30 cursor-not-allowed"}`}
-            title={card.whatsapp ? "Abrir WhatsApp" : "Sem WhatsApp"}
+            className="p-1 rounded text-emerald-500 cursor-pointer transition-colors hover:bg-emerald-50"
+            title="Abrir atendimento no CRM"
+            onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => {
               e.stopPropagation();
-              if (card.whatsapp)
-                window.open(
-                  `https://wa.me/${card.whatsapp.replace(/\D/g, "")}`,
-                  "_blank",
-                );
+              router.push(`/atendimento?leadId=${card.id}`);
             }}
           >
             <MessageCircle className="w-3.5 h-3.5" />
@@ -145,6 +147,7 @@ export function KanbanCard({
           <span
             className={`p-1 rounded text-blue-500 transition-colors ${card.phone || card.whatsapp ? "cursor-pointer hover:bg-blue-50" : "opacity-30 cursor-not-allowed"}`}
             title={card.phone || card.whatsapp ? "Ligar" : "Sem telefone"}
+            onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => {
               e.stopPropagation();
               const num = card.phone || card.whatsapp;
@@ -157,6 +160,7 @@ export function KanbanCard({
           <span
             className={`p-1 rounded text-gray-400 transition-colors ${card.email ? "cursor-pointer hover:bg-gray-50" : "opacity-30 cursor-not-allowed"}`}
             title={card.email ? "Enviar email" : "Sem email"}
+            onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => {
               e.stopPropagation();
               if (card.email) window.open(`mailto:${card.email}`, "_self");
