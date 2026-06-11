@@ -15,9 +15,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const { prisma } = await import("@/lib/prisma");
-    const base = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "";
+    const base =
+      process.env.APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
 
     // jobs em andamento que ainda têm pendentes
     const running = await prisma.broadcastJob.findMany({

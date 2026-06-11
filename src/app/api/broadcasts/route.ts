@@ -124,9 +124,9 @@ export async function POST(request: NextRequest) {
       data: { status: "running", startedAt: new Date() },
     });
     const secret = process.env.CRON_SECRET;
-    const base = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "";
+    const base =
+      process.env.APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
     if (secret && base) {
       after(async () => {
         try {

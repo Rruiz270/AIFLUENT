@@ -11,9 +11,9 @@ export const maxDuration = 60;
 // mesmo com a aba fechada. Usa o CRON_SECRET pra autenticar a chamada interna.
 function scheduleNext(jobId: string) {
   const secret = process.env.CRON_SECRET;
-  const base = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "";
+  const base =
+    process.env.APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
   if (!secret || !base) return;
   after(async () => {
     try {
