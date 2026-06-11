@@ -23,6 +23,7 @@ export async function POST(
   if (orgError) return orgError;
   const { id } = await params;
 
+  const correlationId = crypto.randomUUID();
   try {
     const form = await request.formData();
     const file = form.get("file");
@@ -77,20 +78,25 @@ export async function POST(
         // transcodifica para OGG/Opus. Erro REAL é propagado (sem máscara).
         if (type === "audio" && needsTranscode(mime)) {
           const inExt = (mime.split("/")[1] || "webm").split(";")[0];
-          logger.info("WhatsApp audio transcode start", {
-            from: mime,
-            sizeIn: bytes.byteLength,
-          });
-          const ogg = await transcodeToOggOpus(bytes, inExt);
-          bytes = ogg.buffer.slice(
-            ogg.byteOffset,
-            ogg.byteOffset + ogg.byteLength,
-          ) as ArrayBuffer;
-          uploadMime = "audio/ogg";
-          uploadName = uploadName.replace(/\.[^.]+$/, "") + ".ogg";
-          logger.info("WhatsApp audio transcode done", {
-            sizeOut: bytes.byteLength,
-          });
+          try {
+            const ogg = await transcodeToOggOpus(bytes, inExt);
+            bytes = ogg.buffer.slice(
+              ogg.byteOffset,
+              ogg.byteOffset + ogg.byteLength,
+            ) as ArrayBuffer;
+            uploadMime = "audio/ogg";
+            uploadName = uploadName.replace(/\.[^.]+$/, "") + ".ogg";
+          } catch (e) {
+            // Log estruturado APENAS de falha (sem dados sensíveis: só formatos/tamanho).
+            logger.error("audio_transcode_failed", {
+              correlationId,
+              formatIn: mime,
+              formatOut: "audio/ogg;codecs=opus",
+              sizeIn: bytes.byteLength,
+              reason: e instanceof Error ? e.message.slice(0, 300) : String(e),
+            });
+            throw e;
+          }
         }
 
         const up = await whatsapp.uploadMedia(bytes, uploadMime, uploadName);
@@ -144,9 +150,12 @@ export async function POST(
     });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "erro desconhecido";
-    logger.error("POST /api/conversations/[id]/media error", err);
+    logger.error("POST /api/conversations/[id]/media error", {
+      correlationId,
+      error: detail.slice(0, 300),
+    });
     return NextResponse.json(
-      { error: "Falha ao enviar midia", detail },
+      { error: "Falha ao enviar midia", detail, correlationId },
       { status: 500 },
     );
   }
