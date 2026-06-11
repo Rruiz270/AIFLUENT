@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { requireAuth, checkRateLimit, requireOrgId } from "@/lib/api-auth";
 import { apiLimiter } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -115,6 +115,32 @@ export async function POST(request: NextRequest) {
           status: "pending",
         })),
         skipDuplicates: true,
+      });
+    }
+
+    // arranca o processamento no servidor (continua mesmo com a aba fechada)
+    await prisma.broadcastJob.update({
+      where: { id: job.id },
+      data: { status: "running", startedAt: new Date() },
+    });
+    const secret = process.env.CRON_SECRET;
+    const base = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "";
+    if (secret && base) {
+      after(async () => {
+        try {
+          await fetch(`${base}/api/broadcasts/${job.id}/process`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${secret}`,
+              "Content-Type": "application/json",
+            },
+            body: "{}",
+          });
+        } catch {
+          /* cron-safety reanima */
+        }
       });
     }
 

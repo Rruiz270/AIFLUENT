@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { requireAuth, checkRateLimit, requireOrgId } from "@/lib/api-auth";
 import { apiLimiter } from "@/lib/rate-limit";
 import { whatsapp } from "@/lib/whatsapp";
@@ -6,6 +6,30 @@ import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+// Encadeia o próximo lote no servidor (após a resposta) — disparo continua
+// mesmo com a aba fechada. Usa o CRON_SECRET pra autenticar a chamada interna.
+function scheduleNext(jobId: string) {
+  const secret = process.env.CRON_SECRET;
+  const base = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "";
+  if (!secret || !base) return;
+  after(async () => {
+    try {
+      await fetch(`${base}/api/broadcasts/${jobId}/process`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secret}`,
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      });
+    } catch {
+      /* o cron-safety reanima se o encadeamento falhar */
+    }
+  });
+}
 
 const BATCH_REAL = 25; // envios reais por chamada (cabe folgado em 60s)
 const BATCH_DRY = 500; // dry-run: só DB, processa muito mais por chamada
@@ -24,21 +48,33 @@ export async function POST(
 ) {
   const rl = checkRateLimit(request, apiLimiter);
   if (rl) return rl;
-  const { error, session } = await requireAuth("gestor");
-  if (error) return error;
-  const { orgId, error: orgError } = requireOrgId(session);
-  if (orgError) return orgError;
   const { id } = await params;
+
+  // Auth: worker interno (Bearer CRON_SECRET) OU sessão gestor+.
+  const secret = process.env.CRON_SECRET;
+  const authz = request.headers.get("authorization");
+  const isWorker = !!secret && authz === `Bearer ${secret}`;
+  let sessionOrgId: string | null = null;
+  let sessionUserId: string | null = null;
+  if (!isWorker) {
+    const { error, session } = await requireAuth("gestor");
+    if (error) return error;
+    const { orgId, error: orgError } = requireOrgId(session);
+    if (orgError) return orgError;
+    sessionOrgId = orgId;
+    sessionUserId = (session!.user as Record<string, unknown>).id as string;
+  }
 
   try {
     const { prisma } = await import("@/lib/prisma");
     const job = await prisma.broadcastJob.findUnique({ where: { id } });
-    if (!job || job.organizationId !== orgId) {
+    if (!job || (!isWorker && job.organizationId !== sessionOrgId)) {
       return NextResponse.json(
         { error: "Disparo não encontrado" },
         { status: 404 },
       );
     }
+    const orgId = job.organizationId;
     if (job.status === "cancelled" || job.status === "completed") {
       return NextResponse.json({
         status: job.status,
@@ -61,7 +97,7 @@ export async function POST(
     }
 
     const batch = job.dryRun ? BATCH_DRY : BATCH_REAL;
-    const senderId = (session!.user as Record<string, unknown>).id as string;
+    const senderId = sessionUserId ?? job.createdById;
     const langParams = job.params ? (JSON.parse(job.params) as string[]) : null;
     const components = langParams?.length
       ? [
@@ -142,6 +178,8 @@ export async function POST(
           where: { id },
           data: { status: "completed", completedAt: new Date() },
         });
+      } else {
+        scheduleNext(id); // continua server-side
       }
       return NextResponse.json({
         status: remaining === 0 ? "completed" : "running",
@@ -257,6 +295,8 @@ export async function POST(
         where: { id },
         data: { status: "completed", completedAt: new Date() },
       });
+    } else if (remaining > 0 && updated.status === "running") {
+      scheduleNext(id); // continua server-side (aba pode fechar)
     }
 
     return NextResponse.json({
