@@ -51,8 +51,10 @@ export async function transcodeToOggOpus(
     throw new Error("ffmpeg-static indisponível (binário não encontrado)");
   const id = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
   const safeExt = (inputExt || "bin").replace(/[^a-z0-9]/gi, "").slice(0, 8);
-  const inPath = join(tmpdir(), `wa-${id}.${safeExt}`);
-  const outPath = join(tmpdir(), `wa-${id}.ogg`);
+  const inPath = join(tmpdir(), `wa-${id}-in.${safeExt}`);
+  // Nome de saída DISTINTO do de entrada — senão, quando o input já é .ogg,
+  // inPath === outPath e o ffmpeg recusa ("cannot edit in-place"). (bug raiz)
+  const outPath = join(tmpdir(), `wa-${id}-out.ogg`);
   await writeFile(inPath, Buffer.from(input));
   try {
     await new Promise<void>((resolve, reject) => {
