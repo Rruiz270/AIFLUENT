@@ -12,6 +12,7 @@ export const PERMISSIONS = {
   "page:campaigns": ["admin"],
   "page:disparos": ["admin"],
   "page:disparo-massa": ["admin", "gestor"],
+  "page:distribuir-leads": ["admin", "gestor"],
   "page:templates": ["admin"],
   "page:meta-ads": ["admin"],
   "page:automations": ["admin"],

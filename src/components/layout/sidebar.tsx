@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   Users,
+  UserPlus,
   Kanban,
   Handshake,
   MessageCircle,
@@ -47,6 +48,7 @@ const navigation: NavSection[] = [
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "Leads", href: "/leads", icon: Users },
+      { label: "Distribuir leads", href: "/distribuir-leads", icon: UserPlus },
       { label: "Pipeline", href: "/pipeline", icon: Kanban },
       { label: "Negocios", href: "/deals", icon: Handshake },
     ],

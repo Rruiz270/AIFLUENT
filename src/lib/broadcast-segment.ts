@@ -15,11 +15,12 @@ export interface BroadcastSegment {
 export function buildAudienceWhere(
   organizationId: string,
   seg: BroadcastSegment,
+  opts: { requireWhatsapp?: boolean } = { requireWhatsapp: true },
 ): Record<string, unknown> {
-  const where: Record<string, unknown> = {
-    organizationId,
-    whatsapp: { not: null }, // só quem tem WhatsApp
-  };
+  const where: Record<string, unknown> = { organizationId };
+  if (opts.requireWhatsapp !== false) {
+    where.whatsapp = { not: null }; // só quem tem WhatsApp (disparos)
+  }
 
   if (seg.tags?.length) {
     where.tags = { some: { tag: { name: { in: seg.tags } } } };
